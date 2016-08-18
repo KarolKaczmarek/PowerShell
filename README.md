@@ -1,7 +1,7 @@
 ![logo][] PowerShell
 ====================
 
-Welcome to the PowerShell GitHub Commmunity!
+Welcome to the PowerShell GitHub Community!
 PowerShell is a cross-platform (Windows, Linux and OS X) automation and configuration tool/framework that works well with your existing tools and is optimized for dealing with structured data (e.g. JSON, CSV, XML, etc.), REST APIs, and object models.
 It includes a command-line shell, an associated scripting language and a framework for processing cmdlets. 
 
@@ -20,14 +20,14 @@ Get PowerShell
 
 You can download and install a PowerShell package for any of the following platforms.
 
-| Platform     | Downloads            | How to Install              |
-|--------------|----------------------|-----------------------------|
-| Windows 10   | [.msi][rl-windows10] | [Instructions][in-windows]  |
-| Windows 8.1  | [.msi][rl-windows81] | [Instructions][in-windows]  |
-| Ubuntu 16.04 | [.deb][rl-ubuntu16]  | [Instructions][in-ubuntu16] |
-| Ubuntu 14.04 | [.deb][rl-ubuntu14]  | [Instructions][in-ubuntu14] |
-| CentOS 7     | [.rpm][rl-centos]    | [Instructions][in-centos]   |
-| OS X 10.11   | [.pkg][rl-osx]       | [Instructions][in-osx]      |
+| Platform                     | Downloads            | How to Install              |
+|------------------------------|----------------------|-----------------------------|
+| Windows 10 / Server 2016     | [.msi][rl-windows10] | [Instructions][in-windows]  |
+| Windows 8.1 / Server 2012 R2 | [.msi][rl-windows81] | [Instructions][in-windows]  |
+| Ubuntu 16.04                 | [.deb][rl-ubuntu16]  | [Instructions][in-ubuntu16] |
+| Ubuntu 14.04                 | [.deb][rl-ubuntu14]  | [Instructions][in-ubuntu14] |
+| CentOS 7                     | [.rpm][rl-centos]    | [Instructions][in-centos]   |
+| OS X 10.11                   | [.pkg][rl-osx]       | [Instructions][in-osx]      |
 
 [rl-windows10]: https://github.com/PowerShell/PowerShell/releases/download/v6.0.0-alpha.9/PowerShell_6.0.0.9-alpha.9-win10-x64.msi
 [rl-windows81]: https://github.com/PowerShell/PowerShell/releases/download/v6.0.0-alpha.9/PowerShell_6.0.0.9-alpha.9-win81-x64.msi
@@ -44,6 +44,13 @@ You can download and install a PowerShell package for any of the following platf
 [in-osx]: docs/installation/linux.md#os-x-1011
 
 To install a specific version, visit [releases](https://github.com/PowerShell/PowerShell/releases).
+
+Chat Room
+---------
+
+Want to chat with other members of the PowerShell community?
+
+[![Join the chat at https://gitter.im/PowerShell/PowerShell](https://badges.gitter.im/PowerShell/PowerShell.svg)](https://gitter.im/PowerShell/PowerShell?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Building the Repository
 -----------------------
@@ -66,10 +73,10 @@ If you have any problems building, please consult the developer [FAQ][].
 
 [FAQ]: docs/FAQ.md
 
-[tv-image]: https://travis-ci.com/PowerShell/PowerShell.svg?token=31YifM4jfyVpBmEGitCm&branch=master
-[tv-site]: https://travis-ci.com/PowerShell/PowerShell/branches
-[av-image]: https://ci.appveyor.com/api/projects/status/jtefab3hpngtyesp/branch/master?svg=true
-[av-site]: https://ci.appveyor.com/project/PowerShell/powershell/branch/master
+[tv-image]: https://travis-ci.org/PowerShell/PowerShell.svg?branch=master
+[tv-site]: https://travis-ci.org/PowerShell/PowerShell/branches
+[av-image]: https://ci.appveyor.com/api/projects/status/nsng9iobwa895f98/branch/master?svg=true
+[av-site]: https://ci.appveyor.com/project/PowerShell/powershell
 
 Downloading the Source Code
 ---------------------------
@@ -97,7 +104,9 @@ Please see the [Contribution Guide][] for how to develop and contribute.
 
 If you have any problems, please consult the [known issues][], developer [FAQ][], and [GitHub issues][].
 If you do not see your problem captured, please file a [new issue][] and follow the provided template.
+If you are developing .NET Core C# applications targeting PowerShell Core, please [check out our FAQ][] to learn more about the PowerShell SDK NuGet package. 
 
+[check out our FAQ]: docs/FAQ.md#where-do-i-get-the-powershell-core-sdk-package
 [Contribution Guide]: .github/CONTRIBUTING.md
 [known issues]: docs/KNOWNISSUES.md
 [GitHub issues]: https://github.com/PowerShell/PowerShell/issues

@@ -127,7 +127,7 @@ function Start-PSBuild {
         $env:NUGET_PACKAGES="$PSScriptRoot\Packages"
 
         # cmake is needed to build powershell.exe
-        $precheck = $precheck -and (precheck 'cmake' 'cmake not found. Run Start-PSBootstrap. You can also install it from https://chocolatey.org/packages/cmake.portable')
+        $precheck = $precheck -and (precheck 'cmake' 'cmake not found. Run Start-PSBootstrap. You can also install it from https://chocolatey.org/packages/cmake')
 
         Use-MSBuild
 
@@ -663,6 +663,13 @@ function Start-PSBootstrap {
     Push-Location $PSScriptRoot/tools
 
     try {
+        # Update googletest submodule for linux native cmake
+        if ($IsLinux -or $IsOSX) {
+            $Submodule = "$PSScriptRoot/src/libpsl-native/test/googletest"
+            Remove-Item -Path $Submodule -Recurse -Force -ErrorAction SilentlyContinue
+            git submodule update --init -- $submodule
+        }
+
         # Install ours and .NET's dependencies
         $Deps = @()
         if ($IsUbuntu) {
@@ -754,8 +761,8 @@ function Start-PSBootstrap {
             $newMachineEnvironmentPath = $machinePath
 
             $cmakePresent = precheck 'cmake' $null
-            $sdkPath = "${env:ProgramFiles(x86)}\Microsoft SDKs\Windows\v10.0A"
-            $sdkPresent = Test-Path -Path $sdkPath -PathType Container
+            $win10sdkBinPath = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\x64"
+            $sdkPresent = Test-Path -Path $win10sdkBinPath -PathType Container
 
             # Install chocolatey
             $chocolateyPath = "$env:AllUsersProfile\chocolatey\bin"
@@ -788,7 +795,7 @@ function Start-PSBootstrap {
                 log "Cmake is already installed. Skipping installation."
             } else {
                 log "Cmake not present. Installing cmake."
-                choco install cmake.portable -y --version 3.6.0
+                choco install cmake -y --version 3.6.0
                 if (-not ($machinePath.ToLower().Contains($cmakePath.ToLower()))) {
                     log "Adding $cmakePath to Path environment variable"
                     $env:Path += ";$cmakePath"
