@@ -2,8 +2,6 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
-
 namespace System.Management.Automation.Provider
 {
     #region IContentCmdletProvider
@@ -159,10 +157,8 @@ namespace System.Management.Automation.Provider
         /// The default implemenation returns null. (no additional parameters)
         /// </returns>
         object ClearContentDynamicParameters(string path);
-
     } // IContentCmdletProvider
 
     #endregion IContentCmdletProvider
-
 } // namespace System.Management.Automation
 

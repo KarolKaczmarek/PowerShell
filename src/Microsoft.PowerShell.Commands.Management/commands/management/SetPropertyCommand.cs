@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System;
 using System.Management.Automation;
 using Dbg = System.Management.Automation;
@@ -24,22 +25,15 @@ namespace Microsoft.PowerShell.Commands
         /// <summary>
         /// Gets or sets the path parameter to the command
         /// </summary>
-        [Parameter(Position = 0, ParameterSetName = propertyPSObjectPathSet, 
+        [Parameter(Position = 0, ParameterSetName = propertyPSObjectPathSet,
                    Mandatory = true, ValueFromPipelineByPropertyName = true)]
-        [Parameter(Position = 0, ParameterSetName = propertyValuePathSet, 
+        [Parameter(Position = 0, ParameterSetName = propertyValuePathSet,
                    Mandatory = true, ValueFromPipelineByPropertyName = true)]
         public string[] Path
         {
-            get
-            {
-                return paths;
-            } // get
-
-            set
-            {
-                paths = value;
-            } // set
-        } // Path
+            get { return paths; }
+            set { paths = value; }
+        }
 
         /// <summary>
         /// Gets or sets the literal path parameter to the command
@@ -51,17 +45,13 @@ namespace Microsoft.PowerShell.Commands
         [Alias("PSPath")]
         public string[] LiteralPath
         {
-            get
-            {
-                return paths;
-            } // get
-
+            get { return paths; }
             set
             {
                 base.SuppressWildcardExpansion = true;
                 paths = value;
-            } // set
-        } // LiteralPath
+            }
+        }
 
         #region Property Value set
 
@@ -73,24 +63,12 @@ namespace Microsoft.PowerShell.Commands
         /// This value type is determined by the InvokeProvider.
         /// </value>
         ///
-        [Parameter(Position=1, ParameterSetName = propertyValuePathSet, 
-                   Mandatory=true, ValueFromPipelineByPropertyName = true)]
-        [Parameter(Position=1, ParameterSetName = propertyValueLiteralPathSet, 
-                   Mandatory=true, ValueFromPipelineByPropertyName = true)]
+        [Parameter(Position = 1, ParameterSetName = propertyValuePathSet,
+                   Mandatory = true, ValueFromPipelineByPropertyName = true)]
+        [Parameter(Position = 1, ParameterSetName = propertyValueLiteralPathSet,
+                   Mandatory = true, ValueFromPipelineByPropertyName = true)]
         [Alias("PSProperty")]
-        public string Name
-        {
-            get
-            {
-                return property;
-            } // get
-
-            set
-            {
-                property = value;
-            }
-        } // Property
-        
+        public string Name { get; set; } = String.Empty;
 
         /// <summary>
         /// The value of the property to set.
@@ -100,23 +78,12 @@ namespace Microsoft.PowerShell.Commands
         /// This value type is determined by the InvokeProvider.
         /// </value>
         ///
-        [Parameter(Position=2, ParameterSetName = propertyValuePathSet, 
-                   Mandatory=true, ValueFromPipelineByPropertyName = true)]
-        [Parameter(Position=2, ParameterSetName = propertyValueLiteralPathSet, 
-                   Mandatory=true, ValueFromPipelineByPropertyName = true)]
+        [Parameter(Position = 2, ParameterSetName = propertyValuePathSet,
+                   Mandatory = true, ValueFromPipelineByPropertyName = true)]
+        [Parameter(Position = 2, ParameterSetName = propertyValueLiteralPathSet,
+                   Mandatory = true, ValueFromPipelineByPropertyName = true)]
         [AllowNull]
-        public object Value
-        {
-            get
-            {
-                return content;
-            } // get
-
-            set
-            {
-                content = value;
-            }
-        } // Value
+        public object Value { get; set; }
 
         #endregion Property Value set
 
@@ -132,18 +99,8 @@ namespace Microsoft.PowerShell.Commands
         [Parameter(ParameterSetName = propertyPSObjectLiteralPathSet, Mandatory = true,
                    ValueFromPipelineByPropertyName = true,
                    ValueFromPipeline = true)]
-        public PSObject InputObject
-        {
-            get
-            {
-                return propertyTable;
-            } //get
+        public PSObject InputObject { get; set; }
 
-            set
-            {
-                propertyTable = value;
-            } // set
-        } // PropertyTable
         #endregion Shell Object set
 
         /// <summary>
@@ -169,7 +126,7 @@ namespace Microsoft.PowerShell.Commands
             {
                 case propertyValuePathSet:
                 case propertyValueLiteralPathSet:
-                    if (! String.IsNullOrEmpty(Name))
+                    if (!String.IsNullOrEmpty(Name))
                     {
                         mshObject = new PSObject();
                         mshObject.Properties.Add(new PSNoteProperty(Name, Value));
@@ -187,25 +144,10 @@ namespace Microsoft.PowerShell.Commands
             }
             return InvokeProvider.Property.SetPropertyDynamicParameters(".", mshObject, context);
         } // GetDynamicParameters
-        
+
         #endregion Parameters
 
         #region parameter data
-        
-        /// <summary>
-        /// The value of the property to be set.
-        /// </summary>
-        private object content;
-
-        /// <summary>
-        /// The name of the property to be set.
-        /// </summary>
-        private string property = String.Empty;
-
-        /// <summary>
-        /// The properties to be set contained within a PSObject
-        /// </summary>
-        private PSObject propertyTable;
 
         #endregion parameter data
 
@@ -214,7 +156,7 @@ namespace Microsoft.PowerShell.Commands
         /// <summary>
         /// Sets the content of the item at the specified path
         /// </summary>
-        protected override void ProcessRecord ()
+        protected override void ProcessRecord()
         {
             // Default to the CmdletProviderContext that will direct output to
             // the pipeline.
@@ -287,5 +229,4 @@ namespace Microsoft.PowerShell.Commands
 
 
     } // SetItemPropertyCommand
-
 } // namespace Microsoft.PowerShell.Commands

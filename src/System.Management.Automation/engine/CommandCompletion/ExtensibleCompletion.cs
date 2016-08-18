@@ -6,9 +6,12 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using System.Linq;
 using System.Management.Automation.Language;
+
+#if CORECLR
+using System.Reflection;
+#endif
 
 namespace System.Management.Automation
 {
@@ -93,15 +96,15 @@ namespace System.Management.Automation
         /// <summary>
         /// 
         /// </summary>
-        [Parameter(ParameterSetName="NativeSet", Mandatory = true)]
-        [Parameter(ParameterSetName="PowerShellSet")]
+        [Parameter(ParameterSetName = "NativeSet", Mandatory = true)]
+        [Parameter(ParameterSetName = "PowerShellSet")]
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
         public string[] CommandName { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        [Parameter(ParameterSetName="PowerShellSet", Mandatory = true)]
+        [Parameter(ParameterSetName = "PowerShellSet", Mandatory = true)]
         public string ParameterName { get; set; }
 
         /// <summary>
@@ -114,7 +117,7 @@ namespace System.Management.Automation
         /// <summary>
         /// 
         /// </summary>
-        [Parameter(ParameterSetName="NativeSet")]
+        [Parameter(ParameterSetName = "NativeSet")]
         public SwitchParameter Native { get; set; }
 
         /// <summary>
@@ -136,7 +139,7 @@ namespace System.Management.Automation
 
             if (CommandName == null || CommandName.Length == 0)
             {
-                CommandName = new[] {""};
+                CommandName = new[] { "" };
             }
 
             for (int i = 0; i < CommandName.Length; i++)

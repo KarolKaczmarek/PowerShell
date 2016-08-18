@@ -3,18 +3,11 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
 using System.Management.Automation.Tracing;
-using System.Management.Automation.Remoting.Server;
-using System.Globalization;
 using System.IO;
-using System.IO.Pipes;
 using System.Net;
-using System.Net.Security;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using System.Security.AccessControl;
-using System.Security.Principal;
 using Dbg = System.Diagnostics.Debug;
 
 #if CORECLR
@@ -28,10 +21,10 @@ namespace System.Management.Automation.Remoting
     internal class HyperVSocketEndPoint : EndPoint
     {
         #region Members
-        
-        private System.Net.Sockets.AddressFamily m_AddressFamily;
-        private Guid m_VmId;
-        private Guid m_ServiceId;
+
+        private System.Net.Sockets.AddressFamily _addressFamily;
+        private Guid _vmId;
+        private Guid _serviceId;
 
         public const System.Net.Sockets.AddressFamily AF_HYPERV = (System.Net.Sockets.AddressFamily)34;
         public const int HYPERV_SOCK_ADDR_SIZE = 36;
@@ -41,29 +34,29 @@ namespace System.Management.Automation.Remoting
         #region Constructor
 
         public HyperVSocketEndPoint(System.Net.Sockets.AddressFamily AddrFamily,
-                                   Guid  VmId,
-                                   Guid  ServiceId)
+                                   Guid VmId,
+                                   Guid ServiceId)
         {
-            m_AddressFamily = AddrFamily;
-            m_VmId = VmId;
-            m_ServiceId = ServiceId;
+            _addressFamily = AddrFamily;
+            _vmId = VmId;
+            _serviceId = ServiceId;
         }
 
         public override System.Net.Sockets.AddressFamily AddressFamily
         {
-            get { return m_AddressFamily;  }
+            get { return _addressFamily; }
         }
 
         public Guid VmId
         {
-            get { return m_VmId; }
-            set { m_VmId = value; }
+            get { return _vmId; }
+            set { _vmId = value; }
         }
-        
+
         public Guid ServiceId
         {
-            get { return m_ServiceId; }
-            set { m_VmId = value; }
+            get { return _serviceId; }
+            set { _vmId = value; }
         }
 
         #endregion
@@ -73,22 +66,22 @@ namespace System.Management.Automation.Remoting
         public override EndPoint Create(SocketAddress SockAddr)
         {
             if (SockAddr == null ||
-                SockAddr.Family != AF_HYPERV || 
+                SockAddr.Family != AF_HYPERV ||
                 SockAddr.Size != 34)
             {
                 return null;
             }
-        
+
             HyperVSocketEndPoint endpoint = new HyperVSocketEndPoint(SockAddr.Family, Guid.Empty, Guid.Empty);
-        
+
             string sockAddress = SockAddr.ToString();
 
             endpoint.VmId = new Guid(sockAddress.Substring(4, 16));
             endpoint.ServiceId = new Guid(sockAddress.Substring(20, 16));
-        
+
             return endpoint;
         }
-        
+
         public override bool Equals(Object obj)
         {
             HyperVSocketEndPoint endpoint = (HyperVSocketEndPoint)obj;
@@ -97,47 +90,47 @@ namespace System.Management.Automation.Remoting
             {
                 return false;
             }
-        
-            if ((m_AddressFamily == endpoint.AddressFamily) &&
-                (m_VmId == endpoint.VmId) &&
-                (m_ServiceId == endpoint.ServiceId))
+
+            if ((_addressFamily == endpoint.AddressFamily) &&
+                (_vmId == endpoint.VmId) &&
+                (_serviceId == endpoint.ServiceId))
             {
                 return true;
             }
-        
+
             return false;
         }
-        
+
         public override int GetHashCode()
         {
             return Serialize().GetHashCode();
         }
-        
+
         public override SocketAddress Serialize()
         {
-            SocketAddress sockAddress = new SocketAddress((System.Net.Sockets.AddressFamily)m_AddressFamily, HYPERV_SOCK_ADDR_SIZE);
-            
-            byte[] vmId = m_VmId.ToByteArray();
-            byte[] serviceId = m_ServiceId.ToByteArray();
+            SocketAddress sockAddress = new SocketAddress((System.Net.Sockets.AddressFamily)_addressFamily, HYPERV_SOCK_ADDR_SIZE);
+
+            byte[] vmId = _vmId.ToByteArray();
+            byte[] serviceId = _serviceId.ToByteArray();
 
             sockAddress[2] = (byte)0;
-        
+
             for (int i = 0; i < vmId.Length; i++)
             {
                 sockAddress[i + 4] = vmId[i];
             }
-        
+
             for (int i = 0; i < serviceId.Length; i++)
             {
                 sockAddress[i + 4 + vmId.Length] = serviceId[i];
             }
-        
+
             return sockAddress;
         }
-    
+
         public override string ToString()
         {
-            return m_VmId.ToString() + m_ServiceId.ToString();
+            return _vmId.ToString() + _serviceId.ToString();
         }
 
         #endregion
@@ -147,12 +140,7 @@ namespace System.Management.Automation.Remoting
     {
         #region Members
 
-        private Socket _socket;
-        private NetworkStream _networkStream;
-        private StreamReader _streamReader;
-        private StreamWriter _streamWriter;
         private readonly object _syncObject;
-        private bool _disposed;
         private PowerShellTraceSource _tracer = PowerShellTraceSourceFactory.GetTraceSource();
 
         #endregion
@@ -162,42 +150,27 @@ namespace System.Management.Automation.Remoting
         /// <summary>
         /// Returns the Hyper-V socket object.
         /// </summary>
-        public Socket HyperVSocket
-        {
-            get { return _socket; }
-        }
+        public Socket HyperVSocket { get; }
 
         /// <summary>
         /// Returns the network stream object.
         /// </summary>
-        public NetworkStream Stream
-        {
-            get { return _networkStream; }
-        }
+        public NetworkStream Stream { get; }
 
         /// <summary>
         /// Accessor for the Hyper-V socket reader.
         /// </summary>
-        public StreamReader TextReader
-        {
-            get { return _streamReader; }
-        }
+        public StreamReader TextReader { get; private set; }
 
         /// <summary>
         /// Accessor for the Hyper-V socket writer.
         /// </summary>
-        public StreamWriter TextWriter
-        {
-            get { return _streamWriter; }
-        }
+        public StreamWriter TextWriter { get; private set; }
 
         /// <summary>
         /// Returns true if object is currently disposed.
         /// </summary>
-        public bool IsDisposed
-        {
-            get { return _disposed; }
-        }
+        public bool IsDisposed { get; private set; }
 
         #endregion
 
@@ -212,7 +185,7 @@ namespace System.Management.Automation.Remoting
             int bytesRead;
             */
             _syncObject = new object();
-            
+
             Exception ex = null;
 
             try
@@ -265,19 +238,19 @@ namespace System.Management.Automation.Remoting
                 // TODO: remove below 6 lines of code when .NET supports Hyper-V socket duplication
                 Guid serviceId = new Guid("a5201c21-2770-4c11-a68e-f182edb29220"); // HV_GUID_VM_SESSION_SERVICE_ID_2
                 HyperVSocketEndPoint endpoint = new HyperVSocketEndPoint(HyperVSocketEndPoint.AF_HYPERV, Guid.Empty, serviceId);
-                
+
                 Socket listenSocket = new Socket(endpoint.AddressFamily, SocketType.Stream, (System.Net.Sockets.ProtocolType)1);
                 listenSocket.Bind(endpoint);
-                
-                listenSocket.Listen(1);
-                _socket = listenSocket.Accept();
 
-                _networkStream = new NetworkStream(_socket, true);
-           
+                listenSocket.Listen(1);
+                HyperVSocket = listenSocket.Accept();
+
+                Stream = new NetworkStream(HyperVSocket, true);
+
                 // Create reader/writer streams.
-                _streamReader = new StreamReader(_networkStream);
-                _streamWriter = new StreamWriter(_networkStream);
-                _streamWriter.AutoFlush = true;
+                TextReader = new StreamReader(Stream);
+                TextWriter = new StreamWriter(Stream);
+                TextWriter.AutoFlush = true;
 
                 //
                 // listenSocket is not closed when it goes out of scope here. Sometimes it is 
@@ -286,8 +259,8 @@ namespace System.Management.Automation.Remoting
                 // explicitly close listenSocket here for safe.
                 //
                 if (listenSocket != null)
-                {        
-                    try { listenSocket.Dispose(); } 
+                {
+                    try { listenSocket.Dispose(); }
                     catch (ObjectDisposedException) { }
                 }
             }
@@ -296,11 +269,11 @@ namespace System.Management.Automation.Remoting
                 CommandProcessorBase.CheckForSevereException(e);
                 ex = e;
             }
-            
+
             if (ex != null)
             {
                 Dbg.Assert(false, "Unexpected error in RemoteSessionHyperVSocketServer.");
-            
+
                 // Unexpected error.
                 string errorMessage = !string.IsNullOrEmpty(ex.Message) ? ex.Message : string.Empty;
                 _tracer.WriteMessage("RemoteSessionHyperVSocketServer", "RemoteSessionHyperVSocketServer", Guid.Empty,
@@ -311,7 +284,7 @@ namespace System.Management.Automation.Remoting
                     ex,
                     PSRemotingErrorId.RemoteSessionHyperVSocketServerConstructorFailure.ToString(),
                     ErrorCategory.InvalidOperation,
-                    null);                
+                    null);
             }
         }
 
@@ -326,33 +299,33 @@ namespace System.Management.Automation.Remoting
         {
             lock (_syncObject)
             {
-                if (_disposed) { return; }
-                _disposed = true;
+                if (IsDisposed) { return; }
+                IsDisposed = true;
             }
-            
-            if (_streamReader != null)
+
+            if (TextReader != null)
             {
-                try { _streamReader.Dispose(); }
+                try { TextReader.Dispose(); }
                 catch (ObjectDisposedException) { }
-                _streamReader = null;
+                TextReader = null;
             }
 
-            if (_streamWriter != null)
+            if (TextWriter != null)
             {
-                try { _streamWriter.Dispose(); }
+                try { TextWriter.Dispose(); }
                 catch (ObjectDisposedException) { }
-                _streamWriter = null;
+                TextWriter = null;
             }
 
-            if (_networkStream != null)
-            {        
-                try { _networkStream.Dispose(); } 
+            if (Stream != null)
+            {
+                try { Stream.Dispose(); }
                 catch (ObjectDisposedException) { }
             }
 
-            if (_socket != null)
-            {        
-                try { _socket.Dispose(); } 
+            if (HyperVSocket != null)
+            {
+                try { HyperVSocket.Dispose(); }
                 catch (ObjectDisposedException) { }
             }
         }
@@ -364,16 +337,10 @@ namespace System.Management.Automation.Remoting
     {
         #region Members
 
-        private HyperVSocketEndPoint _endPoint;
-        private Socket _socket;
-        private NetworkStream _networkStream;
-        private StreamReader _streamReader;
-        private StreamWriter _streamWriter;
         private readonly object _syncObject;
-        private bool _disposed;
         private PowerShellTraceSource _tracer = PowerShellTraceSourceFactory.GetTraceSource();
 
-        private static ManualResetEvent connectDone = 
+        private static ManualResetEvent s_connectDone =
                 new ManualResetEvent(false);
 
         #endregion
@@ -390,50 +357,32 @@ namespace System.Management.Automation.Remoting
         /// <summary>
         /// Returns the Hyper-V socket endpoint object.
         /// </summary>
-        public HyperVSocketEndPoint EndPoint
-        {
-            get { return _endPoint; }
-        }
+        public HyperVSocketEndPoint EndPoint { get; }
 
         /// <summary>
         /// Returns the Hyper-V socket object.
         /// </summary>
-        public Socket HyperVSocket
-        {
-            get { return _socket; }
-        }
+        public Socket HyperVSocket { get; }
 
         /// <summary>
         /// Returns the network stream object.
         /// </summary>
-        public NetworkStream Stream
-        {
-            get { return _networkStream; }
-        }
+        public NetworkStream Stream { get; private set; }
 
         /// <summary>
         /// Accessor for the Hyper-V socket reader.
         /// </summary>
-        public StreamReader TextReader
-        {
-            get { return _streamReader; }
-        }
+        public StreamReader TextReader { get; private set; }
 
         /// <summary>
         /// Accessor for the Hyper-V socket writer.
         /// </summary>
-        public StreamWriter TextWriter
-        {
-            get { return _streamWriter; }
-        }
+        public StreamWriter TextWriter { get; private set; }
 
         /// <summary>
         /// Returns true if object is currently disposed.
         /// </summary>
-        public bool IsDisposed
-        {
-            get { return _disposed; }
-        }
+        public bool IsDisposed { get; private set; }
 
         #endregion
 
@@ -445,7 +394,7 @@ namespace System.Management.Automation.Remoting
             bool isContainer = false)
         {
             Guid serviceId;
-            
+
             _syncObject = new object();
 
             if (isFirstConnection)
@@ -459,9 +408,9 @@ namespace System.Management.Automation.Remoting
                 serviceId = new Guid("a5201c21-2770-4c11-a68e-f182edb29220");
             }
 
-            _endPoint = new HyperVSocketEndPoint(HyperVSocketEndPoint.AF_HYPERV, vmId, serviceId);
+            EndPoint = new HyperVSocketEndPoint(HyperVSocketEndPoint.AF_HYPERV, vmId, serviceId);
 
-            _socket = new Socket(_endPoint.AddressFamily, SocketType.Stream, (System.Net.Sockets.ProtocolType)1);
+            HyperVSocket = new Socket(EndPoint.AddressFamily, SocketType.Stream, (System.Net.Sockets.ProtocolType)1);
 
             //
             // We need to call SetSocketOption() in order to set up Hyper-V socket connection between container host and Hyper-V container.
@@ -474,7 +423,7 @@ namespace System.Management.Automation.Remoting
 
                 try
                 {
-                    _socket.SetSocketOption((System.Net.Sockets.SocketOptionLevel)HV_PROTOCOL_RAW, 
+                    HyperVSocket.SetSocketOption((System.Net.Sockets.SocketOptionLevel)HV_PROTOCOL_RAW,
                                             (System.Net.Sockets.SocketOptionName)HVSOCKET_CONTAINER_PASSTHRU,
                                             (byte[])value);
                 }
@@ -497,33 +446,33 @@ namespace System.Management.Automation.Remoting
         {
             lock (_syncObject)
             {
-                if (_disposed) { return; }
-                _disposed = true;
+                if (IsDisposed) { return; }
+                IsDisposed = true;
             }
-        
-            if (_streamReader != null)
+
+            if (TextReader != null)
             {
-                try { _streamReader.Dispose(); }
+                try { TextReader.Dispose(); }
                 catch (ObjectDisposedException) { }
-                _streamReader = null;
+                TextReader = null;
             }
 
-            if (_streamWriter != null)
+            if (TextWriter != null)
             {
-                try { _streamWriter.Dispose(); }
+                try { TextWriter.Dispose(); }
                 catch (ObjectDisposedException) { }
-                _streamWriter = null;
+                TextWriter = null;
             }
 
-            if (_networkStream != null)
-            {        
-                try { _networkStream.Dispose(); } 
+            if (Stream != null)
+            {
+                try { Stream.Dispose(); }
                 catch (ObjectDisposedException) { }
             }
 
-            if (_socket != null)
-            {        
-                try { _socket.Dispose(); } 
+            if (HyperVSocket != null)
+            {
+                try { HyperVSocket.Dispose(); }
                 catch (ObjectDisposedException) { }
             }
         }
@@ -558,15 +507,15 @@ namespace System.Management.Automation.Remoting
                         PSRemotingErrorInvariants.FormatResourceString(RemotingErrorIdStrings.InvalidUsername));
                 }
             }
-            
-            _socket.Connect(_endPoint);
-            
-            if (_socket.Connected)
+
+            HyperVSocket.Connect(EndPoint);
+
+            if (HyperVSocket.Connected)
             {
                 _tracer.WriteMessage("RemoteSessionHyperVSocketClient", "Connect", Guid.Empty,
                     "Client connected.");
 
-                _networkStream = new NetworkStream(_socket, true);
+                Stream = new NetworkStream(HyperVSocket, true);
 
                 if (isFirstConnection)
                 {
@@ -588,11 +537,11 @@ namespace System.Management.Automation.Remoting
                     // Send credential to VM so that PowerShell process inside VM can be
                     // created under the correct security context.
                     //
-                    _socket.Send(domain);
-                    _socket.Receive(response);
-                    
-                    _socket.Send(userName);
-                    _socket.Receive(response);
+                    HyperVSocket.Send(domain);
+                    HyperVSocket.Receive(response);
+
+                    HyperVSocket.Send(userName);
+                    HyperVSocket.Receive(response);
 
                     //
                     // We cannot simply send password because if it is empty,
@@ -600,17 +549,17 @@ namespace System.Management.Automation.Remoting
                     //
                     if (emptyPassword)
                     {
-                        _socket.Send(Encoding.ASCII.GetBytes("EMPTYPW"));
-                        _socket.Receive(response);
+                        HyperVSocket.Send(Encoding.ASCII.GetBytes("EMPTYPW"));
+                        HyperVSocket.Receive(response);
                         responseString = Encoding.ASCII.GetString(response);
                     }
                     else
                     {
-                        _socket.Send(Encoding.ASCII.GetBytes("NONEMPTYPW"));
-                        _socket.Receive(response);
-                    
-                        _socket.Send(password);
-                        _socket.Receive(response);
+                        HyperVSocket.Send(Encoding.ASCII.GetBytes("NONEMPTYPW"));
+                        HyperVSocket.Receive(response);
+
+                        HyperVSocket.Send(password);
+                        HyperVSocket.Receive(response);
                         responseString = Encoding.ASCII.GetString(response);
                     }
 
@@ -620,13 +569,13 @@ namespace System.Management.Automation.Remoting
                     // - "PASS": credentail is valid, but PowerShell Direct in VM does not support configuration (Server 2016 TP4 and before)
                     // - "CONF": credentail is valid, and PowerShell Direct in VM supports configuration (Server 2016 TP5 and later)
                     //
-    
+
                     //
                     // Credential is invalid.
                     //
                     if (String.Compare(responseString, "FAIL", StringComparison.Ordinal) == 0)
                     {
-                        _socket.Send(response);
+                        HyperVSocket.Send(response);
 
                         throw new PSDirectException(
                             PSRemotingErrorInvariants.FormatResourceString(RemotingErrorIdStrings.InvalidCredential));
@@ -639,32 +588,32 @@ namespace System.Management.Automation.Remoting
                     {
                         if (emptyConfiguration)
                         {
-                            _socket.Send(Encoding.ASCII.GetBytes("EMPTYCF"));
+                            HyperVSocket.Send(Encoding.ASCII.GetBytes("EMPTYCF"));
                         }
                         else
                         {
-                            _socket.Send(Encoding.ASCII.GetBytes("NONEMPTYCF"));
-                            _socket.Receive(response);
+                            HyperVSocket.Send(Encoding.ASCII.GetBytes("NONEMPTYCF"));
+                            HyperVSocket.Receive(response);
 
-                            Byte[] configName = Encoding.Unicode.GetBytes(configurationName);                        
-                            _socket.Send(configName);
+                            Byte[] configName = Encoding.Unicode.GetBytes(configurationName);
+                            HyperVSocket.Send(configName);
                         }
                     }
                     else
                     {
-                        _socket.Send(response);
+                        HyperVSocket.Send(response);
                     }
                 }
-                
-                _streamReader = new StreamReader(_networkStream);
-                _streamWriter = new StreamWriter(_networkStream);
-                _streamWriter.AutoFlush = true;
+
+                TextReader = new StreamReader(Stream);
+                TextWriter = new StreamWriter(Stream);
+                TextWriter.AutoFlush = true;
 
                 result = true;
             }
             else
             {
-                _tracer.WriteMessage("RemoteSessionHyperVSocketClient", "Connect", Guid.Empty, 
+                _tracer.WriteMessage("RemoteSessionHyperVSocketClient", "Connect", Guid.Empty,
                     "Client unable to connect.");
 
                 result = false;
@@ -675,8 +624,8 @@ namespace System.Management.Automation.Remoting
 
         public void Close()
         {
-            _networkStream.Dispose();
-            _socket.Dispose();                
+            Stream.Dispose();
+            HyperVSocket.Dispose();
         }
 
         #endregion

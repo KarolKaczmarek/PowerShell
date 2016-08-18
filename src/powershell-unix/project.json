@@ -12,7 +12,6 @@
             "mappings": {
                 "Modules/" : {
                     "include": [
-                        "../Modules/Windows+Unix-Core",
                         "../Modules/Unix",
                         "../Modules/Shared"
                     ],
@@ -24,6 +23,7 @@
             "include": [
                 "*.so",
                 "*.dylib",
+                "../../license_thirdparty_proprietary.txt",
                 "../../powershell.version"
             ]
         },
@@ -36,7 +36,7 @@
         "mappings": {
             "Modules/" : {
                 "include": [
-                    "../Modules/Windows+Unix-Core",
+                    "../Modules/Unix",
                     "../Modules/Shared"
                 ],
                 "exclude": [
@@ -47,14 +47,18 @@
         "include": [
             "*.so",
             "*.dylib",
+            "../../license_thirdparty_proprietary.txt",
             "../../powershell.version"
-        ],
+        ]
     },
 
     "dependencies": {
         "Microsoft.PowerShell.SDK": "1.0.0-*",
         "Microsoft.PowerShell.PSReadLine": "1.0.0-*",
-        "Microsoft.PowerShell.PackageManagement": "1.0.0-*"
+        "libmi": "1.0.0-alpha01",
+        "PSDesiredStateConfiguration": "1.0.0-alpha01",
+        "Microsoft.PowerShell.PackageManagement": "1.0.0-*",
+        "PowerShellHelpFiles": "1.0.0-alpha01"
     },
 
     "frameworks": {
@@ -64,13 +68,15 @@
                 "define": [ "CORECLR" ]
             },
             "dependencies": {
-                "Microsoft.NETCore.App": "1.0.0"
+                "Microsoft.NETCore.App": "1.0.0",
+                "Microsoft.NETCore.Runtime.CoreCLR": "1.0.4"
             }
         }
     },
 
     "runtimes": {
         "ubuntu.14.04-x64": { },
+        "ubuntu.16.04-x64": { },
         "debian.8-x64": { },
         "centos.7-x64": { },
         "osx.10.11-x64": { }

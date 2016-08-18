@@ -1,15 +1,11 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
-using System.Management.Automation;
+
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Resources;
-using Microsoft.Win32;
-using System.IO;
-using System.Reflection;
 using System.ComponentModel;
 using System.Globalization;
 using System.Text;
@@ -27,7 +23,7 @@ namespace System.Management.Automation
     /// always be available. 
     /// 
     /// </summary>
-    internal class EventLogLogProvider: LogProvider
+    internal class EventLogLogProvider : LogProvider
     {
         /// <summary>
         /// Constructor. 
@@ -45,7 +41,7 @@ namespace System.Management.Automation
 
         internal string SetupEventSource(string shellId)
         {
-            string source; 
+            string source;
 
             // In case shellId == null, use the "Default" source.
             if (String.IsNullOrEmpty(shellId))
@@ -63,7 +59,7 @@ namespace System.Management.Automation
 
                 // There may be a situation where ShellId ends with a '.'. 
                 // In that case, use the default source. 
-                if(String.IsNullOrEmpty(source))
+                if (String.IsNullOrEmpty(source))
                     source = "Default";
             }
 
@@ -80,7 +76,7 @@ namespace System.Management.Automation
         /// This represent a handle to EventLog
         /// </summary>
         private EventLog _eventLog;
-        private ResourceManager _resourceManager; 
+        private ResourceManager _resourceManager;
 
         #region Log Provider Api
 
@@ -100,7 +96,7 @@ namespace System.Management.Automation
         /// <param name="eventId"></param>
         /// <param name="exception"></param>
         /// <param name="additionalInfo"></param>
-        override internal void LogEngineHealthEvent(LogContext logContext, int eventId, Exception exception, Dictionary<String, String> additionalInfo)
+        internal override void LogEngineHealthEvent(LogContext logContext, int eventId, Exception exception, Dictionary<String, String> additionalInfo)
         {
             Hashtable mapArgs = new Hashtable();
 
@@ -141,7 +137,7 @@ namespace System.Management.Automation
             LogEvent(entry, mapArgs["ErrorMessage"], detail);
         }
 
-        static private EventLogEntryType GetEventLogEntryType(LogContext logContext)
+        private static EventLogEntryType GetEventLogEntryType(LogContext logContext)
         {
             switch (logContext.Severity)
             {
@@ -161,7 +157,7 @@ namespace System.Management.Automation
         /// <param name="logContext"></param>
         /// <param name="newState"></param>
         /// <param name="previousState"></param>
-        override internal void LogEngineLifecycleEvent(LogContext logContext, EngineState newState, EngineState previousState)
+        internal override void LogEngineLifecycleEvent(LogContext logContext, EngineState newState, EngineState previousState)
         {
             int eventId = GetEngineLifecycleEventId(newState);
 
@@ -194,7 +190,7 @@ namespace System.Management.Automation
         /// <returns></returns>
         private static int GetEngineLifecycleEventId(EngineState engineState)
         {
-            switch(engineState)
+            switch (engineState)
             {
                 case EngineState.None:
                     return _invalidEventId;
@@ -219,7 +215,7 @@ namespace System.Management.Automation
         /// <param name="logContext"></param>
         /// <param name="exception"></param>
         /// 
-        override internal void LogCommandHealthEvent(LogContext logContext, Exception exception)
+        internal override void LogCommandHealthEvent(LogContext logContext, Exception exception)
         {
             int eventId = _commandHealthEventId;
 
@@ -265,7 +261,7 @@ namespace System.Management.Automation
         /// </summary>
         /// <param name="getLogContext"></param>
         /// <param name="newState"></param>
-        override internal void LogCommandLifecycleEvent(Func<LogContext> getLogContext, CommandState newState)
+        internal override void LogCommandLifecycleEvent(Func<LogContext> getLogContext, CommandState newState)
         {
             LogContext logContext = getLogContext();
 
@@ -320,7 +316,7 @@ namespace System.Management.Automation
         /// </summary>
         /// <param name="logContext"></param>
         /// <param name="pipelineExecutionDetail"></param>
-        override internal void LogPipelineExecutionDetailEvent(LogContext logContext, List<String> pipelineExecutionDetail)
+        internal override void LogPipelineExecutionDetailEvent(LogContext logContext, List<String> pipelineExecutionDetail)
         {
             List<String> details = GroupMessages(pipelineExecutionDetail);
 
@@ -330,7 +326,7 @@ namespace System.Management.Automation
             }
         }
 
-        const int MaxLength = 16000;
+        private const int MaxLength = 16000;
 
         private List<String> GroupMessages(List<String> messages)
         {
@@ -395,7 +391,7 @@ namespace System.Management.Automation
         /// <param name="providerName"></param>
         /// <param name="exception"></param>
         /// 
-        override internal void LogProviderHealthEvent(LogContext logContext, string providerName, Exception exception)
+        internal override void LogProviderHealthEvent(LogContext logContext, string providerName, Exception exception)
         {
             int eventId = _providerHealthEventId;
 
@@ -410,7 +406,7 @@ namespace System.Management.Automation
                 mapArgs["ErrorCategory"] = icer.ErrorRecord.CategoryInfo.Category;
                 mapArgs["ErrorId"] = icer.ErrorRecord.FullyQualifiedErrorId;
 
-                if (   icer.ErrorRecord.ErrorDetails != null
+                if (icer.ErrorRecord.ErrorDetails != null
                     && !String.IsNullOrEmpty(icer.ErrorRecord.ErrorDetails.Message))
                 {
                     mapArgs["ErrorMessage"] = icer.ErrorRecord.ErrorDetails.Message;
@@ -445,7 +441,7 @@ namespace System.Management.Automation
         /// <param name="logContext"></param>
         /// <param name="providerName"></param>
         /// <param name="newState"></param>
-        override internal void LogProviderLifecycleEvent(LogContext logContext, string providerName, ProviderState newState)
+        internal override void LogProviderLifecycleEvent(LogContext logContext, string providerName, ProviderState newState)
         {
             int eventId = GetProviderLifecycleEventId(newState);
 
@@ -497,7 +493,7 @@ namespace System.Management.Automation
         /// <param name="variableName"></param>
         /// <param name="value"></param>
         /// <param name="previousValue"></param>
-        override internal void LogSettingsEvent(LogContext logContext, string variableName, string value, string previousValue)
+        internal override void LogSettingsEvent(LogContext logContext, string variableName, string value, string previousValue)
         {
             int eventId = _settingsEventId;
 
@@ -645,7 +641,7 @@ namespace System.Management.Automation
             return FillMessageTemplate(messageTemplate, mapArgs);
         }
 
-        static private string FillMessageTemplate(string messageTemplate, Hashtable mapArgs)
+        private static string FillMessageTemplate(string messageTemplate, Hashtable mapArgs)
         {
             StringBuilder message = new StringBuilder();
 
@@ -670,7 +666,7 @@ namespace System.Management.Automation
                 }
 
                 message.Append(messageTemplate.Substring(cursor, startIndex - cursor));
-                cursor = startIndex; 
+                cursor = startIndex;
 
                 string placeHolder = messageTemplate.Substring(startIndex + 1, endIndex - startIndex - 1);
 

@@ -1,9 +1,9 @@
 //
 //    Copyright (C) Microsoft.  All rights reserved.
 //
-﻿using System.Diagnostics;
+
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Runtime.ConstrainedExecution;
@@ -82,21 +82,21 @@ namespace System.Management.Automation
         [Flags]
         internal enum MiniDumpType : uint
         {
-            MiniDumpNormal                           = 0x00000000,
-            MiniDumpWithDataSegs                     = 0x00000001,
-            MiniDumpWithFullMemory                   = 0x00000002,
-            MiniDumpWithHandleData                   = 0x00000004,
-            MiniDumpFilterMemory                     = 0x00000008,
-            MiniDumpScanMemory                       = 0x00000010,
-            MiniDumpWithUnloadedModules              = 0x00000020,
-            MiniDumpWithIndirectlyReferencedMemory   = 0x00000040,
-            MiniDumpFilterModulePaths                = 0x00000080,
-            MiniDumpWithProcessThreadData            = 0x00000100,
-            MiniDumpWithPrivateReadWriteMemory       = 0x00000200,
-            MiniDumpWithoutOptionalData              = 0x00000400,
-            MiniDumpWithFullMemoryInfo               = 0x00000800,
-            MiniDumpWithThreadInfo                   = 0x00001000,
-            MiniDumpWithCodeSegs                     = 0x00002000
+            MiniDumpNormal = 0x00000000,
+            MiniDumpWithDataSegs = 0x00000001,
+            MiniDumpWithFullMemory = 0x00000002,
+            MiniDumpWithHandleData = 0x00000004,
+            MiniDumpFilterMemory = 0x00000008,
+            MiniDumpScanMemory = 0x00000010,
+            MiniDumpWithUnloadedModules = 0x00000020,
+            MiniDumpWithIndirectlyReferencedMemory = 0x00000040,
+            MiniDumpFilterModulePaths = 0x00000080,
+            MiniDumpWithProcessThreadData = 0x00000100,
+            MiniDumpWithPrivateReadWriteMemory = 0x00000200,
+            MiniDumpWithoutOptionalData = 0x00000400,
+            MiniDumpWithFullMemoryInfo = 0x00000800,
+            MiniDumpWithThreadInfo = 0x00001000,
+            MiniDumpWithCodeSegs = 0x00002000
         }
 
         /// <summary>
@@ -348,13 +348,13 @@ namespace System.Management.Automation
             /// <param name="reportInformation"></param>
             /// <param name="reportHandle">A handle to the report. If the function fails, this handle is NULL.</param>
             /// <returns>hresult</returns>
-            [SuppressMessage("Microsoft.Globalization", "CA2101:SpecifyMarshalingForPInvokeStringArguments", MessageId="ReportInformation.wzDescription")]
-            [SuppressMessage("Microsoft.Globalization", "CA2101:SpecifyMarshalingForPInvokeStringArguments", MessageId="ReportInformation.wzApplicationPath")]
-            [SuppressMessage("Microsoft.Globalization", "CA2101:SpecifyMarshalingForPInvokeStringArguments", MessageId="ReportInformation.wzFriendlyEventName")]
-            [SuppressMessage("Microsoft.Globalization", "CA2101:SpecifyMarshalingForPInvokeStringArguments", MessageId="ReportInformation.wzConsentKey")]
-            [SuppressMessage("Microsoft.Globalization", "CA2101:SpecifyMarshalingForPInvokeStringArguments", MessageId="ReportInformation.wzApplicationName")]
+            [SuppressMessage("Microsoft.Globalization", "CA2101:SpecifyMarshalingForPInvokeStringArguments", MessageId = "ReportInformation.wzDescription")]
+            [SuppressMessage("Microsoft.Globalization", "CA2101:SpecifyMarshalingForPInvokeStringArguments", MessageId = "ReportInformation.wzApplicationPath")]
+            [SuppressMessage("Microsoft.Globalization", "CA2101:SpecifyMarshalingForPInvokeStringArguments", MessageId = "ReportInformation.wzFriendlyEventName")]
+            [SuppressMessage("Microsoft.Globalization", "CA2101:SpecifyMarshalingForPInvokeStringArguments", MessageId = "ReportInformation.wzConsentKey")]
+            [SuppressMessage("Microsoft.Globalization", "CA2101:SpecifyMarshalingForPInvokeStringArguments", MessageId = "ReportInformation.wzApplicationName")]
             [DllImport(WerDll, CharSet = CharSet.Unicode)]
-            static internal extern int WerReportCreate(
+            internal static extern int WerReportCreate(
                 [MarshalAs(UnmanagedType.LPWStr)] string pwzEventType,
                 ReportType repType,
                 [MarshalAs(UnmanagedType.LPStruct)] ReportInformation reportInformation,
@@ -370,7 +370,7 @@ namespace System.Management.Automation
             /// <param name="value">The parameter value</param>
             /// <returns>hresult</returns>
             [DllImport(WerDll, CharSet = CharSet.Unicode)]
-            static internal extern int WerReportSetParameter(
+            internal static extern int WerReportSetParameter(
                 ReportHandle reportHandle,
                 BucketParameterId bucketParameterId,
                 [MarshalAs(UnmanagedType.LPWStr)] string name,
@@ -389,7 +389,7 @@ namespace System.Management.Automation
             /// <param name="dumpFlags"></param>
             /// <returns></returns>
             [DllImport(WerDll, CharSet = CharSet.Unicode)]
-            static internal extern int WerReportAddDump(
+            internal static extern int WerReportAddDump(
                 ReportHandle reportHandle,
                 IntPtr hProcess,
                 IntPtr hThread,
@@ -407,7 +407,7 @@ namespace System.Management.Automation
             /// <param name="result">The result of the submission.</param>
             /// <returns>hresult</returns>
             [DllImport(WerDll)]
-            static internal extern int WerReportSubmit(
+            internal static extern int WerReportSubmit(
                 ReportHandle reportHandle,
                 Consent consent,
                 SubmitFlags flags,
@@ -421,7 +421,7 @@ namespace System.Management.Automation
             /// <returns>hresult</returns>
             [DllImport(WerDll)]
             [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-            static internal extern int WerReportCloseHandle(IntPtr reportHandle);
+            internal static extern int WerReportCloseHandle(IntPtr reportHandle);
 
             /// <summary>
             /// Sets the fault reporting settings for the current process.
@@ -429,7 +429,7 @@ namespace System.Management.Automation
             /// <param name="flags">The fault reporting settings.</param>
             /// <returns>hresult</returns>
             [DllImport("kernel32.dll")]
-            static internal extern int WerSetFlags(ReportingFlags flags);
+            internal static extern int WerSetFlags(ReportingFlags flags);
 
             /// <summary>
             /// Writes user-mode minidump information to the specified file.
@@ -443,21 +443,21 @@ namespace System.Management.Automation
             /// <param name="callackParam">A pointer to a MINIDUMP_CALLBACK_INFORMATION structure that specifies a callback routine which is to receive extended minidump information. If the value of this parameter is NULL, no callbacks are performed.</param>
             /// <returns></returns>
             [DllImport("DbgHelp.dll", SetLastError = true)]
-            static internal extern bool MiniDumpWriteDump(
+            internal static extern bool MiniDumpWriteDump(
                 IntPtr hProcess,
                 Int32 processId,
-                Microsoft.Win32.SafeHandles.SafeFileHandle hFile,        
-                MiniDumpType dumpType,        
-                IntPtr exceptionParam,        
-                IntPtr userStreamParam,        
-                IntPtr callackParam); 
+                Microsoft.Win32.SafeHandles.SafeFileHandle hFile,
+                MiniDumpType dumpType,
+                IntPtr exceptionParam,
+                IntPtr userStreamParam,
+                IntPtr callackParam);
         }
 
         #endregion Native methods
 
         #region Our bucketing logic
 
-        static private string TruncateExeName(string nameOfExe, int maxLength)
+        private static string TruncateExeName(string nameOfExe, int maxLength)
         {
             nameOfExe = nameOfExe.Trim();
 
@@ -473,7 +473,7 @@ namespace System.Management.Automation
             return TruncateBucketParameter(nameOfExe, maxLength);
         }
 
-        static private string TruncateTypeName(string typeName, int maxLength)
+        private static string TruncateTypeName(string typeName, int maxLength)
         {
             if (typeName.Length > maxLength)
             {
@@ -483,7 +483,7 @@ namespace System.Management.Automation
             return typeName;
         }
 
-        static private string TruncateExceptionType(string exceptionType, int maxLength)
+        private static string TruncateExceptionType(string exceptionType, int maxLength)
         {
             if (exceptionType.Length > maxLength)
             {
@@ -502,7 +502,7 @@ namespace System.Management.Automation
             return TruncateBucketParameter(exceptionType, maxLength);
         }
 
-        static private string TruncateBucketParameter(string message, int maxLength)
+        private static string TruncateBucketParameter(string message, int maxLength)
         {
             if (message == null)
                 return string.Empty;
@@ -518,7 +518,7 @@ namespace System.Management.Automation
             {
                 int suffixLength = maxLength - prefixLength - ellipsis.Length;
                 Debug.Assert((prefixLength + ellipsis.Length + suffixLength) <= maxLength);
-                message =  message.Substring(0, prefixLength) +
+                message = message.Substring(0, prefixLength) +
                     ellipsis +
                     message.Substring(message.Length - suffixLength, suffixLength);
             }
@@ -572,7 +572,7 @@ namespace System.Management.Automation
             return StackFrame2BucketParameter(frame, maxLength);
         }
 
-        private static readonly string[] powerShellModulesWithoutGlobalMembers = new string[] { 
+        private static readonly string[] s_powerShellModulesWithoutGlobalMembers = new string[] {
             "Microsoft.PowerShell.Commands.Diagnostics.dll",
             "Microsoft.PowerShell.Commands.Management.dll",
             "Microsoft.PowerShell.Commands.Utility.dll",
@@ -584,7 +584,7 @@ namespace System.Management.Automation
             "Microsoft.PowerShell.GraphicalHost.dll"
         };
 
-        private static readonly string[] powerShellModulesWithGlobalMembers = new string[] {
+        private static readonly string[] s_powerShellModulesWithGlobalMembers = new string[] {
             "powershell.exe",
             "powershell_ise.exe",
             "pwrshplugin.dll",
@@ -595,7 +595,7 @@ namespace System.Management.Automation
 
         private static bool IsPowerShellModule(string moduleName, bool globalMember)
         {
-            foreach (string powerShellModule in powerShellModulesWithGlobalMembers)
+            foreach (string powerShellModule in s_powerShellModulesWithGlobalMembers)
             {
                 if (moduleName.Equals(powerShellModule, StringComparison.OrdinalIgnoreCase))
                 {
@@ -605,19 +605,18 @@ namespace System.Management.Automation
 
             if (!globalMember)
             {
-                foreach (string powerShellModule in powerShellModulesWithoutGlobalMembers)
+                foreach (string powerShellModule in s_powerShellModulesWithoutGlobalMembers)
                 {
                     if (moduleName.Equals(powerShellModule, StringComparison.OrdinalIgnoreCase))
                     {
                         return true;
                     }
                 }
-
             }
 
             return false;
         }
-            
+
         /// <summary>
         /// Returns the deepest frame belonging to powershell.
         /// </summary>
@@ -648,7 +647,7 @@ namespace System.Management.Automation
             return string.Empty;
         }
 
-        
+
         /// <exception cref="System.Runtime.InteropServices.COMException">
         /// Some failure HRESULTs map to well-defined exceptions, while others do not map
         /// to a defined exception. If the HRESULT maps to a defined exception, ThrowExceptionForHR
@@ -658,7 +657,7 @@ namespace System.Management.Automation
         /// retrieve extra information regarding the error by using the unmanaged GetErrorInfo
         /// function.
         /// </exception>
-        static private void SetBucketParameter(ReportHandle reportHandle, BucketParameterId bucketParameterId, string value)
+        private static void SetBucketParameter(ReportHandle reportHandle, BucketParameterId bucketParameterId, string value)
         {
             HandleHResult(NativeMethods.WerReportSetParameter(
                 reportHandle,
@@ -667,17 +666,13 @@ namespace System.Management.Automation
                 value));
         }
 
-        static private string GetThreadName()
+        private static string GetThreadName()
         {
-            string threadName = System.Threading.Thread.CurrentThread.Name;
-            if (threadName == null)
-            {
-                threadName = string.Empty;
-            }
+            string threadName = System.Threading.Thread.CurrentThread.Name ?? string.Empty;
             return threadName;
         }
 
-        static private void SetBucketParameters(ReportHandle reportHandle, Exception uncaughtException)
+        private static void SetBucketParameters(ReportHandle reportHandle, Exception uncaughtException)
         {
             Exception innermostException = uncaughtException;
             while (innermostException.InnerException != null)
@@ -688,12 +683,12 @@ namespace System.Management.Automation
             SetBucketParameter(
                 reportHandle,
                 BucketParameterId.NameOfExe,
-                TruncateExeName(nameOfExe, 20));
+                TruncateExeName(s_nameOfExe, 20));
 
             SetBucketParameter(
                 reportHandle,
                 BucketParameterId.FileVersionOfSystemManagementAutomation,
-                TruncateBucketParameter(versionOfPowerShellLibraries, 16));
+                TruncateBucketParameter(s_versionOfPowerShellLibraries, 16));
 
             SetBucketParameter(
                 reportHandle,
@@ -721,17 +716,17 @@ namespace System.Management.Automation
                 TruncateBucketParameter(GetThreadName(), 20));
         }
 
-        static private string versionOfPowerShellLibraries = string.Empty;
+        private static string s_versionOfPowerShellLibraries = string.Empty;
         // This variable will be set during registration phase. We will
         // try to populate this using Process.MainModule but for some reason
         // if this fails, we want to provide a default value.
-        static private string nameOfExe = "GetMainModuleError";
-        static private string applicationName = "GetMainModuleError";
-        static private string applicationPath = "GetMainModuleError";
-        static private IntPtr hCurrentProcess = IntPtr.Zero;
-        static private IntPtr hwndMainWindow = IntPtr.Zero;
-        static private Process currentProcess = null;
-        
+        private static string s_nameOfExe = "GetMainModuleError";
+        private static string s_applicationName = "GetMainModuleError";
+        private static string s_applicationPath = "GetMainModuleError";
+        private static IntPtr s_hCurrentProcess = IntPtr.Zero;
+        private static IntPtr s_hwndMainWindow = IntPtr.Zero;
+        private static Process s_currentProcess = null;
+
         /// <exception cref="NotSupportedException">
         /// You are trying to access the MainModule property for a process that is running 
         /// on a remote computer. This property is available only for processes that are 
@@ -743,23 +738,23 @@ namespace System.Management.Automation
         /// <exception cref="System.ComponentModel.Win32Exception">
         /// 
         /// </exception>
-        static private void FindStaticInformation()
+        private static void FindStaticInformation()
         {
             string sma = typeof(PSObject).Assembly.Location;
             FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(sma);
-            versionOfPowerShellLibraries = fvi.FileVersion;
+            s_versionOfPowerShellLibraries = fvi.FileVersion;
 
-            currentProcess = Process.GetCurrentProcess();
-            ProcessModule mainModule = PsUtils.GetMainModule(currentProcess);
+            s_currentProcess = Process.GetCurrentProcess();
+            ProcessModule mainModule = PsUtils.GetMainModule(s_currentProcess);
             if (mainModule != null)
             {
-                applicationPath = mainModule.FileName;
+                s_applicationPath = mainModule.FileName;
             }
 
-            nameOfExe = Path.GetFileName(applicationPath);
-            hCurrentProcess = currentProcess.Handle;
-            hwndMainWindow = currentProcess.MainWindowHandle;
-            applicationName = currentProcess.ProcessName;
+            s_nameOfExe = Path.GetFileName(s_applicationPath);
+            s_hCurrentProcess = s_currentProcess.Handle;
+            s_hwndMainWindow = s_currentProcess.MainWindowHandle;
+            s_applicationName = s_currentProcess.ProcessName;
         }
 
         #endregion
@@ -781,21 +776,21 @@ namespace System.Management.Automation
         /// retrieve extra information regarding the error by using the unmanaged GetErrorInfo
         /// function.
         /// </exception>
-        static private void HandleHResult(int hresult)
+        private static void HandleHResult(int hresult)
         {
             Marshal.ThrowExceptionForHR(hresult);
         }
 
-        static private bool? isWindowsErrorReportingAvailable;
-        static private bool IsWindowsErrorReportingAvailable()
+        private static bool? s_isWindowsErrorReportingAvailable;
+        private static bool IsWindowsErrorReportingAvailable()
         {
-            if (!(isWindowsErrorReportingAvailable.HasValue))
+            if (!(s_isWindowsErrorReportingAvailable.HasValue))
             {
                 Version version = Environment.OSVersion.Version; // WER has been introduced in Vista
-                isWindowsErrorReportingAvailable = (version.Major >= 6);
+                s_isWindowsErrorReportingAvailable = (version.Major >= 6);
             }
 
-            return isWindowsErrorReportingAvailable.Value;
+            return s_isWindowsErrorReportingAvailable.Value;
         }
 
         #endregion
@@ -805,9 +800,9 @@ namespace System.Management.Automation
         /// <summary>
         /// Registered??? TODO/FIXME
         /// </summary>
-        const string powerShellEventType = "PowerShell";
+        private const string powerShellEventType = "PowerShell";
 
-        static private readonly object reportCreationLock = new object();
+        private static readonly object s_reportCreationLock = new object();
 
         /// <summary>
         /// Submits a Dr. Watson (aka Windows Error Reporting / WER) crash report and then terminates the process.
@@ -822,9 +817,9 @@ namespace System.Management.Automation
         /// retrieve extra information regarding the error by using the unmanaged GetErrorInfo
         /// function.
         /// </exception>
-        static private void SubmitReport(Exception uncaughtException)
+        private static void SubmitReport(Exception uncaughtException)
         {
-            lock (reportCreationLock)
+            lock (s_reportCreationLock)
             {
                 if (uncaughtException == null)
                 {
@@ -833,10 +828,10 @@ namespace System.Management.Automation
 
                 ReportInformation reportInformation = new ReportInformation();
                 reportInformation.dwSize = Marshal.SizeOf(reportInformation);
-                reportInformation.hProcess = hCurrentProcess;
-                reportInformation.hwndParent = hwndMainWindow;
-                reportInformation.wzApplicationName = applicationName;
-                reportInformation.wzApplicationPath = applicationPath;
+                reportInformation.hProcess = s_hCurrentProcess;
+                reportInformation.hwndParent = s_hwndMainWindow;
+                reportInformation.wzApplicationName = s_applicationName;
+                reportInformation.wzApplicationPath = s_applicationPath;
                 reportInformation.wzConsentKey = null; // null = the name specified by the pwzEventType parameter of WerReportCreate.
                 reportInformation.wzDescription = null; // we can't provide a description of the problem - this an uncaught = *unexpected* exception
                 reportInformation.wzFriendlyEventName = null; // null = the name specified by pwzEventType parameter of WerReportCreate.
@@ -860,21 +855,21 @@ namespace System.Management.Automation
 
                     HandleHResult(NativeMethods.WerReportAddDump(
                         reportHandle,
-                        hCurrentProcess,
+                        s_hCurrentProcess,
                         IntPtr.Zero, // thread id is only required for *micro* dumps
                         DumpType.MiniDump,
                         IntPtr.Zero, // exception details.
                         IntPtr.Zero, // dumpCustomOptions - if this parameter is NULL, the standard minidump information is collected.
-                        /*DumpFlags.NoHeap_OnQueue*/0)); // can't use NoHeap_OnQueue, because then we probably won't
-                                                         // be able to request full heap dumps via http://watson web UI
+                                     /*DumpFlags.NoHeap_OnQueue*/0)); // can't use NoHeap_OnQueue, because then we probably won't
+                                                                      // be able to request full heap dumps via http://watson web UI
 
                     SubmitResult submitResult = SubmitResult.ReportFailed;
-                    SubmitFlags submitFlags = 
-                        SubmitFlags.HonorRecovery | 
-                        SubmitFlags.HonorRestart | 
-                        SubmitFlags.OutOfProcess | 
+                    SubmitFlags submitFlags =
+                        SubmitFlags.HonorRecovery |
+                        SubmitFlags.HonorRestart |
+                        SubmitFlags.OutOfProcess |
                         SubmitFlags.AddRegisteredData;
-                    if (WindowsErrorReporting.unattendedServerMode)
+                    if (WindowsErrorReporting.s_unattendedServerMode)
                     {
                         submitFlags |= SubmitFlags.Queue;
                     }
@@ -893,9 +888,9 @@ namespace System.Management.Automation
             }
         }
 
-        static internal void WaitForPendingReports()
+        internal static void WaitForPendingReports()
         {
-            lock (reportCreationLock) 
+            lock (s_reportCreationLock)
             {
                 // only return if the lock is not taken
                 return;
@@ -916,13 +911,13 @@ namespace System.Management.Automation
         /// exception causing the failure. It is good to make sure this is not null.
         /// However the code will handle null cases.
         /// </param>
-        static internal void FailFast(Exception exception)
+        internal static void FailFast(Exception exception)
         {
             Dbg.Assert(false, "We shouldn't do to FailFast during normal operation");
 
             try
             {
-                if (registered && (null != exception))
+                if (s_registered && (null != exception))
                 {
                     Debug.Assert(IsWindowsErrorReportingAvailable(), "Registration should succeed only if WER.dll is available");
                     WindowsErrorReporting.SubmitReport(exception);
@@ -943,9 +938,9 @@ namespace System.Management.Automation
             }
         }
 
-        static private readonly object registrationLock = new object();
-        static private bool registered = false;
-        static private bool unattendedServerMode = false;
+        private static readonly object s_registrationLock = new object();
+        private static bool s_registered = false;
+        private static bool s_unattendedServerMode = false;
 
         /// <summary>
         /// Sets everything up to report unhandled exceptions. 
@@ -954,11 +949,11 @@ namespace System.Management.Automation
         /// bugs/crashes from customer data.
         /// </summary>
         /// <param name="unattendedServer">If <c>true</c>, then reports are not going to require any user interaction</param>
-        static internal void RegisterWindowsErrorReporting(bool unattendedServer)
+        internal static void RegisterWindowsErrorReporting(bool unattendedServer)
         {
-            lock (registrationLock)
+            lock (s_registrationLock)
             {
-                if (!registered && IsWindowsErrorReportingAvailable())
+                if (!s_registered && IsWindowsErrorReportingAvailable())
                 {
                     try
                     {
@@ -969,14 +964,14 @@ namespace System.Management.Automation
                     // get Process related data..and it is ok to not report
                     // that data (this data helps making debugging/analysing easy)
                     catch (Exception e)
-                    {                       
+                    {
                         CommandProcessorBase.CheckForSevereException(e);
                         // suppress the exception
                     }
 
                     try
                     {
-                        WindowsErrorReporting.unattendedServerMode = unattendedServer;
+                        WindowsErrorReporting.s_unattendedServerMode = unattendedServer;
                         if (unattendedServer)
                         {
                             HandleHResult(NativeMethods.WerSetFlags(ReportingFlags.Queue));
@@ -987,7 +982,7 @@ namespace System.Management.Automation
                         }
 
                         AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
-                        registered = true;
+                        s_registered = true;
                     }
                     // there is some problem setting flags...handle those cases
                     catch (Exception e)
@@ -999,7 +994,7 @@ namespace System.Management.Automation
             }
         }
 
-        static private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             Dbg.Assert(false, "We shouldn't get unhandled exceptions during normal operation: " + e.ExceptionObject.ToString());
 
@@ -1014,7 +1009,7 @@ namespace System.Management.Automation
         /// Writes a default type of memory dump to the specified file.
         /// </summary>
         /// <param name="file">file to write the dump to</param>
-        static internal void WriteMiniDump(string file)
+        internal static void WriteMiniDump(string file)
         {
             WriteMiniDump(file, MiniDumpType.MiniDumpNormal);
         }
@@ -1024,7 +1019,7 @@ namespace System.Management.Automation
         /// </summary>
         /// <param name="file">file to write the dump to</param>
         /// <param name="dumpType">type of the dump</param>
-        static internal void WriteMiniDump(string file, MiniDumpType dumpType)
+        internal static void WriteMiniDump(string file, MiniDumpType dumpType)
         {
             Process process = Process.GetCurrentProcess();
             using (FileStream fileStream = new FileStream(file, FileMode.Create))

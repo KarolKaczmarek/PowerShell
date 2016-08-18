@@ -1,7 +1,7 @@
 ﻿/********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
+
 using System.Collections.Generic;
 using Dbg = System.Management.Automation;
 
@@ -53,14 +53,14 @@ namespace System.Management.Automation
             CmdletInfo result = null;
             if (String.IsNullOrEmpty(cmdletName))
             {
-                return result;
+                return null;
             }
 
             // Use the scope enumerator to find the alias using the
             // appropriate scoping rules
 
             SessionStateScopeEnumerator scopeEnumerator =
-                new SessionStateScopeEnumerator(currentScope);
+                new SessionStateScopeEnumerator(_currentScope);
 
             foreach (SessionStateScope scope in scopeEnumerator)
             {
@@ -75,7 +75,7 @@ namespace System.Management.Automation
                     // scope is the same scope the cmdlet was retrieved from.
 
                     if ((result.Options & ScopedItemOptions.Private) != 0 &&
-                        scope != currentScope)
+                        scope != _currentScope)
                     {
                         result = null;
                     }
@@ -122,7 +122,7 @@ namespace System.Management.Automation
             CmdletInfo result = null;
             if (String.IsNullOrEmpty(cmdletName))
             {
-                return result;
+                return null;
             }
 
             SessionStateScope scope = GetScopeByID(scopeID);
@@ -133,7 +133,7 @@ namespace System.Management.Automation
 
             if (result != null &&
                 (result.Options & ScopedItemOptions.Private) != 0 &&
-                 scope != currentScope)
+                 scope != _currentScope)
             {
                 result = null;
             }
@@ -151,7 +151,7 @@ namespace System.Management.Automation
                 new Dictionary<string, List<CmdletInfo>>(StringComparer.OrdinalIgnoreCase);
 
             SessionStateScopeEnumerator scopeEnumerator =
-                new SessionStateScopeEnumerator(currentScope);
+                new SessionStateScopeEnumerator(_currentScope);
 
             foreach (SessionStateScope scope in scopeEnumerator)
             {
@@ -166,7 +166,7 @@ namespace System.Management.Automation
                         foreach (CmdletInfo cmdletInfo in entry.Value)
                         {
                             if ((cmdletInfo.Options & ScopedItemOptions.Private) == 0 ||
-                                scope == currentScope)
+                                scope == _currentScope)
                             {
                                 toBeAdded.Add(cmdletInfo);
                             }
@@ -213,9 +213,8 @@ namespace System.Management.Automation
                 List<CmdletInfo> toBeAdded = new List<CmdletInfo>();
                 foreach (CmdletInfo cmdletInfo in entry.Value)
                 {
-
                     if ((cmdletInfo.Options & ScopedItemOptions.Private) == 0 ||
-                        scope == currentScope)
+                        scope == _currentScope)
                     {
                         toBeAdded.Add(cmdletInfo);
                     }
@@ -269,7 +268,7 @@ namespace System.Management.Automation
             // Use the scope enumerator to find an existing function
 
             SessionStateScopeEnumerator scopeEnumerator =
-                new SessionStateScopeEnumerator(currentScope);
+                new SessionStateScopeEnumerator(_currentScope);
 
             foreach (SessionStateScope scope in scopeEnumerator)
             {
@@ -283,7 +282,7 @@ namespace System.Management.Automation
                     // scope is the same scope the cmdlet was retrieved from.
 
                     if ((cmdletInfo.Options & ScopedItemOptions.Private) != 0 &&
-                        scope != currentScope)
+                        scope != _currentScope)
                     {
                         cmdletInfo = null;
                     }
@@ -326,7 +325,7 @@ namespace System.Management.Automation
             // Use the scope enumerator to find an existing function
 
             SessionStateScopeEnumerator scopeEnumerator =
-                new SessionStateScopeEnumerator(currentScope);
+                new SessionStateScopeEnumerator(_currentScope);
 
             foreach (SessionStateScope scope in scopeEnumerator)
             {
@@ -339,7 +338,7 @@ namespace System.Management.Automation
                     // scope is the same scope the cmdlet was retrieved from.
 
                     if ((cmdletInfo.Options & ScopedItemOptions.Private) != 0 &&
-                        scope != currentScope)
+                        scope != _currentScope)
                     {
                         cmdletInfo = null;
                     }

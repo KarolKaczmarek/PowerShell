@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System.Xml;
 using System.Diagnostics.CodeAnalysis; // for fxcop
 
@@ -31,11 +32,11 @@ namespace System.Management.Automation
             _fullHelpObject = mamlNode.PSObject;
             this.Errors = mamlNode.Errors;
 
-            this._fullHelpObject.TypeNames.Clear();
-            this._fullHelpObject.TypeNames.Add(string.Format(Globalization.CultureInfo.InvariantCulture,
+            _fullHelpObject.TypeNames.Clear();
+            _fullHelpObject.TypeNames.Add(string.Format(Globalization.CultureInfo.InvariantCulture,
                 "GeneralHelpInfo#{0}", Name));
-            this._fullHelpObject.TypeNames.Add("GeneralHelpInfo");
-            this._fullHelpObject.TypeNames.Add("HelpInfo");
+            _fullHelpObject.TypeNames.Add("GeneralHelpInfo");
+            _fullHelpObject.TypeNames.Add("HelpInfo");
         }
 
         #region Basic Help Properties
@@ -44,7 +45,7 @@ namespace System.Management.Automation
         /// Name of help content. 
         /// </summary>
         /// <value>Name of help content</value>
-        override internal string Name
+        internal override string Name
         {
             get
             {
@@ -69,7 +70,7 @@ namespace System.Management.Automation
         /// Synopsis for this general help.
         /// </summary>
         /// <value>Synopsis for this general help</value>
-        override internal string Synopsis
+        internal override string Synopsis
         {
             get
             {
@@ -81,7 +82,7 @@ namespace System.Management.Automation
         /// Help category for this general help, which is constantly HelpCategory.General.
         /// </summary>
         /// <value>Help category for general help</value>
-        override internal HelpCategory HelpCategory
+        internal override HelpCategory HelpCategory
         {
             get
             {
@@ -95,7 +96,7 @@ namespace System.Management.Automation
         /// Full help object for this help item.
         /// </summary>
         /// <value>Full help object for this help item.</value>
-        override internal PSObject FullHelp
+        internal override PSObject FullHelp
         {
             get
             {

@@ -1,8 +1,8 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
-using Dbg=System.Management.Automation;
+
+using Dbg = System.Management.Automation;
 using System.Management.Automation.Internal;
 
 namespace System.Management.Automation
@@ -45,15 +45,15 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentNullException("cmdlet");
             }
 
-            this.cmdlet = cmdlet;
-            this.item = new ItemCmdletProviderIntrinsics(cmdlet);
-            this.childItem = new ChildItemCmdletProviderIntrinsics(cmdlet);
-            this.content = new ContentCmdletProviderIntrinsics(cmdlet);
-            this.property = new PropertyCmdletProviderIntrinsics(cmdlet);
+            _cmdlet = cmdlet;
+            Item = new ItemCmdletProviderIntrinsics(cmdlet);
+            ChildItem = new ChildItemCmdletProviderIntrinsics(cmdlet);
+            Content = new ContentCmdletProviderIntrinsics(cmdlet);
+            Property = new PropertyCmdletProviderIntrinsics(cmdlet);
 #if SUPPORTS_IMULTIVALUEPROPERTYCMDLETPROVIDER
             this.propertyValue = new PropertyValueCmdletProviderIntrinsics(cmdlet);
 #endif
-            this.securityDescriptor = new SecurityDescriptorCmdletProviderIntrinsics(cmdlet);
+            SecurityDescriptor = new SecurityDescriptorCmdletProviderIntrinsics(cmdlet);
 
 #if RELATIONSHIP_SUPPORTED
     // 2004/11/24-JeffJon - Relationships have been removed from the Exchange release
@@ -76,14 +76,14 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentNullException("sessionState");
             }
 
-            this.item = new ItemCmdletProviderIntrinsics(sessionState);
-            this.childItem = new ChildItemCmdletProviderIntrinsics(sessionState);
-            this.content = new ContentCmdletProviderIntrinsics(sessionState);
-            this.property = new PropertyCmdletProviderIntrinsics(sessionState);
+            Item = new ItemCmdletProviderIntrinsics(sessionState);
+            ChildItem = new ChildItemCmdletProviderIntrinsics(sessionState);
+            Content = new ContentCmdletProviderIntrinsics(sessionState);
+            Property = new PropertyCmdletProviderIntrinsics(sessionState);
 #if SUPPORTS_IMULTIVALUEPROPERTYCMDLETPROVIDER
             this.propertyValue = new PropertyValueCmdletProviderIntrinsics(sessionState);
 #endif
-            this.securityDescriptor = new SecurityDescriptorCmdletProviderIntrinsics(sessionState);
+            SecurityDescriptor = new SecurityDescriptorCmdletProviderIntrinsics(sessionState);
 
 #if RELATIONSHIP_SUPPORTED
     // 2004/11/24-JeffJon - Relationships have been removed from the Exchange release
@@ -98,34 +98,22 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the object that exposes the verbs for the item noun for Cmdlet Providers
         /// </summary>
-        public ItemCmdletProviderIntrinsics Item
-        {
-            get { return item; }
-        }
+        public ItemCmdletProviderIntrinsics Item { get; }
 
         /// <summary>
         /// Gets the object that exposes the verbs for the childItem noun for Cmdlet Providers
         /// </summary>
-        public ChildItemCmdletProviderIntrinsics ChildItem
-        {
-            get { return childItem; }
-        }
+        public ChildItemCmdletProviderIntrinsics ChildItem { get; }
 
         /// <summary>
         /// Gets the object that exposes the verbs for the content noun for Cmdlet Providers
         /// </summary>
-        public ContentCmdletProviderIntrinsics Content
-        {
-            get { return content; }
-        }
+        public ContentCmdletProviderIntrinsics Content { get; }
 
         /// <summary>
         /// Gets the object that exposes the verbs for the property noun for Cmdlet Providers
         /// </summary>
-        public PropertyCmdletProviderIntrinsics Property
-        {
-            get { return property; }
-        }
+        public PropertyCmdletProviderIntrinsics Property { get; }
 
 #if SUPPORTS_IMULTIVALUEPROPERTYCMDLETPROVIDER
         /// <summary>
@@ -141,11 +129,8 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the object that exposes the verbs for the SecurityDescriptor noun for Cmdlet Providers
         /// </summary>
-        public SecurityDescriptorCmdletProviderIntrinsics SecurityDescriptor
-        {
-            get { return securityDescriptor; }
-        }
-        
+        public SecurityDescriptorCmdletProviderIntrinsics SecurityDescriptor { get; }
+
 #if RELATIONSHIP_SUPPORTED
         // 2004/11/24-JeffJon - Relationships have been removed from the Exchange release
 
@@ -162,15 +147,10 @@ namespace System.Management.Automation
 
         #region private data
 
-        private InternalCommand cmdlet;
-        private ItemCmdletProviderIntrinsics item;
-        private ChildItemCmdletProviderIntrinsics childItem;
-        private ContentCmdletProviderIntrinsics content;
-        private PropertyCmdletProviderIntrinsics property;
+        private InternalCommand _cmdlet;
 #if SUPPORTS_IMULTIVALUEPROPERTYCMDLETPROVIDER
         private PropertyValueCmdletProviderIntrinsics propertyValue;
 #endif
-        private SecurityDescriptorCmdletProviderIntrinsics securityDescriptor;
 
 #if RELATIONSHIP_SUPPORTED
         // 2004/11/24-JeffJon - Relationships have been removed from the Exchange release

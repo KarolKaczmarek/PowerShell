@@ -2,35 +2,19 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System.Globalization;
-using System.Linq;
-using System.Reflection;
-using System.Collections;
 using System.Collections.Generic;
-using System.Text;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
 using Microsoft.Win32.SafeHandles;
 using System.IO;
 
-#if CORECLR
-// SMA.Environment is only available on CoreCLR
-using SpecialFolder = System.Management.Automation.Environment.SpecialFolder;
-#endif
-
 namespace System.Management.Automation
 {
-
     /// <summary>
     /// These are platform abstractions and platform specific implementations
-    ///
-    /// All these properties are calling into platform specific static classes, to make
-    /// sure the platform implementations are switched at runtime (including pinvokes).
     /// </summary>
     public static class Platform
     {
-
         /// <summary>
         /// True if the current platform is Linux.
         /// </summary>
@@ -38,11 +22,11 @@ namespace System.Management.Automation
         {
             get
             {
-                #if CORECLR
+#if CORECLR
                 return RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
-                #else
+#else
                 return false;
-                #endif
+#endif
             }
         }
 
@@ -53,11 +37,11 @@ namespace System.Management.Automation
         {
             get
             {
-                #if CORECLR
+#if CORECLR
                 return RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
-                #else
+#else
                 return false;
-                #endif
+#endif
             }
         }
 
@@ -68,11 +52,11 @@ namespace System.Management.Automation
         {
             get
             {
-                #if CORECLR
+#if CORECLR
                 return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-                #else
+#else
                 return true;
-                #endif
+#endif
             }
         }
 
@@ -83,13 +67,112 @@ namespace System.Management.Automation
         {
             get
             {
-                #if CORECLR
+#if CORECLR
                 return true;
-                #else
+#else
                 return false;
-                #endif
+#endif
             }
         }
+        
+        /// <summary>
+        /// True if the underlying system is NanoServer.
+        /// </summary>
+        public static bool IsNanoServer
+        {
+            get
+            {
+#if !CORECLR
+                return false;
+#elif UNIX
+                return false;
+#else
+                if (_isNanoServer.HasValue) { return _isNanoServer.Value; }
+                
+                _isNanoServer = false;
+                using (RegistryKey regKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Server\ServerLevels"))
+                {
+                    if (regKey != null)
+                    {
+                        object value = regKey.GetValue("NanoServer");
+                        if (value != null && regKey.GetValueKind("NanoServer") == RegistryValueKind.DWord)
+                        {
+                            _isNanoServer = (int)value == 1;
+                        }
+                    }
+                }
+
+                return _isNanoServer.Value;
+#endif
+            }
+        }
+
+        /// <summary>
+        /// True if the underlying system is IoT.
+        /// </summary>
+        public static bool IsIoT
+        {
+            get
+            {
+#if !CORECLR
+                return false;
+#elif UNIX
+                return false;
+#else
+                if (_isIoT.HasValue) { return _isIoT.Value; }
+
+                _isIoT = false;
+                using (RegistryKey regKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion"))
+                {
+                    if (regKey != null)
+                    {
+                        object value = regKey.GetValue("ProductName");
+                        if (value != null && regKey.GetValueKind("ProductName") == RegistryValueKind.String)
+                        {
+                            _isIoT = string.Equals("IoTUAP", (string)value, StringComparison.OrdinalIgnoreCase);
+                        }
+                    }
+                }
+
+                return _isIoT.Value;
+#endif
+            }
+        }
+
+#if CORECLR
+        /// <summary>
+        /// True if it is the inbox powershell for NanoServer or IoT.
+        /// </summary>
+        internal static bool IsInbox
+        {
+            get
+            {
+#if UNIX
+                return false;
+#else
+                if (_isInbox.HasValue) { return _isInbox.Value; }
+
+                _isInbox = false;
+                if (IsNanoServer || IsIoT)
+                {
+                    _isInbox = string.Equals(
+                        Utils.GetApplicationBase(Utils.DefaultPowerShellShellID),
+                        Utils.GetApplicationBaseFromRegistry(Utils.DefaultPowerShellShellID),
+                        StringComparison.OrdinalIgnoreCase);
+                }
+
+                return _isInbox.Value;
+#endif
+            }
+        }
+
+#if !UNIX 
+        private static bool? _isNanoServer = null;
+        private static bool? _isIoT = null;
+        private static bool? _isInbox = null;
+#endif
+
+#endif
 
         // format files
         internal static List<string> FormatFileNames = new List<string>
@@ -108,6 +191,20 @@ namespace System.Management.Automation
             };
 
         /// <summary>
+        /// Some common environment variables used in PS have different
+        /// names in different OS platforms
+        /// </summary>
+        internal static class CommonEnvVariableNames
+        {
+#if UNIX
+            internal const string Home = "HOME";
+#else
+            internal const string Home = "USERPROFILE";
+#endif
+        }
+
+#if UNIX
+        /// <summary>
         /// X Desktop Group configuration type enum.
         /// </summary>
         public enum XDG_Type
@@ -119,7 +216,9 @@ namespace System.Management.Automation
             /// <summary> XDG_DATA_HOME/powershell </summary>
             DATA,
             /// <summary> XDG_DATA_HOME/powershell/Modules </summary>
-            MODULES,
+            USER_MODULES,
+            /// <summary> /usr/local/share/powershell/Modules </summary>
+            SHARED_MODULES,
             /// <summary> XDG_CONFIG_HOME/powershell </summary>
             DEFAULT
         }
@@ -127,20 +226,20 @@ namespace System.Management.Automation
         /// <summary>
         /// function for choosing directory location of PowerShell for profile loading
         /// </summary>
-        public static string SelectProductNameForDirectory (Platform.XDG_Type dirpath)
+        public static string SelectProductNameForDirectory(Platform.XDG_Type dirpath)
         {
-
             //TODO: XDG_DATA_DIRS implementation as per GitHub issue #1060
 
             string xdgconfighome = System.Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
             string xdgdatahome = System.Environment.GetEnvironmentVariable("XDG_DATA_HOME");
             string xdgcachehome = System.Environment.GetEnvironmentVariable("XDG_CACHE_HOME");
-            string xdgConfigHomeDefault =  Path.Combine ( System.Environment.GetEnvironmentVariable("HOME"), ".config", "powershell");
-            string xdgDataHomeDefault = Path.Combine( System.Environment.GetEnvironmentVariable("HOME"), ".local", "share", "powershell");
-            string xdgModuleDefault = Path.Combine ( xdgDataHomeDefault, "Modules");
-            string xdgCacheDefault = Path.Combine (System.Environment.GetEnvironmentVariable("HOME"), ".cache", "powershell");
+            string xdgConfigHomeDefault = Path.Combine(System.Environment.GetEnvironmentVariable("HOME"), ".config", "powershell");
+            string xdgDataHomeDefault = Path.Combine(System.Environment.GetEnvironmentVariable("HOME"), ".local", "share", "powershell");
+            string xdgModuleDefault = Path.Combine(xdgDataHomeDefault, "Modules");
+            string xdgCacheDefault = Path.Combine(System.Environment.GetEnvironmentVariable("HOME"), ".cache", "powershell");
 
-            switch (dirpath){
+            switch (dirpath)
+            {
                 case Platform.XDG_Type.CONFIG:
                     //the user has set XDG_CONFIG_HOME corrresponding to profile path
                     if (String.IsNullOrEmpty(xdgconfighome))
@@ -156,8 +255,8 @@ namespace System.Management.Automation
 
                 case Platform.XDG_Type.DATA:
                     //the user has set XDG_DATA_HOME corresponding to module path
-                    if (String.IsNullOrEmpty(xdgdatahome)){
-
+                    if (String.IsNullOrEmpty(xdgdatahome))
+                    {
                         // create the xdg folder if needed
                         if (!Directory.Exists(xdgDataHomeDefault))
                         {
@@ -170,10 +269,10 @@ namespace System.Management.Automation
                         return Path.Combine(xdgdatahome, "powershell");
                     }
 
-                case Platform.XDG_Type.MODULES:
+                case Platform.XDG_Type.USER_MODULES:
                     //the user has set XDG_DATA_HOME corresponding to module path
-                    if (String.IsNullOrEmpty(xdgdatahome)){
-
+                    if (String.IsNullOrEmpty(xdgdatahome))
+                    {
                         //xdg values have not been set
                         if (!Directory.Exists(xdgModuleDefault)) //module folder not always guaranteed to exist
                         {
@@ -185,6 +284,9 @@ namespace System.Management.Automation
                     {
                         return Path.Combine(xdgdatahome, "powershell", "Modules");
                     }
+
+                case Platform.XDG_Type.SHARED_MODULES:
+                    return "/usr/local/share/powershell/Modules";
 
                 case Platform.XDG_Type.CACHE:
                     //the user has set XDG_CACHE_HOME
@@ -218,19 +320,20 @@ namespace System.Management.Automation
                     //This folder is the default in the event of all other failures for data storage
                     if (!Directory.Exists(xdgConfigHomeDefault))
                     {
-                        try {
+                        try
+                        {
                             Directory.CreateDirectory(xdgConfigHomeDefault);
                         }
-                        catch{
-
+                        catch
+                        {
                             Console.Error.WriteLine("Failed to create default data directory: " + xdgConfigHomeDefault);
                         }
                     }
 
                     return xdgConfigHomeDefault;
             }
-
         }
+#endif
 
         // Platform methods prefixed NonWindows are:
         // - non-windows by the definition of the IsWindows method above
@@ -273,13 +376,6 @@ namespace System.Management.Automation
             return Unix.NativeMethods.GetUserFromPid(path);
         }
 
-        #if CORECLR
-        internal static string NonWindowsGetFolderPath(SpecialFolder folder)
-        {
-            return Unix.GetFolderPath(folder);
-        }
-        #endif
-
         internal static string NonWindowsInternalGetLinkType(FileSystemInfo fileInfo)
         {
             if (NonWindowsIsSymLink(fileInfo))
@@ -314,37 +410,24 @@ namespace System.Management.Automation
 
         internal static string NonWindowsGetDomainName()
         {
-            string fullyQualifiedName = Unix.NativeMethods.GetFullyQualifiedName();
-            if (string.IsNullOrEmpty(fullyQualifiedName))
+            string name = Unix.NativeMethods.GetFullyQualifiedName();
+            if (!string.IsNullOrEmpty(name))
             {
-                int lastError = Marshal.GetLastWin32Error();
-                throw new InvalidOperationException("Unix.NonWindowsGetDomainName error: " + lastError);
+                // name is hostname.domainname, so extract domainname
+                int index = name.IndexOf('.');
+                if (index >= 0)
+                {
+                    return name.Substring(index + 1);
+                }
             }
-
-            int index = fullyQualifiedName.IndexOf('.');
-            if (index >= 0)
-            {
-                return fullyQualifiedName.Substring(index + 1);
-            }
-
-            return "";
-        }
-
-        internal static string NonWindowsGetUserName()
-        {
-            return Unix.UserName;
+            // if the domain name could not be found, do not throw, just return empty
+            return string.Empty;
         }
 
         // Hostname in this context seems to be the FQDN
         internal static string NonWindowsGetHostName()
         {
-            string hostName = Unix.NativeMethods.GetFullyQualifiedName();
-            if (string.IsNullOrEmpty(hostName))
-            {
-                int lastError = Marshal.GetLastWin32Error();
-                throw new InvalidOperationException("Unix.NonWindowsHostName error: " + lastError);
-            }
-            return hostName;
+            return Unix.NativeMethods.GetFullyQualifiedName() ?? string.Empty;
         }
 
         internal static bool NonWindowsIsFile(string path)
@@ -367,214 +450,171 @@ namespace System.Management.Automation
             // TODO:PSL clean this up
             return 0;
         }
-    }
 
-    internal static class Unix
-    {
-        private static string _userName;
-        public static string UserName
+        internal static class Unix
         {
-            get
+            private static string s_userName;
+            public static string UserName
             {
-                if (string.IsNullOrEmpty(_userName))
+                get
                 {
-                    _userName = NativeMethods.GetUserName();
-                    if (string.IsNullOrEmpty(_userName))
+                    if (string.IsNullOrEmpty(s_userName))
                     {
-                        int lastError = Marshal.GetLastWin32Error();
-                        throw new InvalidOperationException("Unix.UserName error: " + lastError);
+                        s_userName = NativeMethods.GetUserName();
                     }
+                    return s_userName ?? string.Empty;
                 }
-                return _userName;
             }
-        }
 
-        public static string TemporaryDirectory
-        {
-            get
+            public static string TemporaryDirectory
             {
-                // POSIX temporary directory environment variables
-                string[] environmentVariables = { "TMPDIR", "TMP", "TEMP", "TEMPDIR" };
-                string dir = string.Empty;
-                foreach (string s in environmentVariables)
+                get
                 {
-                    dir = System.Environment.GetEnvironmentVariable(s);
-                    if (!string.IsNullOrEmpty(dir))
+                    // POSIX temporary directory environment variables
+                    string[] environmentVariables = { "TMPDIR", "TMP", "TEMP", "TEMPDIR" };
+                    string dir = string.Empty;
+                    foreach (string s in environmentVariables)
                     {
-                        return dir;
+                        dir = System.Environment.GetEnvironmentVariable(s);
+                        if (!string.IsNullOrEmpty(dir))
+                        {
+                            return dir;
+                        }
                     }
+                    return "/tmp";
                 }
-                return "/tmp";
             }
-        }
 
-        #if CORECLR
-        public static string GetFolderPath(SpecialFolder folder)
-        {
-            string s = null;
-            switch (folder)
+            public static bool IsHardLink(ref IntPtr handle)
             {
-                case SpecialFolder.ProgramFiles:
-                    s = "/bin";
-                    break;
-                case SpecialFolder.ProgramFilesX86:
-                    s = "/usr/bin";
-                    break;
-                case SpecialFolder.System:
-                    s = "/sbin";
-                    break;
-                case SpecialFolder.SystemX86:
-                    s = "/sbin";
-                    break;
-                case SpecialFolder.Personal:
-                    s = System.Environment.GetEnvironmentVariable("HOME");
-                    break;
-                case SpecialFolder.LocalApplicationData:
-                    s = System.IO.Path.Combine(System.Environment.GetEnvironmentVariable("HOME"), ".config");
-                    if (!System.IO.Directory.Exists(s))
-                    {
-                        System.IO.Directory.CreateDirectory(s);
-                    }
-                    break;
-                default:
-                    throw new NotSupportedException();
-            }
-            return s;
-        }
-        #endif
-
-        public static bool IsHardLink(ref IntPtr handle)
-        {
-            // TODO:PSL implement using fstat to query inode refcount to see if it is a hard link
-            return false;
-        }
-
-
-        public static bool IsHardLink(FileSystemInfo fs)
-        {
-            if (!fs.Exists || (fs.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
-            {
+                // TODO:PSL implement using fstat to query inode refcount to see if it is a hard link
                 return false;
             }
 
-            int count;
-            string filePath = fs.FullName;
-            int ret = NativeMethods.GetLinkCount(filePath, out count);
-            if (ret == 1)
+
+            public static bool IsHardLink(FileSystemInfo fs)
             {
-                return count > 1;
-            }
-            else
-            {
-                int lastError = Marshal.GetLastWin32Error();
-                throw new InvalidOperationException("Unix.IsHardLink error: " + lastError);
-            }
+                if (!fs.Exists || (fs.Attributes & FileAttributes.Directory) == FileAttributes.Directory)
+                {
+                    return false;
+                }
 
-        }
-
-        public static void SetDate(SetDateInfoInternal info)
-        {
-            int ret = NativeMethods.SetDate(info);
-            if (ret == -1)
-            {
-                int lastError = Marshal.GetLastWin32Error();
-                throw new InvalidOperationException("Unix.NonWindowsSetDate error: " + lastError);
-            }
-        }
-
-        public static bool CreateHardLink(string path, string strTargetPath)
-        {
-            int ret = NativeMethods.CreateHardLink(path, strTargetPath);
-            return ret == 1 ? true : false;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        internal class SetDateInfoInternal
-        {
-            public int Year;
-            public int Month;
-            public int Day;
-            public int Hour;
-            public int Minute;
-            public int Second;
-            public int Millisecond;
-            public int DST;
-
-            public SetDateInfoInternal(DateTime d)
-            {
-                Year = d.Year;
-                Month = d.Month;
-                Day = d.Day;
-                Hour = d.Hour;
-                Minute = d.Minute;
-                Second = d.Second;
-                Millisecond = d.Millisecond;
-                DST = d.IsDaylightSavingTime() ? 1 : 0;
+                int count;
+                string filePath = fs.FullName;
+                int ret = NativeMethods.GetLinkCount(filePath, out count);
+                if (ret == 1)
+                {
+                    return count > 1;
+                }
+                else
+                {
+                    int lastError = Marshal.GetLastWin32Error();
+                    throw new InvalidOperationException("Unix.IsHardLink error: " + lastError);
+                }
             }
 
-            public override string ToString()
+            public static void SetDate(SetDateInfoInternal info)
             {
-                string ret = String.Format("Year = {0}; Month = {1}; Day = {2}; Hour = {3}; Minute = {4}; Second = {5}; Millisec = {6}; DST = {7}", Year, Month, Day, Hour, Minute, Second, Millisecond, DST);
-                return ret;
+                int ret = NativeMethods.SetDate(info);
+                if (ret == -1)
+                {
+                    int lastError = Marshal.GetLastWin32Error();
+                    throw new InvalidOperationException("Unix.NonWindowsSetDate error: " + lastError);
+                }
             }
-        }
 
-        internal static class NativeMethods
-        {
-            const string psLib = "libpsl-native";
+            public static bool CreateHardLink(string path, string strTargetPath)
+            {
+                int ret = NativeMethods.CreateHardLink(path, strTargetPath);
+                return ret == 1 ? true : false;
+            }
 
-            // Ansi is a misnomer, it is hardcoded to UTF-8 on Linux and OS X
+            [StructLayout(LayoutKind.Sequential)]
+            internal class SetDateInfoInternal
+            {
+                public int Year;
+                public int Month;
+                public int Day;
+                public int Hour;
+                public int Minute;
+                public int Second;
+                public int Millisecond;
+                public int DST;
 
-            // C bools are 1 byte and so must be marshaled as I1
+                public SetDateInfoInternal(DateTime d)
+                {
+                    Year = d.Year;
+                    Month = d.Month;
+                    Day = d.Day;
+                    Hour = d.Hour;
+                    Minute = d.Minute;
+                    Second = d.Second;
+                    Millisecond = d.Millisecond;
+                    DST = d.IsDaylightSavingTime() ? 1 : 0;
+                }
 
-            [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
-            [return: MarshalAs(UnmanagedType.LPStr)]
-            internal static extern string GetUserName();
+                public override string ToString()
+                {
+                    string ret = String.Format("Year = {0}; Month = {1}; Day = {2}; Hour = {3}; Minute = {4}; Second = {5}; Millisec = {6}; DST = {7}", Year, Month, Day, Hour, Minute, Second, Millisecond, DST);
+                    return ret;
+                }
+            }
 
-            [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
-            internal static extern int GetLinkCount([MarshalAs(UnmanagedType.LPStr)]string filePath, out int linkCount);
+            internal static class NativeMethods
+            {
+                private const string psLib = "libpsl-native";
 
-            [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
-            [return: MarshalAs(UnmanagedType.I1)]
-            internal static extern bool IsSymLink([MarshalAs(UnmanagedType.LPStr)]string filePath);
+                // Ansi is a misnomer, it is hardcoded to UTF-8 on Linux and OS X
 
-            [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
-            [return: MarshalAs(UnmanagedType.I1)]
-            internal static extern bool IsExecutable([MarshalAs(UnmanagedType.LPStr)]string filePath);
+                // C bools are 1 byte and so must be marshaled as I1
 
-            [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
-            [return: MarshalAs(UnmanagedType.LPStr)]
-            internal static extern string GetFullyQualifiedName();
+                [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
+                [return: MarshalAs(UnmanagedType.LPStr)]
+                internal static extern string GetUserName();
 
-            [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
-            internal static extern int SetDate(SetDateInfoInternal info);
+                [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
+                internal static extern int GetLinkCount([MarshalAs(UnmanagedType.LPStr)]string filePath, out int linkCount);
 
-            [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
-            [return: MarshalAs(UnmanagedType.I1)]
-            internal static extern bool CreateSymLink([MarshalAs(UnmanagedType.LPStr)]string filePath,
-                                                     [MarshalAs(UnmanagedType.LPStr)]string target);
+                [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
+                [return: MarshalAs(UnmanagedType.I1)]
+                internal static extern bool IsSymLink([MarshalAs(UnmanagedType.LPStr)]string filePath);
 
-            [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
-            internal static extern int CreateHardLink([MarshalAs(UnmanagedType.LPStr)]string filePath,
-                                                      [MarshalAs(UnmanagedType.LPStr)]string target);
+                [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
+                [return: MarshalAs(UnmanagedType.I1)]
+                internal static extern bool IsExecutable([MarshalAs(UnmanagedType.LPStr)]string filePath);
 
-            [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
-            [return: MarshalAs(UnmanagedType.LPStr)]
-            internal static extern string FollowSymLink([MarshalAs(UnmanagedType.LPStr)]string filePath);
+                [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
+                [return: MarshalAs(UnmanagedType.LPStr)]
+                internal static extern string GetFullyQualifiedName();
 
-            [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
-            [return: MarshalAs(UnmanagedType.LPStr)]
-            internal static extern string GetUserFromPid(int pid);
+                [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
+                internal static extern int SetDate(SetDateInfoInternal info);
 
-            [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
-            [return: MarshalAs(UnmanagedType.I1)]
-            internal static extern bool IsFile([MarshalAs(UnmanagedType.LPStr)]string filePath);
+                [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
+                [return: MarshalAs(UnmanagedType.I1)]
+                internal static extern bool CreateSymLink([MarshalAs(UnmanagedType.LPStr)]string filePath,
+                                                          [MarshalAs(UnmanagedType.LPStr)]string target);
 
-            [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
-            [return: MarshalAs(UnmanagedType.I1)]
-            internal static extern bool IsDirectory([MarshalAs(UnmanagedType.LPStr)]string filePath);
+                [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
+                internal static extern int CreateHardLink([MarshalAs(UnmanagedType.LPStr)]string filePath,
+                                                          [MarshalAs(UnmanagedType.LPStr)]string target);
 
+                [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
+                [return: MarshalAs(UnmanagedType.LPStr)]
+                internal static extern string FollowSymLink([MarshalAs(UnmanagedType.LPStr)]string filePath);
+
+                [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
+                [return: MarshalAs(UnmanagedType.LPStr)]
+                internal static extern string GetUserFromPid(int pid);
+
+                [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
+                [return: MarshalAs(UnmanagedType.I1)]
+                internal static extern bool IsFile([MarshalAs(UnmanagedType.LPStr)]string filePath);
+
+                [DllImport(psLib, CharSet = CharSet.Ansi, SetLastError = true)]
+                [return: MarshalAs(UnmanagedType.I1)]
+                internal static extern bool IsDirectory([MarshalAs(UnmanagedType.LPStr)]string filePath);
+            }
         }
     }
-
 } // namespace System.Management.Automation

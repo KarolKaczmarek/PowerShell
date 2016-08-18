@@ -8,15 +8,9 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 #pragma warning disable 56523
 
 using Dbg = System.Management.Automation;
-using System;
-using System.Collections.Generic;
-using System.Collections;
-using System.ComponentModel;
 using System.IO;
 using System.Management.Automation.Internal;
-using System.Management.Automation.Provider;
 using System.Management.Automation.Security;
-using System.Management.Automation;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 #if CORECLR
@@ -24,7 +18,7 @@ using System.Security.Cryptography.X509Certificates;
 using Microsoft.PowerShell.CoreClr.Stubs;
 #endif
 
-using DWORD  = System.UInt32;
+using DWORD = System.UInt32;
 
 namespace System.Management.Automation
 {
@@ -66,10 +60,10 @@ namespace System.Management.Automation
         /// <summary>
         /// tracer for SignatureHelper
         /// </summary>
-        [Dbg.TraceSource( "SignatureHelper", 
+        [Dbg.TraceSource("SignatureHelper",
                           "tracer for SignatureHelper")]
-        private readonly static Dbg.PSTraceSource tracer =
-            Dbg.PSTraceSource.GetTracer ("SignatureHelper",
+        private static readonly Dbg.PSTraceSource s_tracer =
+            Dbg.PSTraceSource.GetTracer("SignatureHelper",
                           "tracer for SignatureHelper");
 
         /// <summary>
@@ -150,18 +144,18 @@ namespace System.Management.Automation
             }
 
             // Validate that the hash algorithm is valid
-            if(! String.IsNullOrEmpty(hashAlgorithm))
+            if (!String.IsNullOrEmpty(hashAlgorithm))
             {
                 IntPtr intptrAlgorithm = Marshal.StringToHGlobalUni(hashAlgorithm);
 
                 IntPtr oidPtr = NativeMethods.CryptFindOIDInfo(NativeConstants.CRYPT_OID_INFO_NAME_KEY,
                         intptrAlgorithm,
                         0);
-                
+
 
                 // If we couldn't find an OID for the hash
                 // algorithm, it was invalid.
-                if(oidPtr == IntPtr.Zero)
+                if (oidPtr == IntPtr.Zero)
                 {
                     throw PSTraceSource.NewArgumentException(
                         "certificate",
@@ -171,7 +165,7 @@ namespace System.Management.Automation
                 {
                     NativeMethods.CRYPT_OID_INFO oidInfo =
                         ClrFacade.PtrToStructure<NativeMethods.CRYPT_OID_INFO>(oidPtr);
-                    
+
                     hashOid = oidInfo.pszOID;
                 }
             }
@@ -210,20 +204,20 @@ namespace System.Management.Automation
 
                 pSignInfo = Marshal.AllocCoTaskMem(Marshal.SizeOf(si));
                 Marshal.StructureToPtr(si, pSignInfo, false);
-        
+
                 //
                 // sign the file
                 //
                 // The GetLastWin32Error of this is checked, but PreSharp doesn't seem to be
                 // able to see that.
-                #pragma warning disable 56523
+#pragma warning disable 56523
                 result = NativeMethods.CryptUIWizDigitalSign(
                     (DWORD)NativeMethods.CryptUIFlags.CRYPTUI_WIZ_NO_UI,
                     IntPtr.Zero,
                     IntPtr.Zero,
                     pSignInfo,
                     IntPtr.Zero);
-                #pragma warning enable 56523
+#pragma warning enable 56523
 
                 if (si.pSignExtInfo != null)
                 {
@@ -256,15 +250,14 @@ namespace System.Management.Automation
                     }
                     else
                     {
-                        if(error == Win32Errors.NTE_BAD_ALGID)
+                        if (error == Win32Errors.NTE_BAD_ALGID)
                         {
                             throw PSTraceSource.NewArgumentException(
                                 "certificate",
                                 Authenticode.InvalidHashAlgorithm);
-
                         }
 
-                        tracer.TraceError("CryptUIWizDigitalSign: failed: {0:x}",
+                        s_tracer.TraceError("CryptUIWizDigitalSign: failed: {0:x}",
                                           error);
                     }
                 }
@@ -275,7 +268,7 @@ namespace System.Management.Automation
                 }
                 else
                 {
-                    signature = new Signature(fileName, (DWORD) error);
+                    signature = new Signature(fileName, (DWORD)error);
                 }
             }
             finally
@@ -332,7 +325,6 @@ namespace System.Management.Automation
                 signature = GetSignatureFromWinVerifyTrust(fileName, fileContent);
             }        
 //#endif        
-        
             return signature;
         }
 
@@ -401,7 +393,7 @@ namespace System.Management.Automation
                             if (!Signature.CatalogApiAvailable.HasValue)
                             {
                                 string productFile = Path.Combine(Utils.GetApplicationBase(Utils.DefaultPowerShellShellID), "Modules\\Microsoft.PowerShell.Utility\\Microsoft.PowerShell.Utility.psm1");
-                                if(signature.Status != SignatureStatus.Valid)
+                                if (signature.Status != SignatureStatus.Valid)
                                 {
                                     if (string.Equals(filename, productFile, StringComparison.OrdinalIgnoreCase))
                                     {
@@ -425,12 +417,12 @@ namespace System.Management.Automation
                     }
                     finally
                     {
-                        if(phStateData != IntPtr.Zero)
+                        if (phStateData != IntPtr.Zero)
                         {
                             NativeMethods.FreeWVTStateData(phStateData);
                         }
 
-                        if(ppCertContext != IntPtr.Zero)
+                        if (ppCertContext != IntPtr.Zero)
                         {
                             NativeMethods.CertFreeCertificateContext(ppCertContext);
                         }
@@ -449,7 +441,7 @@ namespace System.Management.Automation
 
         private static DWORD GetErrorFromSignatureState(NativeMethods.SIGNATURE_STATE state)
         {
-            switch(state)
+            switch (state)
             {
                 case NativeMethods.SIGNATURE_STATE.SIGNATURE_STATE_UNSIGNED_MISSING: return Win32Errors.TRUST_E_NOSIGNATURE;
                 case NativeMethods.SIGNATURE_STATE.SIGNATURE_STATE_UNSIGNED_UNSUPPORTED: return Win32Errors.TRUST_E_NOSIGNATURE;
@@ -459,7 +451,7 @@ namespace System.Management.Automation
                 case NativeMethods.SIGNATURE_STATE.SIGNATURE_STATE_VALID: return Win32Errors.NO_ERROR;
                 case NativeMethods.SIGNATURE_STATE.SIGNATURE_STATE_TRUSTED: return Win32Errors.NO_ERROR;
                 case NativeMethods.SIGNATURE_STATE.SIGNATURE_STATE_UNTRUSTED: return Win32Errors.TRUST_E_EXPLICIT_DISTRUST;
-                
+
                 // Should not happen
                 default:
                     System.Diagnostics.Debug.Fail("Should not get here - could not map SIGNATURE_STATE");
@@ -487,7 +479,7 @@ namespace System.Management.Automation
 
                 if (error != Win32Errors.NO_ERROR)
                 {
-                    tracer.WriteLine("GetWinTrustData failed: {0:x}", error);
+                    s_tracer.WriteLine("GetWinTrustData failed: {0:x}", error);
                 }
 
                 signature = GetSignatureFromWintrustData(fileName, error, wtd);
@@ -496,7 +488,7 @@ namespace System.Management.Automation
 
                 if (error != Win32Errors.NO_ERROR)
                 {
-                    tracer.WriteLine("DestroyWinTrustDataStruct failed: {0:x}", error);
+                    s_tracer.WriteLine("DestroyWinTrustDataStruct failed: {0:x}", error);
                 }
             }
             catch (AccessViolationException)
@@ -511,7 +503,6 @@ namespace System.Management.Automation
         private static DWORD GetWinTrustData(string fileName, string fileContent,
                                             out NativeMethods.WINTRUST_DATA wtData)
         {
-
             DWORD dwResult = Win32Errors.E_FAIL;
             IntPtr WINTRUST_ACTION_GENERIC_VERIFY_V2 = IntPtr.Zero;
             IntPtr wtdBuffer = IntPtr.Zero;
@@ -545,12 +536,12 @@ namespace System.Management.Automation
 
                 // The result is returned to the caller, and handled generically.
                 // Disable the PreFast check for Win32 error codes, as we don't care.
-                #pragma warning disable 56523
+#pragma warning disable 56523
                 dwResult = NativeMethods.WinVerifyTrust(
                     IntPtr.Zero,
                     WINTRUST_ACTION_GENERIC_VERIFY_V2,
                     wtdBuffer);
-                #pragma warning enable 56523
+#pragma warning enable 56523
 
                 wtData = ClrFacade.PtrToStructure<NativeMethods.WINTRUST_DATA>(wtdBuffer);
             }
@@ -571,10 +562,10 @@ namespace System.Management.Automation
 
             // We don't care about the Win32 error code here, so disable
             // the PreFast complaint that we're not retrieving it.
-            #pragma warning disable 56523
+#pragma warning disable 56523
             IntPtr pCert =
                 NativeMethods.WTHelperGetProvCertFromChain(pSigner, 0);
-            #pragma warning enable 56523
+#pragma warning enable 56523
 
             if (pCert != IntPtr.Zero)
             {
@@ -583,7 +574,7 @@ namespace System.Management.Automation
                     ClrFacade.PtrToStructure<NativeMethods.CRYPT_PROVIDER_CERT>(pCert);
                 signerCert = new X509Certificate2(provCert.pCert);
             }
-            
+
             return signerCert;
         }
 
@@ -597,15 +588,15 @@ namespace System.Management.Automation
             X509Certificate2 signerCert = null;
             X509Certificate2 timestamperCert = null;
 
-            tracer.WriteLine("GetSignatureFromWintrustData: error: {0}", error);
-            
+            s_tracer.WriteLine("GetSignatureFromWintrustData: error: {0}", error);
+
             // The GetLastWin32Error of this is checked, but PreSharp doesn't seem to be
             // able to see that.
-            #pragma warning disable 56523
+#pragma warning disable 56523
             IntPtr pProvData =
                 NativeMethods.WTHelperProvDataFromStateData(wtd.hWVTStateData);
-            #pragma warning enable 56523
-            
+#pragma warning enable 56523
+
             if (pProvData != IntPtr.Zero)
             {
                 IntPtr pProvSigner =
@@ -619,7 +610,7 @@ namespace System.Management.Automation
 
                     if (signerCert != null)
                     {
-                        NativeMethods.CRYPT_PROVIDER_SGNR provSigner = 
+                        NativeMethods.CRYPT_PROVIDER_SGNR provSigner =
                             (NativeMethods.CRYPT_PROVIDER_SGNR)
                             ClrFacade.PtrToStructure<NativeMethods.CRYPT_PROVIDER_SGNR>(pProvSigner);
                         if (provSigner.csCounterSigners == 1)
@@ -628,7 +619,6 @@ namespace System.Management.Automation
                             // time stamper cert available
                             //
                             timestamperCert = GetCertFromChain(provSigner.pasCounterSigners);
-
                         }
 
                         if (timestamperCert != null)

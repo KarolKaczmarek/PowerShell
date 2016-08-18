@@ -2,7 +2,6 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
 using System.Runtime.Serialization;
 using System.Management.Automation.Internal;
 using Dbg = System.Management.Automation.Diagnostics;
@@ -78,7 +77,7 @@ namespace System.Management.Automation.Host
 
         public
         HostException(string message, Exception innerException)
-            : base (message, innerException)
+            : base(message, innerException)
         {
             SetDefaultErrorRecord();
         }
@@ -117,7 +116,7 @@ namespace System.Management.Automation.Host
         /// </remarks>
 
         public
-        HostException(string message, Exception innerException, string errorId, ErrorCategory errorCategory):
+        HostException(string message, Exception innerException, string errorId, ErrorCategory errorCategory) :
             base(message, innerException)
         {
             SetErrorId(errorId);
@@ -175,7 +174,7 @@ namespace System.Management.Automation.Host
         /// </summary>
 
         public
-        PromptingException() : base(StringUtil.Format(HostInterfaceExceptionsStrings.DefaultCtorMessageTemplate,typeof(PromptingException).FullName))
+        PromptingException() : base(StringUtil.Format(HostInterfaceExceptionsStrings.DefaultCtorMessageTemplate, typeof(PromptingException).FullName))
         {
             SetDefaultErrorRecord();
         }
@@ -219,7 +218,7 @@ namespace System.Management.Automation.Host
 
         public
         PromptingException(string message, Exception innerException)
-            : base (message, innerException)
+            : base(message, innerException)
         {
             SetDefaultErrorRecord();
         }
@@ -258,7 +257,7 @@ namespace System.Management.Automation.Host
         /// </remarks>
 
         public
-        PromptingException(string message, Exception innerException, string errorId, ErrorCategory errorCategory):
+        PromptingException(string message, Exception innerException, string errorId, ErrorCategory errorCategory) :
             base(message, innerException, errorId, errorCategory)
         {
         }

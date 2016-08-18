@@ -14,7 +14,6 @@
  * ***************************************************************************/
 
 #if !CLR2
-using System.Linq;
 using System.Linq.Expressions;
 #else
 using Microsoft.Scripting.Ast;
@@ -24,16 +23,14 @@ using Microsoft.Scripting.Ast;
 // Use stub for SpecialNameAttribute
 using Microsoft.PowerShell.CoreClr.Stubs;
 #endif
-
-using System;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
 using System.Diagnostics;
 using System.Collections.Generic;
 
-namespace System.Management.Automation.Interpreter {
+namespace System.Management.Automation.Interpreter
+{
     /// <summary>
     /// A simple forth-style stack machine for executing Expression trees
     /// without the need to compile to IL and then invoke the JIT.  This trades
@@ -43,7 +40,8 @@ namespace System.Management.Automation.Interpreter {
     /// 
     /// The core loop in the interpreter is the RunInstructions method.
     /// </summary>
-    internal sealed class Interpreter {
+    internal sealed class Interpreter
+    {
         internal static readonly object NoValue = new object();
         internal const int RethrowOnReturn = Int32.MaxValue;
 
@@ -51,11 +49,6 @@ namespace System.Management.Automation.Interpreter {
         // negative: default
         internal readonly int _compilationThreshold;
 
-        private readonly int _localCount;
-        private readonly HybridReferenceDictionary<LabelTarget, BranchLabel> _labelMapping;
-        private readonly Dictionary<ParameterExpression, LocalVariable> _closureVariables;
-
-        private readonly InstructionArray _instructions;
         internal readonly object[] _objects;
         internal readonly RuntimeLabel[] _labels;
 
@@ -63,51 +56,45 @@ namespace System.Management.Automation.Interpreter {
         internal readonly DebugInfo[] _debugInfos;
 
         internal Interpreter(string name, LocalVariables locals, HybridReferenceDictionary<LabelTarget, BranchLabel> labelMapping,
-            InstructionArray instructions, DebugInfo[] debugInfos, int compilationThreshold) {
-
+            InstructionArray instructions, DebugInfo[] debugInfos, int compilationThreshold)
+        {
             _name = name;
-            _localCount = locals.LocalCount;
-            _closureVariables = locals.ClosureVariables;
+            LocalCount = locals.LocalCount;
+            ClosureVariables = locals.ClosureVariables;
 
-            _instructions = instructions;
+            Instructions = instructions;
             _objects = instructions.Objects;
             _labels = instructions.Labels;
-            _labelMapping = labelMapping;
+            LabelMapping = labelMapping;
 
             _debugInfos = debugInfos;
             _compilationThreshold = compilationThreshold;
         }
 
-        internal int ClosureSize {
-            get {
-                if (_closureVariables == null) {
+        internal int ClosureSize
+        {
+            get
+            {
+                if (ClosureVariables == null)
+                {
                     return 0;
                 }
-                return _closureVariables.Count;
+                return ClosureVariables.Count;
             }
         }
 
-        internal int LocalCount {
-            get {
-                return _localCount;
-            }
-        }
+        internal int LocalCount { get; }
 
-        internal bool CompileSynchronously {
+        internal bool CompileSynchronously
+        {
             get { return _compilationThreshold <= 1; }
         }
 
-        internal InstructionArray Instructions {
-            get { return _instructions; }
-        }
+        internal InstructionArray Instructions { get; }
 
-        internal Dictionary<ParameterExpression, LocalVariable> ClosureVariables {
-            get { return _closureVariables; } 
-        }
+        internal Dictionary<ParameterExpression, LocalVariable> ClosureVariables { get; }
 
-        internal HybridReferenceDictionary<LabelTarget, BranchLabel> LabelMapping {
-            get { return _labelMapping; }
-        }
+        internal HybridReferenceDictionary<LabelTarget, BranchLabel> LabelMapping { get; }
 
         /// <summary>
         /// Runs instructions within the given frame.
@@ -119,10 +106,12 @@ namespace System.Management.Automation.Interpreter {
         /// Each group of subsequent frames of Run method corresponds to a single interpreted frame.
         /// </remarks>
         [SpecialName, MethodImpl(MethodImplOptions.NoInlining)]
-        public void Run(InterpretedFrame frame) {
-            var instructions = _instructions.Instructions;
+        public void Run(InterpretedFrame frame)
+        {
+            var instructions = Instructions.Instructions;
             int index = frame.InstructionIndex;
-            while (index < instructions.Length) {
+            while (index < instructions.Length)
+            {
                 index += instructions[index].Run(frame);
                 frame.InstructionIndex = index;
             }
@@ -140,16 +129,19 @@ namespace System.Management.Automation.Interpreter {
         /// If the target that 'Goto' jumps to is inside the current catch block or the subsequent finally block,
         /// we delay the call to 'Abort' method, because we want to finish the catch/finally blocks
         /// </summary>
-        internal static void AbortThreadIfRequested(InterpretedFrame frame, int targetLabelIndex) {
+        internal static void AbortThreadIfRequested(InterpretedFrame frame, int targetLabelIndex)
+        {
             var abortHandler = frame.CurrentAbortHandler;
             var targetInstrIndex = frame.Interpreter._labels[targetLabelIndex].Index;
-            if (abortHandler != null && 
-                !abortHandler.IsInsideCatchBlock(targetInstrIndex) && 
-                !abortHandler.IsInsideFinallyBlock(targetInstrIndex)) {
+            if (abortHandler != null &&
+                !abortHandler.IsInsideCatchBlock(targetInstrIndex) &&
+                !abortHandler.IsInsideFinallyBlock(targetInstrIndex))
+            {
                 frame.CurrentAbortHandler = null;
 
                 var currentThread = Thread.CurrentThread;
-                if ((currentThread.ThreadState & System.Threading.ThreadState.AbortRequested) != 0) {
+                if ((currentThread.ThreadState & System.Threading.ThreadState.AbortRequested) != 0)
+                {
                     Debug.Assert(AnyAbortException != null);
 
                     // The current abort reason needs to be preserved.
@@ -167,11 +159,13 @@ namespace System.Management.Automation.Interpreter {
         /// So this method doesn't need to do anything when running with CoreCLR
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void AbortThreadIfRequested(InterpretedFrame frame, int targetLabelIndex) {}
+        internal static void AbortThreadIfRequested(InterpretedFrame frame, int targetLabelIndex) { }
 #endif
 
-        internal int ReturnAndRethrowLabelIndex {
-            get {
+        internal int ReturnAndRethrowLabelIndex
+        {
+            get
+            {
                 // the last label is "return and rethrow" label:
                 Debug.Assert(_labels[_labels.Length - 1].Index == RethrowOnReturn);
                 return _labels.Length - 1;

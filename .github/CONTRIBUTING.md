@@ -1,4 +1,4 @@
-Contribute to PowerShell
+Contributing to PowerShell
 ========================
 
 We welcome and appreciate contributions from the community.
@@ -29,22 +29,22 @@ Quick Start Checklist
 Contributing to Issues
 ----------------------
 
-* Review the [Issue Label Descriptions](../docs/dev-process/issue-label-descriptions.md).
+* Review [Issue Management][issue-management].
 * Check if the issue you are going to file already exists in our [GitHub issues][open-issue].
 * If you can't find your issue already,
   [open a new issue](https://github.com/PowerShell/PowerShell/issues/new),
   making sure to follow the directions as best you can.
-* If the issue is marked as [`Help Wanted`][help-wanted-issue],
+* If the issue is marked as [`0 - Backlog`][help-wanted-issue],
   the PowerShell maintainers are looking for help with the issue.
 
 Contributing to Documentation
 -----------------------------
 
-### Contributing to documentation related to the PowerShell the product
+### Contributing to documentation related to PowerShell
 
 Please see the [Contributor Guide in `PowerShell/PowerShell-Docs`](https://github.com/PowerShell/PowerShell-Docs/blob/staging/CONTRIBUTING.md).
 
-### Contributing to documentation related to contributing or maintaining the PowerShell Project
+### Contributing to documentation related to maintaining or contributing to the PowerShell project
 
 * When writing Markdown documentation, use [semantic linefeeds][].
   In most cases, it means "once clause / idea per line".
@@ -75,46 +75,56 @@ a user simply creates a pull request in order to "request" that the changes be t
 Additional references:
 * GitHub's guide on [forking](https://guides.github.com/activities/forking/)
 * GitHub's guide on [Contributing to Open Source](https://guides.github.com/activities/contributing-to-open-source/#pull-request)
-* GitHub's guide on [Understanding the GitHub Flow](https://guides.github.com/introduction/flow/) 
+* GitHub's guide on [Understanding the GitHub Flow](https://guides.github.com/introduction/flow/)
 
 
 ### Lifecycle of a pull request
 
+#### Before submitting
+
+* To avoid merge conflicts, make sure your branch is rebased on the `master` branch of this repository.
+* Many code changes will require new tests,
+  so make sure you've added a new test if existing tests do not effectively test the code changed.
+* Clean up your commit history.
+  Each commit should be a **single complete** change.
+  This discipline is important when reviewing the changes as well as when using `git bisect` and `git revert`.
+
+
 #### Pull request submission
 
-**Always create a pull request to the `master` branch of this repository**. 
+**Always create a pull request to the `master` branch of this repository**.
 
 ![Github-PR-dev.png](Images/Github-PR-dev.png)
 
-* If your contribution in a way that changes the user or developer experience,
-  you are expected to document those changes.
-  See [Contributing to documentation related to the PowerShell the product](#contributing-to-documentation-related-to-the-powershell-the-product).
+* If you're contributing in a way that changes the user or developer experience, you are expected to document those changes.
+See [Contributing to documentation related to PowerShell](#contributing-to-documentation-related-to-powershell).
 
 * Add a meaningful title of the PR describing what change you want to check in.
   Don't simply put: "Fixes issue #5".
   A better example is: "Add Ensure parameter to New-Item cmdlet", with "Fixes #5" in the PR's body.
 
 * When you create a pull request,
-  fill out the pull request template,
-  including a summary of what's included in your changes.
-  If the changes are related to an existing GitHub issue,
+  including a summary of what's included in your changes and
+  if the changes are related to an existing GitHub issue,
   please reference the issue in pull request description (e.g. ```Closes #11```).
   See [this][closing-via-message] for more details.
 
-* Include an update to the [changelog](../CHANGELOG.MD) in your pull request.
+* If the change warrants a note in the [changelog](../CHANGELOG.MD)
+  either update the changelog in your pull request or
+  add a comment in the PR description saying that the change may warrant a note in the changelog.
   New changes always go into the **Unreleased** section.
   Keeping the changelog up-to-date simplifies the release process for maintainers.
   An example:
     ```
     Unreleased
     ----------
-    
+
     * `Update-Item` now supports `-FriendlyName`.
     ```
     Please use the present tense and imperative mood when describing your changes:
-    
+
       * Instead of "Adding support for Windows Server 2012 R2", write "Add support for Windows Server 2012 R2".
-    
+
       * Instead of "Fixed for server connection issue", write "Fix server connection issue".
 
     This form is akin to giving commands to the code base,
@@ -122,12 +132,12 @@ Additional references:
     It is also used in the [Git commit messages](#common-engineering-practices).
 
     Also, if change is related to a specific resource, please prefix the description with the resource name:
-    
+
       * Instead of "New,parameter 'ConnectionCredential' in New-SqlConnection",
         write "New-SqlConnection: added parameter 'ConnectionCredential'".
 
 #### Pull Request - Automatic Checks
-    
+
 * If this is your first contribution to PowerShell,
   you may be asked to sign a [Contribution Licensing Agreement][CLA] (CLA)
   before your changes will be accepted.
@@ -139,7 +149,7 @@ Additional references:
   our [CI system (Travis CI and AppVeyor)][ci-system]
   will run a suite of tests and automatically update the status of the pull request.
 
-#### Pull Request / Code Review
+#### Pull Request - Code Review
 
 * After a successful test pass,
   the area maintainers will do a code review,
@@ -179,7 +189,7 @@ please follow the [PowerShell Request for Comments (RFC)](https://github.com/Pow
 Common Engineering Practices
 ----------------------------
 
-Other than the guidelines for ([coding](../docs/coding-guidelines/coding-guidelines.md), 
+Other than the guidelines for ([coding](../docs/dev-process/coding-guidelines.md),
 the [RFC process](https://github.com/PowerShell/PowerShell-RFC) for design,
 [documentation](#contributing-to-documentation) and [testing](../docs/testing-guidelines/testing-guidelines.md)) discussed above,
 we encourage contributors to follow these common engineering practices:
@@ -234,24 +244,6 @@ is also appropriate, as is using Markdown syntax.
   Before you invest a large amount of time,
   file an issue and start a discussion with the community.
 
-File Headers
-------------
-
-The following file header is used for all PowerShell code.
-Please use it for new files.
-For more information, see [coding guidelines](../docs/coding-guidelines/coding-guidelines.md).
-
-```C#
-// …  TODO TODO
-// Licensed to the PowerShell …. under one or more agreements.
-// See the LICENSE file in the project root for more information.
-```
-
-Licensing and Copyright
------------------------
-
-You can find more information about the PowerShell source license and copyright [here](../docs/community/legal-licensing.md).
-
 Contributor License Agreement (CLA)
 -----------------------------------
 
@@ -263,13 +255,13 @@ This a one-time requirement for the PowerShell project.
 Signing the CLA process is simple and can be done in less than a minute.
 You don't have to do this up-front.
 You can simply clone, fork, and submit your pull request as usual.
-When your pull request is created, it is classified by a CLA bot. 
-If the change is trivial, it's classified as `cla-required`. 
+When your pull request is created, it is classified by a CLA bot.
+If the change is trivial, it's classified as `cla-required`.
 Once you sign a CLA, all your existing and future pull requests will be labeled as `cla-signed`.
 
 [testing-guidelines]: ../docs/testing-guidelines/testing-guidelines.md
 [running-tests-outside-of-ci]: ../docs/testing-guidelines/testing-guidelines.md#running-tests-outside-of-ci
-[issue-triage]: ../docs/dev-process/issue-management-process.md
+[issue-management]: ../docs/maintainers/issue-management.md
 [governance]: ../docs/community/governance.md
 [using-prs]: https://help.github.com/articles/using-pull-requests/
 [fork-a-repo]: https://help.github.com/articles/fork-a-repo/
@@ -279,5 +271,5 @@ Once you sign a CLA, all your existing and future pull requests will be labeled 
 [good-git-resources]: https://help.github.com/articles/good-resources-for-learning-git-and-github/
 [contribute-issues]: #contributing-to-issues
 [open-issue]: https://github.com/PowerShell/PowerShell/issues
-[help-wanted-issue]: https://github.com/PowerShell/PowerShell/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22
+[help-wanted-issue]: https://github.com/PowerShell/PowerShell/issues?q=is%3Aopen+is%3Aissue+label%3A%220%20-%20Backlog%22
 [semantic linefeeds]: http://rhodesmill.org/brandon/2012/one-sentence-per-line/

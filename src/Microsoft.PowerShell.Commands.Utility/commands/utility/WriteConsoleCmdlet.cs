@@ -5,7 +5,6 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 using System;
 using System.Management.Automation;
 using System.Collections;
-using System.Collections.Generic;
 using System.Text;
 
 namespace Microsoft.PowerShell.Commands
@@ -32,18 +31,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
 
         [Parameter(Position = 0, ValueFromRemainingArguments = true, ValueFromPipeline = true)]
-        public object Object
-        {
-            get
-            {
-                return objectToEcho;
-            }
-
-            set
-            {
-                objectToEcho = value;
-            }
-        }
+        public object Object { get; set; } = null;
 
 
         /// <summary>
@@ -57,11 +45,11 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return notAppendNewline;
+                return _notAppendNewline;
             }
             set
             {
-                notAppendNewline = value;
+                _notAppendNewline = value;
             }
         }
 
@@ -75,18 +63,7 @@ namespace Microsoft.PowerShell.Commands
         /// <value></value>
 
         [Parameter]
-        public object Separator
-        {
-            get
-            {
-                return separator;
-            }
-            set
-            {
-                separator = value;
-            }
-        }
-
+        public object Separator { get; set; } = " ";
 
 
         //
@@ -99,7 +76,7 @@ namespace Microsoft.PowerShell.Commands
             {
                 string s = o as string;
                 IEnumerable enumerable = null;
-                if (s != null) 
+                if (s != null)
                 {
                     // strings are IEnumerable, so we special case them
                     if (s.Length > 0)
@@ -150,11 +127,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         protected override void ProcessRecord()
         {
-            string result = ProcessObject(Object);
-            if(result == null)
-            {
-                result = "";
-            }
+            string result = ProcessObject(Object) ?? "";
 
             HostInformationMessage informationMessage = new HostInformationMessage();
             informationMessage.Message = result;
@@ -175,9 +148,6 @@ namespace Microsoft.PowerShell.Commands
             this.Host.UI.TranscribeResult(result);
         }
 
-        private Boolean notAppendNewline = false;
-        private object objectToEcho = null;
-        private object separator = " ";
+        private Boolean _notAppendNewline = false;
     }
-
 }   // namespace Microsoft.PowerShell.Commands

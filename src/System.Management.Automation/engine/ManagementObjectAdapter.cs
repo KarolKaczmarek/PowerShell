@@ -2,19 +2,17 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System.Xml;
-using System.Data;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
 using System.Collections.Specialized;
-using System.Management;
 using System.Globalization;
 using System.ComponentModel;
 using System.Management.Automation.Internal;
 using Microsoft.PowerShell;
 using Dbg = System.Management.Automation.Diagnostics;
+
 #pragma warning disable 1634, 1691 // Stops compiler from warning about unknown warnings
 
 namespace System.Management.Automation
@@ -25,7 +23,6 @@ namespace System.Management.Automation
     /// </summary>
     internal abstract class BaseWMIAdapter : Adapter
     {
-
         #region WMIMethodCacheEntry
 
         /// <summary>
@@ -36,48 +33,20 @@ namespace System.Management.Automation
         /// </summary>
         internal class WMIMethodCacheEntry
         {
-            public string Name
-            {
-                get
-                {
-                    return name;
-                }
-            }
-            private string name;
+            public string Name { get; }
 
-            public string ClassPath
-            {
-                get
-                {
-                    return classPath;
-                }
-            }
-            private string classPath;
+            public string ClassPath { get; }
 
-            public MethodInformation MethodInfoStructure
-            {
-                get
-                {
-                    return methodInfoStructure;
-                }
-            }
-            private MethodInformation methodInfoStructure;
+            public MethodInformation MethodInfoStructure { get; }
 
-            public string MethodDefinition
-            {
-                get
-                {
-                    return methodDefinition;
-                }
-            }
-            private string methodDefinition;
+            public string MethodDefinition { get; }
 
             internal WMIMethodCacheEntry(string n, string cPath, MethodData mData)
             {
-                this.name = n;
-                this.classPath = cPath;
-                methodInfoStructure = ManagementObjectAdapter.GetMethodInformation(mData);
-                methodDefinition = ManagementObjectAdapter.GetMethodDefinition(mData);
+                Name = n;
+                ClassPath = cPath;
+                MethodInfoStructure = ManagementObjectAdapter.GetMethodInformation(mData);
+                MethodDefinition = ManagementObjectAdapter.GetMethodDefinition(mData);
             }
         }
 
@@ -87,18 +56,11 @@ namespace System.Management.Automation
 
         internal class WMIParameterInformation : ParameterInformation
         {
-            public string Name
-            {
-                get
-                {
-                    return name;
-                }
-            }
-            private string  name;
+            public string Name { get; }
 
             public WMIParameterInformation(string name, Type ty) : base(ty, true, null, false)
             {
-                this.name = name;
+                Name = name;
             }
         }
 
@@ -160,7 +122,7 @@ namespace System.Management.Automation
                 }
             }
         }
-        
+
         /// <summary>
         /// Returns the TypeNameHierarchy out of an ManagementBaseObject
         /// </summary>
@@ -251,9 +213,9 @@ namespace System.Management.Automation
             // obj should never be null
             Diagnostics.Assert(obj != null, "Input object is null");
 
-            ManagementBaseObject wmiObject = (ManagementBaseObject) obj;
+            ManagementBaseObject wmiObject = (ManagementBaseObject)obj;
             PSMemberInfoInternalCollection<T> returnValue = new PSMemberInfoInternalCollection<T>();
-            AddAllProperties<T>(wmiObject, returnValue);               
+            AddAllProperties<T>(wmiObject, returnValue);
             AddAllMethods<T>(wmiObject, returnValue);
             return returnValue;
         }
@@ -287,7 +249,7 @@ namespace System.Management.Automation
             WMIMethodCacheEntry methodEntry = (WMIMethodCacheEntry)method.adapterData;
             Collection<string> returnValue = new Collection<string>();
             returnValue.Add(methodEntry.MethodDefinition);
-            
+
             return returnValue;
         }
 
@@ -364,7 +326,7 @@ namespace System.Management.Automation
             }
             else
             {
-                typeName = forDisplay ? ToStringCodeMethods.Type(dotNetType) : dotNetType.ToString();                
+                typeName = forDisplay ? ToStringCodeMethods.Type(dotNetType) : dotNetType.ToString();
             }
 
             return typeName;
@@ -447,7 +409,7 @@ namespace System.Management.Automation
             returnValue.Append("}");
             return returnValue.ToString();
         }
-               
+
         /// <summary>
         /// Returns an array with the property attributes
         /// </summary>
@@ -461,7 +423,7 @@ namespace System.Management.Automation
         #endregion
 
         #region Private/Internal Methods
-        
+
         /// <summary>
         /// Retrieves the table for instance methods
         /// </summary>
@@ -470,7 +432,7 @@ namespace System.Management.Automation
         protected static CacheTable GetInstanceMethodTable(ManagementBaseObject wmiObject,
             bool staticBinding)
         {
-            lock (instanceMethodCacheTable)
+            lock (s_instanceMethodCacheTable)
             {
                 CacheTable typeTable = null;
 
@@ -478,7 +440,7 @@ namespace System.Management.Automation
                 ManagementPath classPath = wmiObject.ClassPath;
                 string key = string.Format(CultureInfo.InvariantCulture, "{0}#{1}", classPath.Path, staticBinding.ToString());
 
-                typeTable = (CacheTable)instanceMethodCacheTable[key];
+                typeTable = (CacheTable)s_instanceMethodCacheTable[key];
                 if (typeTable != null)
                 {
                     tracer.WriteLine("Returning method information from internal cache");
@@ -496,13 +458,9 @@ namespace System.Management.Automation
                     // is fixed)
                     typeTable = new CacheTable();
                     // Construct a ManagementClass object for this object to get the member metadata
-                    ManagementClass mgmtClass = wmiObject as ManagementClass;
-                    if (null == mgmtClass)
-                    {
-                        mgmtClass = CreateClassFrmObject(wmiObject);
-                    }
+                    ManagementClass mgmtClass = wmiObject as ManagementClass ?? CreateClassFrmObject(wmiObject);
                     PopulateMethodTable(mgmtClass, typeTable, staticBinding);
-                    instanceMethodCacheTable[key] = typeTable;
+                    s_instanceMethodCacheTable[key] = typeTable;
                 }
                 catch (ManagementException)
                 {
@@ -627,7 +585,7 @@ namespace System.Management.Automation
                 "Input PropertyData should not be null");
 
             tracer.WriteLine("Getting DotNet Type for CimType : {0}", pData.Type);
-            
+
             string retValue;
             switch (pData.Type)
             {
@@ -678,7 +636,7 @@ namespace System.Management.Automation
                 case CimType.Char16:
                     retValue = typeof(char).FullName;
                     break;
-                case CimType.Object:                        
+                case CimType.Object:
                 default:
                     retValue = typeof(object).FullName;
                     break;
@@ -688,7 +646,7 @@ namespace System.Management.Automation
             {
                 retValue += "[]";
             }
-           
+
             return Type.GetType(retValue);
         }
 
@@ -729,13 +687,13 @@ namespace System.Management.Automation
         {
             // Evaluate method and arguments
             object[] verifiedArguments;
-            
+
             MethodInformation[] methods = new MethodInformation[1];
             methods[0] = mdata.MethodInfoStructure;
 
             // This will convert Null Strings to Empty Strings
             GetBestMethodAndArguments(mdata.Name, methods, arguments, out verifiedArguments);
-            
+
             ParameterInformation[] parameterList = mdata.MethodInfoStructure.parameters;
 
             // GetBestMethodAndArguments should fill verifiedArguments with
@@ -745,7 +703,7 @@ namespace System.Management.Automation
 
             Diagnostics.Assert(parameterList.Length == verifiedArguments.Length,
                 "The number of parameters and arguments should match");
-            
+
 
             // we should not cache inParameters as we are updating
             // inParameters object with argument values..Caching will
@@ -756,7 +714,7 @@ namespace System.Management.Automation
             ManagementClass mClass = CreateClassFrmObject(obj);
             ManagementBaseObject inParameters = mClass.GetMethodParameters(mdata.Name);
 
-            for (int i = 0; i < parameterList.Length ; i++)
+            for (int i = 0; i < parameterList.Length; i++)
             {
                 // this cast should always succeed
                 WMIParameterInformation pInfo = (WMIParameterInformation)parameterList[i];
@@ -767,7 +725,7 @@ namespace System.Management.Automation
                 // conversions. So dont convert input arguments if they are null.
                 // We could have done this in the base adapter but the change would be
                 // costly for other adpaters which dont mind the conversion.
-                if ( (i < arguments.Length) && (arguments[i] == null))
+                if ((i < arguments.Length) && (arguments[i] == null))
                 {
                     verifiedArguments[i] = null;
                 }
@@ -786,7 +744,7 @@ namespace System.Management.Automation
         /// <remarks>
         /// Should not throw exceptions
         /// </remarks>
-        internal static void UpdateParameters(ManagementBaseObject parameters, 
+        internal static void UpdateParameters(ManagementBaseObject parameters,
             SortedList parametersList)
         {
             // ManagementObject class do not populate parameters when there are none.
@@ -833,8 +791,8 @@ namespace System.Management.Automation
         /// </remarks>
         internal static MethodInformation GetMethodInformation(MethodData mData)
         {
-            Diagnostics.Assert(mData != null,"MethodData should not be null");
-            
+            Diagnostics.Assert(mData != null, "MethodData should not be null");
+
             // Get Method parameters
             SortedList parameters = new SortedList();
             UpdateParameters(mData.InParameters, parameters);
@@ -846,7 +804,7 @@ namespace System.Management.Automation
                 parameters.Values.CopyTo(pInfos, 0);
             }
 
-            MethodInformation returnValue = new MethodInformation(false, true, pInfos);              
+            MethodInformation returnValue = new MethodInformation(false, true, pInfos);
 
             return returnValue;
         }
@@ -860,13 +818,13 @@ namespace System.Management.Automation
             UpdateParameters(mData.InParameters, parameters);
 
             StringBuilder inParameterString = new StringBuilder();
-            
+
             if (parameters.Count > 0)
             {
                 foreach (WMIParameterInformation parameter in parameters.Values)
                 {
                     string typeName = parameter.parameterType.ToString();
-                    
+
                     PropertyData pData = mData.InParameters.Properties[parameter.Name];
                     if (pData.Type == CimType.Object)
                     {
@@ -901,7 +859,7 @@ namespace System.Management.Automation
 
             string returnValue = builder.ToString();
             tracer.WriteLine("Definition constructed: {0}", returnValue);
-         
+
             return returnValue;
         }
 
@@ -962,7 +920,7 @@ namespace System.Management.Automation
 
         #region Private Data
 
-        private static HybridDictionary instanceMethodCacheTable = new HybridDictionary();
+        private static HybridDictionary s_instanceMethodCacheTable = new HybridDictionary();
 
         #endregion
     }
@@ -1009,7 +967,7 @@ namespace System.Management.Automation
         /// <param name="methodName">Method data.</param>
         /// <param name="inParams">Method arguments.</param>
         /// <returns></returns>
-        protected override object InvokeManagementMethod(ManagementObject wmiObject, 
+        protected override object InvokeManagementMethod(ManagementObject wmiObject,
             string methodName, ManagementBaseObject inParams)
         {
             tracer.WriteLine("Invoking class method: {0}", methodName);
@@ -1148,7 +1106,7 @@ namespace System.Management.Automation
                                     PSTask.None,
                                     PSKeyword.UseAlwaysOperational,
                                     string.Format(CultureInfo.InvariantCulture,
-                                                  "ManagementBaseObjectAdapter::DoGetProperty::PropertyName:{0}, Exception:{1}, StackTrace:{2}", 
+                                                  "ManagementBaseObjectAdapter::DoGetProperty::PropertyName:{0}, Exception:{1}, StackTrace:{2}",
                                                   propertyName, e.Message, e.StackTrace),
                                     string.Empty,
                                     string.Empty);
@@ -1210,7 +1168,7 @@ namespace System.Management.Automation
             foreach (WMIMethodCacheEntry methodEntry in table.memberCollection)
             {
                 if (members[methodEntry.Name] == null)
-                {                    
+                {
                     tracer.WriteLine("Adding method {0}", methodEntry.Name);
                     members.Add(new PSMethod(methodEntry.Name, this, wmiObject, methodEntry) as T);
                 }

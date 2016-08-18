@@ -13,7 +13,6 @@ using System.Management.Automation.Language;
 using System.Management.Automation.Runspaces;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading;
 using Microsoft.Management.Infrastructure;
 using Dbg = System.Management.Automation.Diagnostics;
@@ -21,6 +20,7 @@ using Dbg = System.Management.Automation.Diagnostics;
 //
 // Now define the set of commands for manipulating modules.
 //
+
 namespace Microsoft.PowerShell.Commands
 {
     /// <summary>
@@ -28,7 +28,7 @@ namespace Microsoft.PowerShell.Commands
     /// </summary>
     [Cmdlet("Get", "Module", DefaultParameterSetName = ParameterSet_Loaded,
         HelpUri = "http://go.microsoft.com/fwlink/?LinkID=141552")]
-    [OutputType(typeof (PSModuleInfo))]
+    [OutputType(typeof(PSModuleInfo))]
     public sealed class GetModuleCommand : ModuleCmdletBase, IDisposable
     {
         #region Cmdlet parameters
@@ -265,7 +265,7 @@ namespace Microsoft.PowerShell.Commands
 
         private CancellationToken CancellationToken
         {
-            get { return this._cancellationTokenSource.Token; }
+            get { return _cancellationTokenSource.Token; }
         }
 
         /// <summary>
@@ -276,7 +276,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         protected override void StopProcessing()
         {
-            this._cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Cancel();
         }
 
         #endregion
@@ -304,7 +304,7 @@ namespace Microsoft.PowerShell.Commands
 
             if (disposing)
             {
-                this._cancellationTokenSource.Dispose();
+                _cancellationTokenSource.Dispose();
             }
 
             _disposed = true;
@@ -385,7 +385,7 @@ namespace Microsoft.PowerShell.Commands
                 AssertNameDoesNotResolveToAPath(names,
                                                 Modules.RemoteDiscoveryWorksOnlyForUnQualifiedNames,
                                                 "RemoteDiscoveryWorksOnlyForUnQualifiedNames");
-                
+
                 GetAvailableViaPsrpSession(names, moduleSpecTable, this.PSSession);
             }
             else if (ParameterSetName.Equals(ParameterSet_AvailableInCimSession, StringComparison.OrdinalIgnoreCase))
@@ -435,7 +435,7 @@ namespace Microsoft.PowerShell.Commands
         private static bool ModuleMatch(PSModuleInfo moduleInfo, IDictionary<string, ModuleSpecification> moduleSpecTable, string edition)
         {
             ModuleSpecification moduleSpecification;
-            return (String.IsNullOrEmpty(edition) || moduleInfo.CompatiblePSEditions.Contains(edition, StringComparer.OrdinalIgnoreCase)) && 
+            return (String.IsNullOrEmpty(edition) || moduleInfo.CompatiblePSEditions.Contains(edition, StringComparer.OrdinalIgnoreCase)) &&
                    (!moduleSpecTable.TryGetValue(moduleInfo.Name, out moduleSpecification) || ModuleIntrinsics.IsModuleMatchingModuleSpec(moduleInfo, moduleSpecification));
         }
 
@@ -515,6 +515,5 @@ namespace Microsoft.PowerShell.Commands
             }
         }
     }
-
 } // Microsoft.PowerShell.Commands
 

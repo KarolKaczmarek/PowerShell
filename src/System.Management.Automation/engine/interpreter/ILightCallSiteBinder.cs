@@ -14,19 +14,14 @@
  * ***************************************************************************/
 
 #if !CLR2
-using System.Linq.Expressions;
 #else
 using Microsoft.Scripting.Ast;
 #endif
 
-using System;
-using System.Reflection;
-using System.Management.Automation.Interpreter;
-using System.Runtime.CompilerServices;
-using System.Collections.Generic;
-
-namespace System.Management.Automation.Interpreter {
-    internal interface ILightCallSiteBinder {
+namespace System.Management.Automation.Interpreter
+{
+    internal interface ILightCallSiteBinder
+    {
         bool AcceptsArgumentArray { get; }
     }
 }

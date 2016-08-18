@@ -8,15 +8,15 @@ using System.Linq.Expressions;
 using Microsoft.Scripting.Ast;
 #endif
 
-using System;
-
-namespace System.Management.Automation.ComInterop {
-
+namespace System.Management.Automation.ComInterop
+{
     // Miscellaneous helpers that don't belong anywhere else
-    internal static class Helpers {
-
-        internal static Expression Convert(Expression expression, Type type) {
-            if (expression.Type == type) {
+    internal static class Helpers
+    {
+        internal static Expression Convert(Expression expression, Type type)
+        {
+            if (expression.Type == type)
+            {
                 return expression;
             }
             return Expression.Convert(expression, type);

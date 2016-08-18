@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System.Collections.Generic;
 using System.IO;
 using System.Management.Automation.Host;
@@ -22,30 +23,16 @@ namespace System.Management.Automation.Remoting
     /// </summary>
     internal class RemoteSessionCapability
     {
-        private Version _psversion;
-        private Version _serversion;
-        private Version _protocolVersion;
-        internal Version ProtocolVersion 
-        { 
-            get 
-            { 
-                return _protocolVersion;  
-            }
-            set
-            {
-                _protocolVersion = value;
-            }
-        }
-        internal Version PSVersion { get { return _psversion; } }
-        internal Version SerializationVersion { get { return _serversion; } }
-        private RemotingDestination _remotingDestination;
-        internal RemotingDestination RemotingDestination { get { return _remotingDestination; } }
+        internal Version ProtocolVersion { get; set; }
+
+        internal Version PSVersion { get; }
+        internal Version SerializationVersion { get; }
+        internal RemotingDestination RemotingDestination { get; }
 
 #if !CORECLR // TimeZone Not In CoreCLR
-        private TimeZone _timeZone;
 #endif
 
-        private static byte[] _timeZoneInByteFormat;
+        private static byte[] s_timeZoneInByteFormat;
 
         /// <summary>
         /// Constructor for RemoteSessionCapability.
@@ -54,13 +41,13 @@ namespace System.Management.Automation.Remoting
         /// </remarks>
         internal RemoteSessionCapability(RemotingDestination remotingDestination)
         {
-            _protocolVersion = RemotingConstants.ProtocolVersion;
+            ProtocolVersion = RemotingConstants.ProtocolVersion;
             // PS Version 3 is fully backward compatible with Version 2
             // In the remoting protocol sense, nothing is changing between PS3 and PS2
             // For negotiation to succeed with old client/servers we have to use 2.
-            _psversion = new Version(2,0); //PSVersionInfo.PSVersion;
-            _serversion = PSVersionInfo.SerializationVersion;
-            _remotingDestination = remotingDestination;
+            PSVersion = new Version(2, 0); //PSVersionInfo.PSVersion;
+            SerializationVersion = PSVersionInfo.SerializationVersion;
+            RemotingDestination = remotingDestination;
         }
 
         internal RemoteSessionCapability(RemotingDestination remotingDestination,
@@ -68,10 +55,10 @@ namespace System.Management.Automation.Remoting
             Version psVersion,
             Version serVersion)
         {
-            _protocolVersion = protocolVersion;
-            _psversion = psVersion;
-            _serversion = serVersion;
-            _remotingDestination = remotingDestination;
+            ProtocolVersion = protocolVersion;
+            PSVersion = psVersion;
+            SerializationVersion = serVersion;
+            RemotingDestination = remotingDestination;
         }
 
         /// <summary>
@@ -103,11 +90,10 @@ namespace System.Management.Automation.Remoting
         /// </summary>
         internal static byte[] GetCurrentTimeZoneInByteFormat()
         {
-            if (null == _timeZoneInByteFormat)
+            if (null == s_timeZoneInByteFormat)
             {
-
 #if CORECLR //TODO:CORECLR 'BinaryFormatter' is not in CORE CLR. Since this is TimeZone related and TimeZone is not available on CORE CLR so wait until we solve TimeZone issue.
-                _timeZoneInByteFormat = Utils.EmptyArray<byte>();
+                s_timeZoneInByteFormat = Utils.EmptyArray<byte>();
 #else
                 Exception e = null;
                 try
@@ -119,19 +105,18 @@ namespace System.Management.Automation.Remoting
                         stream.Seek(0, SeekOrigin.Begin);
                         byte[] result = new byte[stream.Length];
                         stream.Read(result, 0, (int)stream.Length);
-                        _timeZoneInByteFormat = result;
+                        s_timeZoneInByteFormat = result;
                     }
-
                 }
-                catch(ArgumentNullException ane)
+                catch (ArgumentNullException ane)
                 {
                     e = ane;
                 }
-                catch(System.Runtime.Serialization.SerializationException sre)
+                catch (System.Runtime.Serialization.SerializationException sre)
                 {
                     e = sre;
                 }
-                catch(System.Security.SecurityException se)
+                catch (System.Security.SecurityException se)
                 {
                     e = se;
                 }
@@ -140,23 +125,19 @@ namespace System.Management.Automation.Remoting
                 // ignore it and dont try to serialize again.
                 if (null != e)
                 {
-                    _timeZoneInByteFormat = Utils.EmptyArray<byte>();
+                    s_timeZoneInByteFormat = Utils.EmptyArray<byte>();
                 }
 #endif
             }
 
-            return _timeZoneInByteFormat;
+            return s_timeZoneInByteFormat;
         }
 
 #if !CORECLR // TimeZone Not In CoreCLR
         /// <summary>
         /// Gets the TimeZone of the destination machine. This may be null
         /// </summary>
-        internal TimeZone TimeZone
-        {
-            get { return _timeZone; }
-            set { _timeZone = value; }
-        }
+        internal TimeZone TimeZone { get; set; }
 #endif
 
     }
@@ -186,6 +167,7 @@ namespace System.Management.Automation.Remoting
         /// <summary>
         /// Data.
         /// </summary>
+        // DO NOT REMOVE OR RENAME THESE FIELDS - it will break remoting
         private Dictionary<HostDefaultDataId, object> data;
 
         /// <summary>
@@ -193,7 +175,7 @@ namespace System.Management.Automation.Remoting
         /// </summary>
         private HostDefaultData()
         {
-            this.data = new Dictionary<HostDefaultDataId, object>();
+            data = new Dictionary<HostDefaultDataId, object>();
         }
 
         /// <summary>
@@ -212,7 +194,7 @@ namespace System.Management.Automation.Remoting
         /// </summary>
         internal bool HasValue(HostDefaultDataId id)
         {
-            return this.data.ContainsKey(id);
+            return data.ContainsKey(id);
         }
 
         /// <summary>
@@ -220,7 +202,7 @@ namespace System.Management.Automation.Remoting
         /// </summary>
         internal void SetValue(HostDefaultDataId id, object dataValue)
         {
-            this.data[id] = dataValue;
+            data[id] = dataValue;
         }
 
         /// <summary>
@@ -229,7 +211,7 @@ namespace System.Management.Automation.Remoting
         internal object GetValue(HostDefaultDataId id)
         {
             object result;
-            this.data.TryGetValue(id, out result);
+            data.TryGetValue(id, out result);
             return result;
         }
 
@@ -359,33 +341,17 @@ namespace System.Management.Automation.Remoting
         /// <summary>
         /// Host default data.
         /// </summary>
-        private HostDefaultData _hostDefaultData;
-
-        /// <summary>
-        /// Host default data.
-        /// </summary>
         internal HostDefaultData HostDefaultData
         {
-            get
-            {
-                return _hostDefaultData;
-            }
+            get { return _hostDefaultData; }
         }
-
-        /// <summary>
-        /// Is host null.
-        /// </summary>
-        private bool _isHostNull;
 
         /// <summary>
         /// Is host null.
         /// </summary>
         internal bool IsHostNull
         {
-            get
-            {
-                return _isHostNull;
-            }
+            get { return _isHostNull; }
         }
 
         /// <summary>
@@ -409,6 +375,12 @@ namespace System.Management.Automation.Remoting
         /// </summary>
         private bool _isHostRawUINull;
 
+        private readonly bool _isHostNull;
+
+        // DO NOT REMOVE OR RENAME THESE FIELDS - it will break remoting
+        private readonly HostDefaultData _hostDefaultData;
+        private bool _useRunspaceHost;
+
         /// <summary>
         /// Is host raw ui null.
         /// </summary>
@@ -423,22 +395,10 @@ namespace System.Management.Automation.Remoting
         /// <summary>
         /// Use runspace host.
         /// </summary>
-        private bool _useRunspaceHost;
-
-        /// <summary>
-        /// Use runspace host.
-        /// </summary>
         internal bool UseRunspaceHost
         {
-            get
-            {
-                return _useRunspaceHost;
-            }
-
-            set
-            {
-                _useRunspaceHost = value;
-            }
+            get { return _useRunspaceHost; }
+            set { _useRunspaceHost = value; }
         }
 
         /// <summary>
@@ -481,7 +441,7 @@ namespace System.Management.Automation.Remoting
             else if (host is InternalHost)
             {
                 // This nesting can only be one level deep.
-                host = ((InternalHost) host).ExternalHost;
+                host = ((InternalHost)host).ExternalHost;
             }
 
             // At this point we know for sure that the host is not null.

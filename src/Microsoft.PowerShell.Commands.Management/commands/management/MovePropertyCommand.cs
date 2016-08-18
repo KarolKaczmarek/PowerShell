@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System;
 using System.Management.Automation;
 using Dbg = System.Management.Automation;
@@ -10,7 +11,7 @@ namespace Microsoft.PowerShell.Commands
     /// <summary>
     /// A command to move a property on an item to another item
     /// </summary>
-    [Cmdlet (VerbsCommon.Move, "ItemProperty", SupportsShouldProcess = true, DefaultParameterSetName = "Path", SupportsTransactions = true,
+    [Cmdlet(VerbsCommon.Move, "ItemProperty", SupportsShouldProcess = true, DefaultParameterSetName = "Path", SupportsTransactions = true,
         HelpUri = "http://go.microsoft.com/fwlink/?LinkID=113351")]
     public class MoveItemPropertyCommand : PassThroughItemPropertyCommandBase
     {
@@ -19,20 +20,13 @@ namespace Microsoft.PowerShell.Commands
         /// <summary>
         /// Gets or sets the path parameter to the command
         /// </summary>
-        [Parameter(Position = 0, ParameterSetName = "Path", 
-                   Mandatory = true, ValueFromPipeline=true, ValueFromPipelineByPropertyName = true)]
+        [Parameter(Position = 0, ParameterSetName = "Path",
+                   Mandatory = true, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
         public string[] Path
         {
-            get
-            {
-                return paths;
-            } // get
-
-            set
-            {
-                paths = value;
-            } // set
-        } // Path
+            get { return paths; }
+            set { paths = value; }
+        }
 
         /// <summary>
         /// Gets or sets the literal path parameter to the command
@@ -42,17 +36,13 @@ namespace Microsoft.PowerShell.Commands
         [Alias("PSPath")]
         public string[] LiteralPath
         {
-            get
-            {
-                return paths;
-            } // get
-
+            get { return paths; }
             set
             {
                 base.SuppressWildcardExpansion = true;
                 paths = value;
-            } // set
-        } // LiteralPath
+            }
+        }
 
         /// <summary>
         /// The name of the property to create on the item
@@ -62,39 +52,24 @@ namespace Microsoft.PowerShell.Commands
         [Alias("PSProperty")]
         public string[] Name
         {
-            get
-            {
-                return property;
-            } // get
-
+            get { return _property; }
             set
             {
                 if (value == null)
                 {
-                    value = new string[0];
+                    value = Utils.EmptyArray<string>();
                 }
-                property = value;
+                _property = value;
             }
-        } // Property
+        }
 
         /// <summary>
         /// The path to the destination item to copy the property to.
         /// </summary>
         /// 
         [Parameter(Mandatory = true, Position = 1, ValueFromPipelineByPropertyName = true)]
-        public string Destination
-        {
-            get
-            {
-                return destination;
-            } // get
+        public string Destination { get; set; }
 
-            set
-            {
-                destination = value;
-            }
-        } // Destination
-            
         /// <summary>
         /// A virtual method for retrieving the dynamic parameters for a cmdlet. Derived cmdlets
         /// that require dynamic parameters should override this method and return the
@@ -129,20 +104,15 @@ namespace Microsoft.PowerShell.Commands
                 propertyName,
                 context);
         } // GetDynamicParameters
-        
+
         #endregion Parameters
 
         #region parameter data
-        
+
         /// <summary>
         /// The property to be created.
         /// </summary>
-        private string[] property = new string[0];
-
-        /// <summary>
-        /// The destination path of the item to copy the property to.
-        /// </summary>
-        private string destination;
+        private string[] _property = new string[0];
 
         #endregion parameter data
 
@@ -151,7 +121,7 @@ namespace Microsoft.PowerShell.Commands
         /// <summary>
         /// Creates the property on the item
         /// </summary>
-        protected override void ProcessRecord ()
+        protected override void ProcessRecord()
         {
             foreach (string path in Path)
             {
@@ -193,7 +163,6 @@ namespace Microsoft.PowerShell.Commands
                                 pathNotFound));
                         continue;
                     }
-
                 }
             }
         } // ProcessRecord
@@ -201,5 +170,4 @@ namespace Microsoft.PowerShell.Commands
 
 
     } // MoveItemPropertyCommand
-
 } // namespace Microsoft.PowerShell.Commands

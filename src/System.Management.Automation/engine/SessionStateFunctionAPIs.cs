@@ -1,12 +1,12 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
+
 using System.Collections;
 using System.Collections.Generic;
 using System.Management.Automation.Language;
 using System.Management.Automation.Runspaces;
-using Dbg=System.Management.Automation.Diagnostics;
+using Dbg = System.Management.Automation.Diagnostics;
 
 
 namespace System.Management.Automation
@@ -37,11 +37,8 @@ namespace System.Management.Automation
         {
             var converterInstance = Utils.GetAstToWorkflowConverterAndEnsureWorkflowModuleLoaded(null);
 
-            var workflowInfo = entry.WorkflowInfo;
-            if (workflowInfo == null)
-            {
-                workflowInfo = converterInstance.CompileWorkflow(entry.Name, entry.Definition, initialSessionState);
-            }
+            var workflowInfo = entry.WorkflowInfo ??
+                               converterInstance.CompileWorkflow(entry.Name, entry.Definition, initialSessionState);
 
             WorkflowInfo wf = new WorkflowInfo(workflowInfo);
 
@@ -62,9 +59,9 @@ namespace System.Management.Automation
         /// </returns>
         /// 
         internal IDictionary GetFunctionTable()
-        {            
+        {
             SessionStateScopeEnumerator scopeEnumerator =
-                new SessionStateScopeEnumerator(currentScope);
+                new SessionStateScopeEnumerator(_currentScope);
 
             Dictionary<string, FunctionInfo> result =
                 new Dictionary<string, FunctionInfo>(StringComparer.OrdinalIgnoreCase);
@@ -116,7 +113,7 @@ namespace System.Management.Automation
                 // scope is the same scope the alias was retrieved from.
 
                 if ((entry.Options & ScopedItemOptions.Private) == 0 ||
-                    scope == currentScope)
+                    scope == _currentScope)
                 {
                     result.Add(entry.Name, entry);
                 }
@@ -128,33 +125,14 @@ namespace System.Management.Automation
         /// <summary>
         /// List of functions/filters to export from this session state object...
         /// </summary>
-        internal List<FunctionInfo> ExportedFunctions
-        {
-            get
-            {
-                return _exportedFunctions;
-            }
-        }
-        private List<FunctionInfo> _exportedFunctions = new List<FunctionInfo>();
+        internal List<FunctionInfo> ExportedFunctions { get; } = new List<FunctionInfo>();
 
         /// <summary>
         /// List of workflows to export from this session state object...
         /// </summary>
-        internal List<WorkflowInfo> ExportedWorkflows
-        {
-            get
-            {
-                return _exportedWorkflows;
-            }
-        }
-        private List<WorkflowInfo> _exportedWorkflows = new List<WorkflowInfo>();
+        internal List<WorkflowInfo> ExportedWorkflows { get; } = new List<WorkflowInfo>();
 
-        internal bool UseExportList
-        {
-            get { return _useExportList; }
-            set { _useExportList = value; }
-        }
-        private bool _useExportList = false;
+        internal bool UseExportList { get; set; } = false;
 
         /// <summary>
         /// Get a functions out of session state.
@@ -218,7 +196,7 @@ namespace System.Management.Automation
             return GetFunction(name, CommandOrigin.Internal);
         } // GetFunction 
 
-        IEnumerable<string> GetFunctionAliases(IParameterMetadataProvider ipmp)
+        private IEnumerable<string> GetFunctionAliases(IParameterMetadataProvider ipmp)
         {
             if (ipmp == null || ipmp.Body.ParamBlock == null)
                 yield break;
@@ -229,7 +207,7 @@ namespace System.Management.Automation
                 var attributeType = attributeAst.TypeName.GetReflectionAttributeType();
                 if (attributeType == typeof(AliasAttribute))
                 {
-                    var cvv = new ConstantValueVisitor {AttributeArgument = true};
+                    var cvv = new ConstantValueVisitor { AttributeArgument = true };
                     for (int i = 0; i < attributeAst.PositionalArguments.Count; i++)
                     {
                         yield return Compiler._attrArgToStringConverter.Target(Compiler._attrArgToStringConverter,
@@ -424,7 +402,7 @@ namespace System.Management.Automation
         /// </exception>
         /// 
         internal FunctionInfo SetFunction(
-            string name, 
+            string name,
             ScriptBlock function,
             FunctionInfo originalFunction,
             ScopedItemOptions options,
@@ -762,7 +740,7 @@ namespace System.Management.Automation
             FunctionInfo result = null;
 
             SessionStateScope scope = searcher.InitialScope;
-           
+
             if (searcher.MoveNext())
             {
                 scope = searcher.CurrentLookupScope;
@@ -774,7 +752,6 @@ namespace System.Management.Automation
                     FunctionInfo existingFunction = scope.GetFunction(name);
                     options |= existingFunction.Options;
                     result = scope.SetFunction(name, function, originalFunction, options, force, origin, ExecutionContext);
-
                 }
                 else
                 {
@@ -862,7 +839,7 @@ namespace System.Management.Automation
         /// If the function is constant.
         /// </exception> 
         /// 
-        internal void RemoveFunction (string name, bool force, CommandOrigin origin)
+        internal void RemoveFunction(string name, bool force, CommandOrigin origin)
         {
             if (String.IsNullOrEmpty(name))
             {
@@ -871,7 +848,7 @@ namespace System.Management.Automation
 
             // Use the scope enumerator to find an existing function
 
-            SessionStateScope scope = currentScope;
+            SessionStateScope scope = _currentScope;
 
             FunctionLookupPath path = new FunctionLookupPath(name);
 
@@ -944,8 +921,6 @@ namespace System.Management.Automation
                 RemoveFunction(name, true);
             }
         }
-
-
 
         #endregion Functions
     } // SessionStateInternal class

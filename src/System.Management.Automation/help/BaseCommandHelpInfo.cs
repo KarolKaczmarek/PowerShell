@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation.Runspaces;
@@ -17,10 +18,10 @@ namespace System.Management.Automation
     /// </summary>
     internal abstract class BaseCommandHelpInfo : HelpInfo
     {
-        internal BaseCommandHelpInfo(HelpCategory helpCategory) 
+        internal BaseCommandHelpInfo(HelpCategory helpCategory)
             : base()
         {
-            _helpCategory = helpCategory;
+            HelpCategory = helpCategory;
         }
 
         #region Basic Help Properties
@@ -46,7 +47,7 @@ namespace System.Management.Automation
         /// Name of command. 
         /// </summary>
         /// <value>Name of command</value>
-        override internal string Name
+        internal override string Name
         {
             get
             {
@@ -74,7 +75,7 @@ namespace System.Management.Automation
         /// Synopsis for this command help.
         /// </summary>
         /// <value>Synopsis for this command help</value>
-        override internal string Synopsis
+        internal override string Synopsis
         {
             get
             {
@@ -91,23 +92,23 @@ namespace System.Management.Automation
                 }
 
                 object[] synopsisItems = (object[])LanguagePrimitives.ConvertTo(
-                    commandDetails.Properties["Description"].Value, 
+                    commandDetails.Properties["Description"].Value,
                     typeof(object[]),
                     CultureInfo.InvariantCulture);
-	            if (synopsisItems == null || synopsisItems.Length == 0)
-	            {
+                if (synopsisItems == null || synopsisItems.Length == 0)
+                {
                     return "";
-	            }
-
-                PSObject firstSynopsisItem = synopsisItems[0] == null ? null : PSObject.AsPSObject(synopsisItems[0]);
-	            if (firstSynopsisItem == null || 
-                    firstSynopsisItem.Properties["Text"] == null || 
-		            firstSynopsisItem.Properties["Text"].Value == null)
-	            {
-		            return "";
                 }
 
-	            string synopsis = firstSynopsisItem.Properties["Text"].Value.ToString();
+                PSObject firstSynopsisItem = synopsisItems[0] == null ? null : PSObject.AsPSObject(synopsisItems[0]);
+                if (firstSynopsisItem == null ||
+                    firstSynopsisItem.Properties["Text"] == null ||
+                    firstSynopsisItem.Properties["Text"].Value == null)
+                {
+                    return "";
+                }
+
+                string synopsis = firstSynopsisItem.Properties["Text"].Value.ToString();
                 if (synopsis == null)
                 {
                     return "";
@@ -121,15 +122,7 @@ namespace System.Management.Automation
         /// Help category for this command help, which is constantly HelpCategory.Command.
         /// </summary>
         /// <value>Help category for this command help</value>
-        override internal HelpCategory HelpCategory
-        {
-            get
-            {
-                return _helpCategory;
-            }
-        }
-
-        private HelpCategory _helpCategory;
+        internal override HelpCategory HelpCategory { get; }
 
         /// <summary>
         /// Returns the Uri used by get-help cmdlet to show help
@@ -143,7 +136,7 @@ namespace System.Management.Automation
         /// <exception cref="InvalidOperationException">
         /// Specified Uri is not valid.
         /// </exception>
-        override internal Uri GetUriForOnlineHelp()
+        internal override Uri GetUriForOnlineHelp()
         {
             Uri result = null;
             UriFormatException uriFormatException = null;
@@ -177,7 +170,7 @@ namespace System.Management.Automation
         internal Uri LookupUriFromCommandInfo()
         {
             CommandTypes cmdTypesToLookFor = CommandTypes.Cmdlet;
-            switch(this.HelpCategory)
+            switch (this.HelpCategory)
             {
                 case Automation.HelpCategory.Cmdlet:
                     cmdTypesToLookFor = CommandTypes.Cmdlet;
@@ -206,7 +199,7 @@ namespace System.Management.Automation
                 default:
                     return null;
             }
-                 
+
             string commandName = this.Name;
             string moduleName = string.Empty;
             if (this.FullHelp.Properties["ModuleName"] != null)
@@ -244,7 +237,7 @@ namespace System.Management.Automation
                 {
                     cmdInfo = context.SessionState.InvokeCommand.GetCommands(commandToSearch, cmdTypesToLookFor, false).FirstOrDefault();
                 }
-               
+
                 if ((cmdInfo == null) || (cmdInfo.CommandMetadata == null))
                 {
                     return null;
@@ -252,7 +245,7 @@ namespace System.Management.Automation
 
                 string uriString = cmdInfo.CommandMetadata.HelpUri;
                 if (!string.IsNullOrEmpty(uriString))
-                {                    
+                {
                     if (!System.Uri.IsWellFormedUriString(uriString, UriKind.RelativeOrAbsolute))
                     {
                         // WinBlue: 545315 Online help links are broken with localized help
@@ -276,9 +269,8 @@ namespace System.Management.Automation
                     }
                 }
             }
-            catch(CommandNotFoundException)
+            catch (CommandNotFoundException)
             {
-                
             }
 
             return null;
@@ -303,7 +295,7 @@ namespace System.Management.Automation
             }
 
             object[] navigationLinks = (object[])LanguagePrimitives.ConvertTo(
-                relatedLinks.Properties["navigationLink"].Value, 
+                relatedLinks.Properties["navigationLink"].Value,
                 typeof(object[]),
                 CultureInfo.InvariantCulture);
             foreach (object navigationLinkAsObject in navigationLinks)
@@ -361,7 +353,7 @@ namespace System.Management.Automation
         internal override bool MatchPatternInContent(WildcardPattern pattern)
         {
             Dbg.Assert(null != pattern, "pattern cannot be null");
-            
+
             string synopsis = Synopsis;
             string detailedDescription = DetailedDescription;
 
@@ -383,11 +375,11 @@ namespace System.Management.Automation
         /// </summary>
         /// <param name="pattern">pattern to search for parameters</param>
         /// <returns>A collection of parameters that match pattern</returns>        
-        override internal PSObject[] GetParameter(string pattern)
+        internal override PSObject[] GetParameter(string pattern)
         {
             // this object knows Maml format...
             // So retrieve parameter information as per the format..
-            if ((this.FullHelp == null) || 
+            if ((this.FullHelp == null) ||
                 (this.FullHelp.Properties["parameters"] == null) ||
                 (this.FullHelp.Properties["parameters"].Value == null))
             {
@@ -403,7 +395,7 @@ namespace System.Management.Automation
             }
 
             PSObject[] prmtArray = (PSObject[])LanguagePrimitives.ConvertTo(
-                prmts.Properties["parameter"].Value, 
+                prmts.Properties["parameter"].Value,
                 typeof(PSObject[]),
                 CultureInfo.InvariantCulture);
 
@@ -452,7 +444,7 @@ namespace System.Management.Automation
                 }
 
                 object[] descriptionItems = (object[])LanguagePrimitives.ConvertTo(
-                    this.FullHelp.Properties["Description"].Value, 
+                    this.FullHelp.Properties["Description"].Value,
                     typeof(object[]),
                     CultureInfo.InvariantCulture);
                 if (descriptionItems == null || descriptionItems.Length == 0)

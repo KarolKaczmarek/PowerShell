@@ -1,8 +1,4 @@
-// ==++==
-// 
-//   Copyright (c) Microsoft Corporation.  All rights reserved.
-// 
-// ==--==
+
 //
 // NOTE: A vast majority of this code was copied from BCL in
 // ndp\clr\src\BCL\Microsoft\Win32\Registry.cs.
@@ -13,14 +9,9 @@ using BCLDebug = System.Diagnostics.Debug;
 
 namespace Microsoft.PowerShell.Commands.Internal
 {
-    
-	using System;
-	using System.Runtime.InteropServices;
+    using System.Runtime.InteropServices;
     using System.Runtime.Versioning;
-    using Microsoft.Win32;
-    using System.Management.Automation;
     using System.Diagnostics.CodeAnalysis;
-    using System.Transactions;
 
 
     /**
@@ -54,7 +45,7 @@ namespace Microsoft.PowerShell.Commands.Internal
         // The TransactedRegistryKey's members cannot be changed.
         [SuppressMessage("Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes")]
         internal static readonly TransactedRegistryKey CurrentUser = TransactedRegistryKey.GetBaseKey(BaseRegistryKeys.HKEY_CURRENT_USER);
-        
+
         /**
          * Local Machine Key.
          * 
@@ -73,7 +64,7 @@ namespace Microsoft.PowerShell.Commands.Internal
         // The TransactedRegistryKey's members cannot be changed.
         [SuppressMessage("Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes")]
         internal static readonly TransactedRegistryKey LocalMachine = TransactedRegistryKey.GetBaseKey(BaseRegistryKeys.HKEY_LOCAL_MACHINE);
-        
+
         /**
          * Classes Root Key.
          * 
@@ -92,7 +83,7 @@ namespace Microsoft.PowerShell.Commands.Internal
         // The TransactedRegistryKey's members cannot be changed.
         [SuppressMessage("Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes")]
         internal static readonly TransactedRegistryKey ClassesRoot = TransactedRegistryKey.GetBaseKey(BaseRegistryKeys.HKEY_CLASSES_ROOT);
-        
+
         /**
          * Users Root Key.
          * 
@@ -111,7 +102,7 @@ namespace Microsoft.PowerShell.Commands.Internal
         // The TransactedRegistryKey's members cannot be changed.
         [SuppressMessage("Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes")]
         internal static readonly TransactedRegistryKey Users = TransactedRegistryKey.GetBaseKey(BaseRegistryKeys.HKEY_USERS);
-        
+
         /**
          * Current Config Root Key.
          * 

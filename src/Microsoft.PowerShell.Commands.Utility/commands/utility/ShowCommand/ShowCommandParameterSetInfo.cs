@@ -1,20 +1,16 @@
 ﻿//-----------------------------------------------------------------------
-// <copyright file="ShowCommandParameterSetInfo.cs" company="Microsoft">
 //     Copyright © Microsoft Corporation.  All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
+
 namespace Microsoft.PowerShell.Commands.ShowCommandExtension
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-    using System.ComponentModel;
-    using System.Diagnostics.CodeAnalysis;
-    using System.Globalization;
     using System.Linq;
     using System.Management.Automation;
 
-    
+
     /// <summary>
     /// Implements a facade around CommandParameterSetInfo and its deserialized counterpart
     /// </summary>
@@ -33,12 +29,12 @@ namespace Microsoft.PowerShell.Commands.ShowCommandExtension
             {
                 throw new ArgumentNullException("other");
             }
-            
+
             this.Name = other.Name;
             this.IsDefault = other.IsDefault;
-            this.Parameters = other.Parameters.Select(x=>new ShowCommandParameterInfo(x)).ToArray();
+            this.Parameters = other.Parameters.Select(x => new ShowCommandParameterInfo(x)).ToArray();
         }
-        
+
         /// <summary>
         /// Creates an instance of the ShowCommandParameterSetInfo class based on a PSObject object
         /// </summary>
@@ -56,9 +52,9 @@ namespace Microsoft.PowerShell.Commands.ShowCommandExtension
             this.Name = other.Members["Name"].Value as string;
             this.IsDefault = (bool)(other.Members["IsDefault"].Value);
             var parameters = (other.Members["Parameters"].Value as PSObject).BaseObject as System.Collections.ArrayList;
-            this.Parameters = ShowCommandCommandInfo.GetObjectEnumerable(parameters).Cast<PSObject>().Select(x=>new ShowCommandParameterInfo(x)).ToArray();
+            this.Parameters = ShowCommandCommandInfo.GetObjectEnumerable(parameters).Cast<PSObject>().Select(x => new ShowCommandParameterInfo(x)).ToArray();
         }
-        
+
         /// <summary>
         /// Gets the name of the parameter set
         /// </summary>

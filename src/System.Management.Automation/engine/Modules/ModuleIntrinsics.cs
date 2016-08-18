@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Management.Automation.Internal;
 using System.Management.Automation.Language;
-using System.Management.Automation.Runspaces;
 using Microsoft.PowerShell.Commands;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using Dbg = System.Management.Automation.Diagnostics;
 
@@ -35,20 +35,13 @@ namespace System.Management.Automation
         private readonly ExecutionContext _context;
 
         // Holds the module collection...
-        internal Dictionary<string, PSModuleInfo> ModuleTable
-        {
-            get
-            {
-                return _moduleTable;
-            }
-        }
-        private readonly Dictionary<string, PSModuleInfo> _moduleTable = new Dictionary<string, PSModuleInfo>(StringComparer.OrdinalIgnoreCase);
+        internal Dictionary<string, PSModuleInfo> ModuleTable { get; } = new Dictionary<string, PSModuleInfo>(StringComparer.OrdinalIgnoreCase);
 
-        const int MaxModuleNestingDepth = 10;
+        private const int MaxModuleNestingDepth = 10;
 
         internal void IncrementModuleNestingDepth(PSCmdlet cmdlet, string path)
         {
-            if (++_moduleNestingDepth > MaxModuleNestingDepth)
+            if (++ModuleNestingDepth > MaxModuleNestingDepth)
             {
                 string message = StringUtil.Format(Modules.ModuleTooDeeplyNested, path, MaxModuleNestingDepth);
                 InvalidOperationException ioe = new InvalidOperationException(message);
@@ -60,15 +53,10 @@ namespace System.Management.Automation
         }
         internal void DecrementModuleNestingCount()
         {
-            --_moduleNestingDepth;
+            --ModuleNestingDepth;
         }
 
-        internal int ModuleNestingDepth
-        {
-            get { return _moduleNestingDepth; }
-        }
-
-        int _moduleNestingDepth;
+        internal int ModuleNestingDepth { get; private set; }
 
         /// <summary>
         /// Create a new module object from a scriptblock specifying the path to set for the module
@@ -196,7 +184,7 @@ namespace System.Management.Automation
                 {
                     ast = ast.Parent;
                 }
-                
+
                 // The variables set in the interpretted case get set by InvokeWithPipe in the compiled case.
                 Diagnostics.Assert(_context.SessionState.Internal.CurrentScope.LocalsTuple == null,
                                     "No locals tuple should have been created yet.");
@@ -209,14 +197,14 @@ namespace System.Management.Automation
 
                     // And run the scriptblock...
                     sb.InvokeWithPipe(
-                        useLocalScope:         false,
+                        useLocalScope: false,
                         errorHandlingBehavior: ScriptBlock.ErrorHandlingBehavior.WriteToCurrentErrorPipe,
-                        dollarUnder:           AutomationNull.Value,
-                        input:                 AutomationNull.Value,
-                        scriptThis:            AutomationNull.Value,
-                        outputPipe:            outputPipe,
-                        invocationInfo:        invocationInfo,
-                        args:                  arguments ?? Utils.EmptyArray<object>());
+                        dollarUnder: AutomationNull.Value,
+                        input: AutomationNull.Value,
+                        scriptThis: AutomationNull.Value,
+                        outputPipe: outputPipe,
+                        invocationInfo: invocationInfo,
+                        args: arguments ?? Utils.EmptyArray<object>());
                 }
                 catch (ExitException ee)
                 {
@@ -264,7 +252,7 @@ namespace System.Management.Automation
         internal List<PSModuleInfo> GetExactMatchModules(string moduleName, bool all, bool exactMatch)
         {
             if (moduleName == null) { moduleName = String.Empty; }
-            return GetModuleCore(new string[] {moduleName}, all, exactMatch);
+            return GetModuleCore(new string[] { moduleName }, all, exactMatch);
         }
 
         private List<PSModuleInfo> GetModuleCore(string[] patterns, bool all, bool exactMatch)
@@ -297,7 +285,7 @@ namespace System.Management.Automation
                 foreach (PSModuleInfo module in ModuleTable.Values)
                 {
                     // See if this is the requested module...
-                    if ((exactMatch && module.Name.Equals(targetModuleName, StringComparison.OrdinalIgnoreCase)) || 
+                    if ((exactMatch && module.Name.Equals(targetModuleName, StringComparison.OrdinalIgnoreCase)) ||
                         (!exactMatch && SessionStateUtilities.MatchesAnyWildcardPattern(module.Name, wcpList, false)))
                     {
                         modulesMatched.Add(module);
@@ -421,7 +409,7 @@ namespace System.Management.Automation
 
         internal static Version GetManifestModuleVersion(string manifestPath)
         {
-            if (manifestPath != null && 
+            if (manifestPath != null &&
                 manifestPath.EndsWith(StringLiterals.PowerShellDataFileExtension, StringComparison.OrdinalIgnoreCase))
             {
                 try
@@ -542,26 +530,15 @@ namespace System.Management.Automation
 
         /// <summary>
         /// Gets the personal module path
-        /// (i.e. C:\Users\lukasza\Documents\WindowsPowerShell\modules, or
-        /// ~/.powershell/Modules on Linux)
         /// </summary>
         /// <returns>personal module path</returns>
         internal static string GetPersonalModulePath()
         {
-            if (Platform.IsWindows)
-            {
-                string personalModuleRoot = Path.Combine(
-                                                         Path.Combine(
-                                                                      Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                                                                      Utils.ProductNameForDirectory),
-                                                         Utils.ModuleDirectory);
-                return personalModuleRoot;
-            }
-            else
-            {
-                string personalModuleRoot = Platform.SelectProductNameForDirectory(Platform.XDG_Type.MODULES);
-                return personalModuleRoot;
-            }
+#if UNIX
+            return Platform.SelectProductNameForDirectory(Platform.XDG_Type.USER_MODULES);
+#else
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), Utils.ModuleDirectory);
+#endif
         }
 
         /// <summary>
@@ -570,46 +547,33 @@ namespace System.Management.Automation
         /// <returns>The default system wide module path</returns>
         internal static string GetSystemwideModulePath()
         {
-            if (SystemWideModulePath != null)
-                return SystemWideModulePath;
-
-            // There is no runspace config so we use the default string
-            string shellId = Utils.DefaultPowerShellShellID;
-
-            // Now figure out what $PSHOME is.
-            // This depends on the shellId. If we cannot read the application base
-            // registry key, set the variable to empty string
-            string psHome = null;
+            if (s_systemWideModulePath != null)
+                return s_systemWideModulePath;
+            
             try
             {
-                psHome = Utils.GetApplicationBase(shellId);
-            }
-            catch (System.Security.SecurityException)
-            {
-            }
-
-            if (!string.IsNullOrEmpty(psHome))
-            {
-                // Win8: 584267 Powershell Modules are listed twice in x86, and cannot be removed
-                // This happens because ModuleTable uses Path as the key and CBS installer 
-                // expands the path to include "SysWOW64" (for 
-                // HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\PowerShell\3\PowerShellEngine ApplicationBase).
-                // Because of this, the module that is getting loaded during startup (through LocalRunspace)
-                // is using "SysWow64" in the key. Later, when Import-Module is called, it loads the 
-                // module using ""System32" in the key.
-
-                // Porting note: psHome cannot be lower-cased on case sensitive file systems
-                if (Platform.IsWindows)
+                string psHome = Utils.GetApplicationBase(Utils.DefaultPowerShellShellID);
+                if (!string.IsNullOrEmpty(psHome))
                 {
+                    // Win8: 584267 Powershell Modules are listed twice in x86, and cannot be removed
+                    // This happens because ModuleTable uses Path as the key and CBS installer 
+                    // expands the path to include "SysWOW64" (for 
+                    // HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\PowerShell\3\PowerShellEngine ApplicationBase).
+                    // Because of this, the module that is getting loaded during startup (through LocalRunspace)
+                    // is using "SysWow64" in the key. Later, when Import-Module is called, it loads the 
+                    // module using ""System32" in the key.
+#if !UNIX
                     psHome = psHome.ToLowerInvariant().Replace("\\syswow64\\", "\\system32\\");
+#endif
+                    Interlocked.CompareExchange(ref s_systemWideModulePath, Path.Combine(psHome, "Modules"), null);
                 }
-                Interlocked.CompareExchange(ref SystemWideModulePath, Path.Combine(psHome, Utils.ModuleDirectory), null);
             }
+            catch (System.Security.SecurityException) { }
 
-            return SystemWideModulePath;
+            return s_systemWideModulePath;
         }
 
-        private static string SystemWideModulePath;
+        private static string s_systemWideModulePath;
 
         /// <summary>
         /// Get the DSC module path.
@@ -617,18 +581,17 @@ namespace System.Management.Automation
         /// <returns></returns>
         internal static string GetDscModulePath()
         {
-            if (!Platform.IsWindows)
-            {
-                return string.Empty;
-            }
-
+#if UNIX
+            return Platform.SelectProductNameForDirectory(Platform.XDG_Type.SHARED_MODULES);
+#else
             string dscModulePath = null;
             string programFilesPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
             if (!string.IsNullOrEmpty(programFilesPath))
             {
-                dscModulePath = Path.Combine(programFilesPath, Utils.DscModuleDirectory);
+                dscModulePath = Path.Combine(programFilesPath, Utils.ModuleDirectory);
             }
             return dscModulePath;
+#endif
         }
 
         /// <summary>
@@ -638,23 +601,26 @@ namespace System.Management.Automation
         /// <returns></returns>
         private static string CombineSystemModulePaths()
         {
-            string psSystemModulePath = GetSystemwideModulePath();
-            string dscSystemModulePath = GetDscModulePath();
+            string systemModulePath = GetSystemwideModulePath();
+            string commonModulePath = GetDscModulePath();
 
-            if (psSystemModulePath != null && dscSystemModulePath != null)
+            bool isSystemPathNullOrEmpty = string.IsNullOrEmpty(systemModulePath);
+            bool isCommonPathNullOrEmpty = string.IsNullOrEmpty(commonModulePath);
+
+            if (!isSystemPathNullOrEmpty && !isCommonPathNullOrEmpty)
             {
-                return (dscSystemModulePath + ";" + psSystemModulePath);
+                return (commonModulePath + Path.PathSeparator + systemModulePath);
             }
 
-            if (psSystemModulePath != null || dscSystemModulePath != null)
+            if (!isSystemPathNullOrEmpty || !isCommonPathNullOrEmpty)
             {
-                return (psSystemModulePath ?? dscSystemModulePath);
+                return isSystemPathNullOrEmpty ? commonModulePath : systemModulePath;
             }
 
             return null;
         }
 
-        private static string GetExpandedEnvironmentVariable(string name, EnvironmentVariableTarget target)
+        internal static string GetExpandedEnvironmentVariable(string name, EnvironmentVariableTarget target)
         {
             string result = Environment.GetEnvironmentVariable(name, target);
             if (!string.IsNullOrEmpty(result))
@@ -677,11 +643,11 @@ namespace System.Management.Automation
             Diagnostics.Assert(pathToLookFor != null, "pathToLookFor should not be null according to contract of the function");
 
             int pos = 0; // position of the current substring in pathToScan
-            string[] substrings = pathToScan.Split(new char[] { ';' }, StringSplitOptions.None); // we want to process empty entries
-            string goodPathToLookFor = pathToLookFor.Trim().TrimEnd('\\'); // trailing backslashes and white-spaces will mess up equality comparison
+            string[] substrings = pathToScan.Split(Utils.Separators.PathSeparator, StringSplitOptions.None); // we want to process empty entries
+            string goodPathToLookFor = pathToLookFor.Trim().TrimEnd(Path.DirectorySeparatorChar); // trailing backslashes and white-spaces will mess up equality comparison
             foreach (string substring in substrings)
             {
-                string goodSubstring = substring.Trim().TrimEnd('\\');  // trailing backslashes and white-spaces will mess up equality comparison
+                string goodSubstring = substring.Trim().TrimEnd(Path.DirectorySeparatorChar);  // trailing backslashes and white-spaces will mess up equality comparison
 
                 // We have to use equality comparison on individual substrings (as opposed to simple 'string.IndexOf' or 'string.Contains')
                 // because of cases like { pathToScan="C:\Temp\MyDir\MyModuleDir", pathToLookFor="C:\Temp" }
@@ -711,35 +677,122 @@ namespace System.Management.Automation
             Diagnostics.Assert(basePath != null, "basePath should not be null according to contract of the function");
             Diagnostics.Assert(pathToAdd != null, "pathToAdd should not be null according to contract of the function");
 
-            System.Text.StringBuilder result = new System.Text.StringBuilder(basePath);
-
-            char[] semicolonSeparator = new char[] { ';' };
+            StringBuilder result = new StringBuilder(basePath);
+            
             if (!string.IsNullOrEmpty(pathToAdd)) // we don't want to append empty paths
             {
-                foreach (string subPathToAdd in pathToAdd.Split(semicolonSeparator, StringSplitOptions.RemoveEmptyEntries)) // in case pathToAdd is a 'combined path' (semicolon-separated)
+                foreach (string subPathToAdd in pathToAdd.Split(Utils.Separators.PathSeparator, StringSplitOptions.RemoveEmptyEntries)) // in case pathToAdd is a 'combined path' (semicolon-separated)
                 {
                     int position = PathContainsSubstring(result.ToString(), subPathToAdd); // searching in effective 'result' value ensures that possible duplicates in pathsToAdd are handled correctly
                     if (-1 == position) // subPathToAdd not found - add it
                     {
                         if (-1 == insertPosition) // append subPathToAdd to the end
                         {
-                            bool resultHasEndingSemicolon = false;
-                            if (result.Length > 0) resultHasEndingSemicolon = (result[result.Length - 1] == ';');
+                            bool endsWithPathSeparator = false;
+                            if (result.Length > 0) endsWithPathSeparator = (result[result.Length - 1] == Path.PathSeparator);
 
-                            if (resultHasEndingSemicolon)
+                            if (endsWithPathSeparator)
                                 result.Append(subPathToAdd);
                             else
-                                result.Append(";" + subPathToAdd);
+                                result.Append(Path.PathSeparator + subPathToAdd);
                         }
                         else // insert at the requested location (this is used by DSC (<Program Files> location) and by 'user-specific location' (SpecialFolder.MyDocuments or EVT.User))
                         {
-                            result.Insert(insertPosition, subPathToAdd + ";");
+                            result.Insert(insertPosition, subPathToAdd + Path.PathSeparator);
                         }
                     }
                 }
             }
 
             return result.ToString();
+        }
+        
+        /// <summary>
+        /// Check if the current powershell is likely running in following scenarios:
+        ///  - sxs ps started on windows [machine-wide env:psmodulepath will influence]
+        ///  - sxs ps started from full ps
+        ///  - sxs ps started from inbox nano/iot ps
+        ///  - full ps started from sxs ps
+        ///  - inbox nano/iot ps started from sxs ps
+        /// If it's likely one of them, then we need to clear the current process module path.
+        /// </summary>
+        private static bool NeedToClearProcessModulePath(string currentProcessModulePath, string personalModulePath, string programFilesModulePath, bool runningSxS)
+        {
+#if UNIX
+            return false;
+#else
+            Dbg.Assert(!string.IsNullOrEmpty(personalModulePath), "caller makes sure it's not null or empty");
+            Dbg.Assert(!string.IsNullOrEmpty(programFilesModulePath), "caller makes sure it's not null or empty");
+
+            const string winSxSModuleDirectory = @"PowerShell\Modules";
+            const string winLegacyModuleDirectory = @"WindowsPowerShell\Modules";
+
+            if (runningSxS)
+            {
+                // The machine-wide and user-wide environment variables are only meaningful for full ps,
+                // so if the current process module path contains any of them, it's likely that the sxs
+                // ps was started directly on windows, or from full ps. The same goes for the legacy personal
+                // and shared module paths.
+                string hklmModulePath = GetExpandedEnvironmentVariable("PSMODULEPATH", EnvironmentVariableTarget.Machine);
+                string hkcuModulePath = GetExpandedEnvironmentVariable("PSMODULEPATH", EnvironmentVariableTarget.User);
+                string legacyPersonalModulePath = personalModulePath.Replace(winSxSModuleDirectory, winLegacyModuleDirectory);
+                string legacyProgramFilesModulePath = programFilesModulePath.Replace(winSxSModuleDirectory, winLegacyModuleDirectory);
+
+                return (!string.IsNullOrEmpty(hklmModulePath) && currentProcessModulePath.IndexOf(hklmModulePath, StringComparison.OrdinalIgnoreCase) != -1) ||
+                       (!string.IsNullOrEmpty(hkcuModulePath) && currentProcessModulePath.IndexOf(hkcuModulePath, StringComparison.OrdinalIgnoreCase) != -1) ||
+                       currentProcessModulePath.IndexOf(legacyPersonalModulePath, StringComparison.OrdinalIgnoreCase) != -1 ||
+                       currentProcessModulePath.IndexOf(legacyProgramFilesModulePath, StringComparison.OrdinalIgnoreCase) != -1;
+            }
+
+            // The sxs personal and shared module paths are only meaningful for sxs ps, so if they appear
+            // in the current process module path, it's likely the running ps was started from a sxs ps.
+            string sxsPersonalModulePath = personalModulePath.Replace(winLegacyModuleDirectory, winSxSModuleDirectory);
+            string sxsProgramFilesModulePath = programFilesModulePath.Replace(winLegacyModuleDirectory, winSxSModuleDirectory);
+
+            return currentProcessModulePath.IndexOf(sxsPersonalModulePath, StringComparison.OrdinalIgnoreCase) != -1 ||
+                   currentProcessModulePath.IndexOf(sxsProgramFilesModulePath, StringComparison.OrdinalIgnoreCase) != -1;
+#endif
+        }
+
+        /// <summary>
+        /// When sxs ps instance B got started from sxs ps instance A, A's pshome module path might
+        /// show up in current process module path. It doesn't make sense for B to load modules from
+        /// A's pshome module path, so remove it in such case.
+        /// </summary>
+        private static string RemoveSxSPsHomeModulePath(string currentProcessModulePath)
+        {
+#if UNIX
+            const string powershellExeName = "powershell";
+#else
+            const string powershellExeName = "powershell.exe";
+#endif
+            StringBuilder modulePathString = new StringBuilder(currentProcessModulePath.Length);
+            char[] invalidPathChars = Path.GetInvalidPathChars();
+
+            foreach (var path in currentProcessModulePath.Split(Utils.Separators.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+            {
+                string trimedPath = path.Trim().TrimEnd(Path.DirectorySeparatorChar);
+                if (trimedPath == string.Empty || trimedPath.IndexOfAny(invalidPathChars) != -1)
+                {
+                    // Path contains invalid characters. Ignore it.
+                    continue;
+                }
+
+                string psExePath = Path.Combine(Path.GetDirectoryName(trimedPath), powershellExeName);
+                if (File.Exists(psExePath))
+                {
+                    // Path is a PSHome module path. Ignore it.
+                    continue;
+                }
+
+                if (modulePathString.Length > 0)
+                {
+                    modulePathString.Append(Path.PathSeparator);
+                }
+                modulePathString.Append(trimedPath);
+            }
+
+            return modulePathString.ToString();
         }
 
         /// <summary>
@@ -749,23 +802,42 @@ namespace System.Management.Automation
         /// </summary>
         public static string GetModulePath(string currentProcessModulePath, string hklmMachineModulePath, string hkcuUserModulePath)
         {
+            string personalModulePath = GetPersonalModulePath();
             string programFilesModulePath = GetDscModulePath(); // aka <Program Files> location
-            string psHomeModulePath = Environment.ExpandEnvironmentVariables(GetSystemwideModulePath()); // $PSHome\Modules location
+            string psHomeModulePath = GetSystemwideModulePath(); // $PSHome\Modules location
+
+#if CORECLR
+            bool runningSxS = Platform.IsInbox ? false : true;
+#else
+            bool runningSxS = false;
+#endif
+            if (!string.IsNullOrEmpty(currentProcessModulePath) && 
+                NeedToClearProcessModulePath(currentProcessModulePath, personalModulePath, programFilesModulePath, runningSxS))
+            {
+                // Clear the current process module path in the following cases
+                //  - start sxs ps on windows [machine-wide env:psmodulepath will influence]
+                //  - start sxs ps from full ps
+                //  - start sxs ps from inbox nano/iot ps
+                //  - start full ps from sxs ps
+                //  - start inbox nano/iot ps from sxs ps
+                currentProcessModulePath = null;
+            }
+
             // If the variable isn't set, then set it to the default value
             if (currentProcessModulePath == null)  // EVT.Process does Not exist - really corner case
             {
                 // Handle the default case...
-                if (String.IsNullOrEmpty(hkcuUserModulePath)) // EVT.User does Not exist -> set to <SpecialFolder.MyDocuments> location
+                if (string.IsNullOrEmpty(hkcuUserModulePath)) // EVT.User does Not exist -> set to <SpecialFolder.MyDocuments> location
                 {
-                    currentProcessModulePath = GetPersonalModulePath(); // = SpecialFolder.MyDocuments + Utils.ProductNameForDirectory + Utils.ModuleDirectory
+                    currentProcessModulePath = personalModulePath; // = SpecialFolder.MyDocuments + Utils.ProductNameForDirectory + Utils.ModuleDirectory
                 }
                 else // EVT.User exists -> set to EVT.User
                 {
                     currentProcessModulePath = hkcuUserModulePath; // = EVT.User
                 }
 
-                currentProcessModulePath += ';';
-                if (String.IsNullOrEmpty(hklmMachineModulePath)) // EVT.Machine does Not exist
+                currentProcessModulePath += Path.PathSeparator;
+                if (string.IsNullOrEmpty(hklmMachineModulePath)) // EVT.Machine does Not exist
                 {
                     currentProcessModulePath += CombineSystemModulePaths(); // += (DscModulePath + $PSHome\Modules)
                 }
@@ -774,19 +846,21 @@ namespace System.Management.Automation
                     currentProcessModulePath += hklmMachineModulePath; // += EVT.Machine
                 }
             }
-            #if !CORECLR
-            else // EVT.Process exists
+            // EVT.Process exists
+            // Now handle the case where the environment variable is already set.
+            else if (runningSxS) // The running powershell is an SxS PS instance
             {
-                // Now handle the case where the environment variable is already set.
+                // When SxS PS instance A starts SxS PS instance B, A's PSHome module path might be inherited by B. We need to remove that path from B
+                currentProcessModulePath = RemoveSxSPsHomeModulePath(currentProcessModulePath);
 
-                // CoreCLR PowerShell on Windows has a Modules folder in the the application base
-                // path which contains the built-in modules It must be in the front of the path no
-                // matter what, regardless of inherited path.
-#if CORECLR && !UNIX
-                // TODO: #1184 will resolve this work-around
-                currentProcessModulePath = AddToPath(currentProcessModulePath, GetSystemwideModulePath(), 0);
-#endif
+                string personalModulePathToUse = string.IsNullOrEmpty(hkcuUserModulePath) ? personalModulePath : hkcuUserModulePath;
+                string systemModulePathToUse = string.IsNullOrEmpty(hklmMachineModulePath) ? psHomeModulePath : hklmMachineModulePath;
 
+                currentProcessModulePath = AddToPath(currentProcessModulePath, personalModulePathToUse, 0);
+                currentProcessModulePath = AddToPath(currentProcessModulePath, systemModulePathToUse, -1);
+            }
+            else // The running powershell is Full PS or inbox Core PS
+            {
                 // If there is no personal path key, then if the env variable doesn't match the system variable,
                 // the user modified it somewhere, else prepend the default personel module path
                 if (hklmMachineModulePath != null) // EVT.Machine exists
@@ -803,8 +877,7 @@ namespace System.Management.Automation
                                 // for bug 6678623, if we are running wow64 process (x86 32-bit process on 64-bit (amd64) OS), then ensure that <SpecialFolder.MyDocuments> exists in currentProcessModulePath / return value                             
                                 if (Environment.Is64BitOperatingSystem && !Environment.Is64BitProcess)
                                 {
-                                    string userModulePath = GetPersonalModulePath();
-                                    currentProcessModulePath = AddToPath(currentProcessModulePath, userModulePath, psHomePosition);
+                                    currentProcessModulePath = AddToPath(currentProcessModulePath, personalModulePath, psHomePosition);
                                     psHomePosition = PathContainsSubstring(currentProcessModulePath, psHomeModulePath);
                                 }
 #endif
@@ -813,12 +886,12 @@ namespace System.Management.Automation
 
                             return null;
                         }
-                        currentProcessModulePath = GetPersonalModulePath() + ';' + hklmMachineModulePath; // <SpecialFolder.MyDocuments> + EVT.Machine + inserted <ProgramFiles> later in this function
+                        currentProcessModulePath = personalModulePath + Path.PathSeparator + hklmMachineModulePath; // <SpecialFolder.MyDocuments> + EVT.Machine + inserted <ProgramFiles> later in this function
                     }
                     else // EVT.User exists
                     {
                         // PSModulePath is designed to have behaviour like 'Path' var in a sense that EVT.User + EVT.Machine are merged to get final value of PSModulePath
-                        string combined = string.Concat(hkcuUserModulePath, ';', hklmMachineModulePath); // EVT.User + EVT.Machine
+                        string combined = string.Concat(hkcuUserModulePath, Path.PathSeparator, hklmMachineModulePath); // EVT.User + EVT.Machine
                         if (!((combined).Equals(currentProcessModulePath, StringComparison.OrdinalIgnoreCase) ||
                             (hklmMachineModulePath).Equals(currentProcessModulePath, StringComparison.OrdinalIgnoreCase) ||
                             (hkcuUserModulePath).Equals(currentProcessModulePath, StringComparison.OrdinalIgnoreCase)))
@@ -843,7 +916,7 @@ namespace System.Management.Automation
                     {
                         if (hkcuUserModulePath.Equals(currentProcessModulePath, StringComparison.OrdinalIgnoreCase))
                         {
-                            currentProcessModulePath = hkcuUserModulePath + ';' + CombineSystemModulePaths(); // = EVT.User + (DscModulePath + $PSHome\Modules)
+                            currentProcessModulePath = hkcuUserModulePath + Path.PathSeparator + CombineSystemModulePaths(); // = EVT.User + (DscModulePath + $PSHome\Modules)
                         }
                         else
                         {
@@ -900,12 +973,12 @@ namespace System.Management.Automation
         internal static string SetModulePath()
         {
             string currentModulePath = GetExpandedEnvironmentVariable("PSMODULEPATH", EnvironmentVariableTarget.Process);
-            string systemWideModulePath = GetExpandedEnvironmentVariable("PSMODULEPATH", EnvironmentVariableTarget.Machine);
-            string personalModulePath = GetExpandedEnvironmentVariable("PSMODULEPATH", EnvironmentVariableTarget.User);
+            string systemWideModulePath = ConfigPropertyAccessor.Instance.GetModulePath(ConfigPropertyAccessor.PropertyScope.SystemWide);
+            string personalModulePath = ConfigPropertyAccessor.Instance.GetModulePath(ConfigPropertyAccessor.PropertyScope.CurrentUser);
 
             string newModulePathString = GetModulePath(currentModulePath, systemWideModulePath, personalModulePath);
 
-            if(!string.IsNullOrEmpty(newModulePathString))
+            if (!string.IsNullOrEmpty(newModulePathString))
             {
                 // Set the environment variable...
                 Environment.SetEnvironmentVariable("PSMODULEPATH", newModulePathString);
@@ -937,13 +1010,13 @@ namespace System.Management.Automation
 
             if (!string.IsNullOrWhiteSpace(modulePathString))
             {
-            foreach (string envPath in modulePathString.Split(Utils.Separators.Semicolon, StringSplitOptions.RemoveEmptyEntries))
-            {
-                var processedPath = ProcessOneModulePath(context, envPath, processedPathSet);
-                if (processedPath != null)
-                    yield return processedPath;
+                foreach (string envPath in modulePathString.Split(Utils.Separators.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var processedPath = ProcessOneModulePath(context, envPath, processedPathSet);
+                    if (processedPath != null)
+                        yield return processedPath;
+                }
             }
-        }
 
             if (includeSystemModulePath)
             {
@@ -953,7 +1026,7 @@ namespace System.Management.Automation
             }
         }
 
-        static private string ProcessOneModulePath(ExecutionContext context, string envPath, HashSet<string> processedPathSet)
+        private static string ProcessOneModulePath(ExecutionContext context, string envPath, HashSet<string> processedPathSet)
         {
             string trimmedenvPath = envPath.Trim();
 
@@ -1023,12 +1096,12 @@ namespace System.Management.Automation
             return null;
         }
 
-        static private void SortAndRemoveDuplicates<T>(List<T> input, Func<T, string> keyGetter)
+        private static void SortAndRemoveDuplicates<T>(List<T> input, Func<T, string> keyGetter)
         {
             Dbg.Assert(input != null, "Caller should verify that input != null");
 
             input.Sort(
-                delegate(T x, T y)
+                delegate (T x, T y)
                 {
                     string kx = keyGetter(x);
                     string ky = keyGetter(y);
@@ -1066,7 +1139,7 @@ namespace System.Management.Automation
         /// <param name="variablePatterns">Patterns describing the variables to export</param>
         /// <param name="doNotExportCmdlets">List of Cmdlets that will not be exported,  
         ///     even if they match in cmdletPatterns.</param>
-        static internal void ExportModuleMembers(PSCmdlet cmdlet, SessionStateInternal sessionState,
+        internal static void ExportModuleMembers(PSCmdlet cmdlet, SessionStateInternal sessionState,
             List<WildcardPattern> functionPatterns, List<WildcardPattern> cmdletPatterns,
             List<WildcardPattern> aliasPatterns, List<WildcardPattern> variablePatterns, List<string> doNotExportCmdlets)
         {
@@ -1099,14 +1172,14 @@ namespace System.Management.Automation
                         else
                         {
                             message = StringUtil.Format(Modules.ExportingFunction, entry.Key);
-	                        sessionState.ExportedFunctions.Add(entry.Value);
+                            sessionState.ExportedFunctions.Add(entry.Value);
                         }
 
                         cmdlet.WriteVerbose(message);
                     }
                 }
-                SortAndRemoveDuplicates(sessionState.ExportedFunctions, delegate(FunctionInfo ci) { return ci.Name; });
-                SortAndRemoveDuplicates(sessionState.ExportedWorkflows, delegate(WorkflowInfo ci) { return ci.Name; });
+                SortAndRemoveDuplicates(sessionState.ExportedFunctions, delegate (FunctionInfo ci) { return ci.Name; });
+                SortAndRemoveDuplicates(sessionState.ExportedWorkflows, delegate (WorkflowInfo ci) { return ci.Name; });
             }
 
             if (cmdletPatterns != null)
@@ -1131,7 +1204,8 @@ namespace System.Management.Automation
                                 cmdlet.WriteVerbose(message);
                                 // Copy the cmdlet info, changing the module association to be the current module...
                                 CmdletInfo exportedCmdlet = new CmdletInfo(element.Name, element.ImplementingType,
-                                    element.HelpFile, null, element.Context) {Module = sessionState.Module};
+                                    element.HelpFile, null, element.Context)
+                                { Module = sessionState.Module };
                                 Dbg.Assert(sessionState.Module != null, "sessionState.Module should not be null by the time we're exporting cmdlets");
                                 sessionState.Module.CompiledExports.Add(exportedCmdlet);
                             }
@@ -1152,14 +1226,15 @@ namespace System.Management.Automation
                             cmdlet.WriteVerbose(message);
                             // Copy the cmdlet info, changing the module association to be the current module...
                             CmdletInfo exportedCmdlet = new CmdletInfo(cmdletToImport.Name, cmdletToImport.ImplementingType,
-                                cmdletToImport.HelpFile, null, cmdletToImport.Context) {Module = sessionState.Module};
+                                cmdletToImport.HelpFile, null, cmdletToImport.Context)
+                            { Module = sessionState.Module };
                             Dbg.Assert(sessionState.Module != null, "sessionState.Module should not be null by the time we're exporting cmdlets");
                             sessionState.Module.CompiledExports.Add(exportedCmdlet);
                         }
                     }
                 }
 
-                SortAndRemoveDuplicates(sessionState.Module.CompiledExports, delegate(CmdletInfo ci) { return ci.Name; });
+                SortAndRemoveDuplicates(sessionState.Module.CompiledExports, delegate (CmdletInfo ci) { return ci.Name; });
             }
 
             if (variablePatterns != null)
@@ -1168,7 +1243,6 @@ namespace System.Management.Automation
 
                 foreach (KeyValuePair<string, PSVariable> entry in vt)
                 {
-
                     // The magic variables are always private as are all-scope variables...
                     if (entry.Value.IsAllScope || Array.IndexOf(PSModuleInfo._builtinVariables, entry.Key) != -1)
                     {
@@ -1182,7 +1256,7 @@ namespace System.Management.Automation
                         sessionState.ExportedVariables.Add(entry.Value);
                     }
                 }
-                SortAndRemoveDuplicates(sessionState.ExportedVariables, delegate(PSVariable v) { return v.Name; });
+                SortAndRemoveDuplicates(sessionState.ExportedVariables, delegate (PSVariable v) { return v.Name; });
             }
 
             if (aliasPatterns != null)
@@ -1222,11 +1296,11 @@ namespace System.Management.Automation
                     }
                 }
 
-                SortAndRemoveDuplicates(sessionState.ExportedAliases, delegate(AliasInfo ci) { return ci.Name; });
+                SortAndRemoveDuplicates(sessionState.ExportedAliases, delegate (AliasInfo ci) { return ci.Name; });
             }
         }
 
-        static private AliasInfo NewAliasInfo(AliasInfo alias, SessionStateInternal sessionState)
+        private static AliasInfo NewAliasInfo(AliasInfo alias, SessionStateInternal sessionState)
         {
             Dbg.Assert(alias != null, "alias should not be null");
             Dbg.Assert(sessionState != null, "sessionState should not be null");
@@ -1264,5 +1338,4 @@ namespace System.Management.Automation
         /// </summary>
         void OnRemove(PSModuleInfo psModuleInfo);
     }
-
 } // System.Management.Automation

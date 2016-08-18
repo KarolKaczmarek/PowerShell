@@ -19,7 +19,7 @@ namespace System.Management.Automation
         {
             if (commandRuntime == null)
             {
-                throw PSTraceSource.NewArgumentNullException ("commandRuntime");
+                throw PSTraceSource.NewArgumentNullException("commandRuntime");
             }
             commandRuntime.PagingParameters = this;
         }
@@ -46,12 +46,7 @@ namespace System.Management.Automation
         /// If the user doesn't specify anything, the default is <see cref="System.UInt64.MaxValue"/>.
         /// </summary>
         [Parameter]
-        public UInt64 First
-        {
-            get { return psFirst; }
-            set { psFirst = value; }
-        }
-        private ulong psFirst = UInt64.MaxValue;
+        public UInt64 First { get; set; } = UInt64.MaxValue;
 
         #endregion parameters
 
@@ -119,13 +114,13 @@ namespace System.Management.Automation.Internal
         /// user feedback properties on when the parameters get bound.
         /// </param>
         /// 
-        internal ShouldProcessParameters (MshCommandRuntime commandRuntime)
+        internal ShouldProcessParameters(MshCommandRuntime commandRuntime)
         {
             if (commandRuntime == null)
             {
-                throw PSTraceSource.NewArgumentNullException ("commandRuntime");
+                throw PSTraceSource.NewArgumentNullException("commandRuntime");
             }
-            this.commandRuntime = commandRuntime;
+            _commandRuntime = commandRuntime;
         } // ctor
         #endregion ctor
 
@@ -140,11 +135,11 @@ namespace System.Management.Automation.Internal
         {
             get
             {
-                return this.commandRuntime.WhatIf;
+                return _commandRuntime.WhatIf;
             }
             set
             {
-                this.commandRuntime.WhatIf = value;
+                _commandRuntime.WhatIf = value;
             }
         }
 
@@ -157,22 +152,22 @@ namespace System.Management.Automation.Internal
         {
             get
             {
-                return this.commandRuntime.Confirm;
+                return _commandRuntime.Confirm;
             }
             set
             {
-                this.commandRuntime.Confirm = value;
+                _commandRuntime.Confirm = value;
             }
         }
         #endregion parameters
 
-        private MshCommandRuntime commandRuntime;
+        private MshCommandRuntime _commandRuntime;
     }
 
     /// <summary>
     /// The declaration of parameters for the Transactions mechanisms. -UseTransaction, and -BypassTransaction.
     /// </summary>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.MSInternal", "CA903:InternalNamespaceShouldNotContainPublicTypes", Justification="These are only exposed by way of the PowerShell core cmdlets that surface them.")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.MSInternal", "CA903:InternalNamespaceShouldNotContainPublicTypes", Justification = "These are only exposed by way of the PowerShell core cmdlets that surface them.")]
     public sealed class TransactionParameters
     {
         #region ctor
@@ -186,9 +181,9 @@ namespace System.Management.Automation.Internal
         /// user feedback properties on when the parameters get bound.
         /// </param>
         /// 
-        internal TransactionParameters (MshCommandRuntime commandRuntime)
+        internal TransactionParameters(MshCommandRuntime commandRuntime)
         {
-            this.commandRuntime = commandRuntime;
+            _commandRuntime = commandRuntime;
         } // ctor
         #endregion ctor
 
@@ -204,17 +199,17 @@ namespace System.Management.Automation.Internal
         {
             get
             {
-                return this.commandRuntime.UseTransaction;
+                return _commandRuntime.UseTransaction;
             }
             set
             {
-                this.commandRuntime.UseTransaction = value;
+                _commandRuntime.UseTransaction = value;
             }
         }
 
         #endregion parameters
 
-        private MshCommandRuntime commandRuntime;
-    } 
+        private MshCommandRuntime _commandRuntime;
+    }
 }
 

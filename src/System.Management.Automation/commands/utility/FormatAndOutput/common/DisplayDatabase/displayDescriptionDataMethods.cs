@@ -2,13 +2,8 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-
 namespace Microsoft.PowerShell.Commands.Internal.Format
 {
-
     #region Type Info Database
 
     internal sealed partial class TypeInfoDataBase
@@ -16,7 +11,7 @@ namespace Microsoft.PowerShell.Commands.Internal.Format
     }
     #endregion
 
-#region View Definitions: common data
+    #region View Definitions: common data
     internal sealed partial class AppliesTo
     {
 #if false
@@ -28,15 +23,14 @@ namespace Microsoft.PowerShell.Commands.Internal.Format
             this.referenceList.Add (tgr);
         }
 #endif
-        internal void AddAppliesToType (string typeName)
+        internal void AddAppliesToType(string typeName)
         {
-            TypeReference tr = new TypeReference ();
+            TypeReference tr = new TypeReference();
 
             tr.name = typeName;
-            this.referenceList.Add (tr);
+            this.referenceList.Add(tr);
         }
     }
 
-#endregion
-
+    #endregion
 }

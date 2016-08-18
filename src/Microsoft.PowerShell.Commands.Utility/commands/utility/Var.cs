@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,7 +11,6 @@ using System.Management.Automation.Internal;
 
 namespace Microsoft.PowerShell.Commands
 {
-
     /// <summary>
     /// Base class for all variable commands.
     /// 
@@ -27,19 +27,8 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         [Parameter]
         [ValidateNotNullOrEmpty]
-        public string Scope
-        {
-            get
-            {
-                return scope;
-            }
+        public string Scope { get; set; }
 
-            set
-            {
-                scope = value;
-            }
-        }
-        private string scope;
         #endregion parameters
 
         /// <summary>
@@ -50,7 +39,7 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return include;
+                return _include;
             }
 
             set
@@ -59,10 +48,10 @@ namespace Microsoft.PowerShell.Commands
                 {
                     value = new string[0];
                 }
-                include = value;
+                _include = value;
             }
         }
-        private string[] include = new string[0];
+        private string[] _include = new string[0];
 
         /// <summary>
         /// The Exclude parameter for all the variable commands
@@ -72,7 +61,7 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return exclude;
+                return _exclude;
             }
 
             set
@@ -81,10 +70,10 @@ namespace Microsoft.PowerShell.Commands
                 {
                     value = new string[0];
                 }
-                exclude = value;
+                _exclude = value;
             }
         }
-        private string[] exclude = new string[0];
+        private string[] _exclude = new string[0];
 
 
         #region helpers
@@ -139,12 +128,12 @@ namespace Microsoft.PowerShell.Commands
 
             Collection<WildcardPattern> includeFilters =
                 SessionStateUtilities.CreateWildcardsFromStrings(
-                    include,
+                    _include,
                     WildcardOptions.IgnoreCase);
 
             Collection<WildcardPattern> excludeFilters =
                 SessionStateUtilities.CreateWildcardsFromStrings(
-                    exclude,
+                    _exclude,
                     WildcardOptions.IgnoreCase);
 
             if (!nameContainsWildcard)
@@ -212,7 +201,6 @@ namespace Microsoft.PowerShell.Commands
                             // In quiet mode, don't report private variable accesses unless they are specific matches...
                             if (quiet || nameContainsWildcard)
                             {
-
                                 wasFiltered = true;
                                 continue;
                             }
@@ -275,7 +263,7 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return name;
+                return _name;
             }
 
             set
@@ -284,10 +272,10 @@ namespace Microsoft.PowerShell.Commands
                 {
                     value = new string[] { "*" };
                 }
-                name = value;
+                _name = value;
             }
         }
-        private string[] name = new string[] { "*" };
+        private string[] _name = new string[] { "*" };
 
 
 
@@ -299,14 +287,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return valueOnly;
+                return _valueOnly;
             }
             set
             {
-                valueOnly = value;
+                _valueOnly = value;
             }
         }
-        private bool valueOnly;
+        private bool _valueOnly;
 
 
         /// <summary>
@@ -352,14 +340,14 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         protected override void ProcessRecord()
         {
-            foreach (string varName in name)
+            foreach (string varName in _name)
             {
                 bool wasFiltered = false;
                 List<PSVariable> matchingVariables =
                     GetMatchingVariables(varName, Scope, out wasFiltered, /*quiet*/ false);
 
                 matchingVariables.Sort(
-                    delegate(PSVariable left, PSVariable right)
+                    delegate (PSVariable left, PSVariable right)
                     {
                         return StringComparer.CurrentCultureIgnoreCase.Compare(left.Name, right.Name);
                     });
@@ -368,7 +356,7 @@ namespace Microsoft.PowerShell.Commands
                 foreach (PSVariable matchingVariable in matchingVariables)
                 {
                     matchFound = true;
-                    if (valueOnly)
+                    if (_valueOnly)
                     {
                         WriteObject(matchingVariable.Value);
                     }
@@ -407,53 +395,19 @@ namespace Microsoft.PowerShell.Commands
         /// Name of the PSVariable
         /// </summary>
         [Parameter(Position = 0, ValueFromPipelineByPropertyName = true, Mandatory = true)]
-        public string Name
-        {
-            get
-            {
-                return name;
-            }
-
-            set
-            {
-                name = value;
-            }
-        }
-        private string name;
+        public string Name { get; set; }
 
         /// <summary>
         /// Value of the PSVariable
         /// </summary>
         [Parameter(Position = 1, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
-        public object Value
-        {
-            get
-            {
-                return _value;
-            }
-            set
-            {
-                this._value = value;
-            }
-        }
-        private object _value;
+        public object Value { get; set; }
 
         /// <summary>
         /// Description of the variable
         /// </summary>
         [Parameter]
-        public string Description
-        {
-            get
-            {
-                return description;
-            }
-            set
-            {
-                description = value;
-            }
-        }
-        private string description;
+        public string Description { get; set; }
 
 
         /// <summary>
@@ -462,18 +416,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         /// 
         [Parameter]
-        public ScopedItemOptions Option
-        {
-            get
-            {
-                return options;
-            }
-            set
-            {
-                options = value;
-            }
-        }
-        private ScopedItemOptions options = ScopedItemOptions.None;
+        public ScopedItemOptions Option { get; set; } = ScopedItemOptions.None;
 
         /// <summary>
         /// Specifies the visiblity of the new variable...
@@ -501,15 +444,15 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return force;
+                return _force;
             }
 
             set
             {
-                force = value;
+                _force = value;
             }
         }
-        private bool force;
+        private bool _force;
 
         /// <summary>
         /// The variable object should be passed down the pipeline.
@@ -519,14 +462,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return passThru;
+                return _passThru;
             }
             set
             {
-                passThru = value;
+                _passThru = value;
             }
         }
-        private bool passThru;
+        private bool _passThru;
 
         #endregion parameters
 
@@ -548,19 +491,19 @@ namespace Microsoft.PowerShell.Commands
                 if (String.IsNullOrEmpty(Scope))
                 {
                     varFound =
-                        SessionState.PSVariable.GetAtScope(name, "local");
+                        SessionState.PSVariable.GetAtScope(Name, "local");
                 }
                 else
                 {
                     varFound =
-                        SessionState.PSVariable.GetAtScope(name, Scope);
+                        SessionState.PSVariable.GetAtScope(Name, Scope);
                 }
 
                 if (varFound != null)
                 {
                     SessionStateException sessionStateException =
                         new SessionStateException(
-                            name,
+                            Name,
                             SessionStateCategory.Variable,
                             "VariableAlreadyExists",
                             SessionStateStrings.VariableAlreadyExists,
@@ -583,16 +526,16 @@ namespace Microsoft.PowerShell.Commands
 
             if (ShouldProcess(target, action))
             {
-                PSVariable newVariable = new PSVariable(name, _value, options);
+                PSVariable newVariable = new PSVariable(Name, Value, Option);
 
                 if (_visibility != null)
                 {
-                    newVariable.Visibility =  (SessionStateEntryVisibility) _visibility;
+                    newVariable.Visibility = (SessionStateEntryVisibility)_visibility;
                 }
 
-                if (description != null)
+                if (Description != null)
                 {
-                    newVariable.Description = description;
+                    newVariable.Description = Description;
                 }
 
                 try
@@ -623,7 +566,7 @@ namespace Microsoft.PowerShell.Commands
                     return;
                 }
 
-                if (passThru)
+                if (_passThru)
                 {
                     WriteObject(newVariable);
                 }
@@ -645,36 +588,13 @@ namespace Microsoft.PowerShell.Commands
         /// Name of the PSVariable(s) to set
         /// </summary>
         [Parameter(Position = 0, ValueFromPipelineByPropertyName = true, Mandatory = true)]
-        public string[] Name
-        {
-            get
-            {
-                return names;
-            }
-
-            set
-            {
-                names = value;
-            }
-        }
-        private string[] names;
+        public string[] Name { get; set; }
 
         /// <summary>
         /// Value of the PSVariable
         /// </summary>
         [Parameter(Position = 1, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
-        public object Value
-        {
-            get
-            {
-                return _value;
-            }
-            set
-            {
-                this._value = value;
-            }
-        }
-        private object _value = AutomationNull.Value;
+        public object Value { get; set; } = AutomationNull.Value;
 
         /// <summary>
         /// The Include parameter for all the variable commands
@@ -716,18 +636,7 @@ namespace Microsoft.PowerShell.Commands
         /// Description of the variable
         /// </summary>
         [Parameter]
-        public string Description
-        {
-            get
-            {
-                return description;
-            }
-            set
-            {
-                description = value;
-            }
-        }
-        private string description;
+        public string Description { get; set; }
 
 
         /// <summary>
@@ -740,14 +649,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return (ScopedItemOptions)options;
+                return (ScopedItemOptions)_options;
             }
             set
             {
-                options = value;
+                _options = value;
             }
         }
-        private Nullable<ScopedItemOptions> options;
+        private Nullable<ScopedItemOptions> _options;
 
         /// <summary>
         /// Force the operation to make the best attempt at setting the variable.
@@ -757,15 +666,15 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return force;
+                return _force;
             }
 
             set
             {
-                force = value;
+                _force = value;
             }
         }
-        private bool force;
+        private bool _force;
 
         /// <summary>
         /// Sets the visibility of the variable...
@@ -794,17 +703,17 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return passThru;
+                return _passThru;
             }
             set
             {
-                passThru = value;
+                _passThru = value;
             }
         }
-        private bool passThru;
+        private bool _passThru;
 
-        private bool nameIsFormalParameter;
-        private bool valueIsFormalParameter;
+        private bool _nameIsFormalParameter;
+        private bool _valueIsFormalParameter;
         #endregion parameters
 
         /// <summary>
@@ -813,14 +722,14 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         protected override void BeginProcessing()
         {
-            if (names != null && names.Length > 0)
+            if (Name != null && Name.Length > 0)
             {
-                nameIsFormalParameter = true;
+                _nameIsFormalParameter = true;
             }
 
-            if (_value != AutomationNull.Value)
+            if (Value != AutomationNull.Value)
             {
-                valueIsFormalParameter = true;
+                _valueIsFormalParameter = true;
             }
         }
 
@@ -836,28 +745,28 @@ namespace Microsoft.PowerShell.Commands
         /// 
         protected override void ProcessRecord()
         {
-            if (nameIsFormalParameter && valueIsFormalParameter)
+            if (_nameIsFormalParameter && _valueIsFormalParameter)
             {
                 return;
             }
 
-            if (nameIsFormalParameter && !valueIsFormalParameter)
+            if (_nameIsFormalParameter && !_valueIsFormalParameter)
             {
-                if (_value != AutomationNull.Value)
+                if (Value != AutomationNull.Value)
                 {
-                    if (valueList == null)
+                    if (_valueList == null)
                     {
-                        valueList = new ArrayList();
+                        _valueList = new ArrayList();
                     }
-                    valueList.Add(_value);
+                    _valueList.Add(Value);
                 }
             }
             else
             {
-                SetVariable(names, _value);
+                SetVariable(Name, Value);
             }
         }
-        private ArrayList valueList;
+        private ArrayList _valueList;
 
         /// <summary>
         /// Sets the variable if the name was specified as a formal parameter
@@ -865,32 +774,32 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         protected override void EndProcessing()
         {
-            if (nameIsFormalParameter)
+            if (_nameIsFormalParameter)
             {
-                if (valueIsFormalParameter)
+                if (_valueIsFormalParameter)
                 {
-                    SetVariable(names, _value);
+                    SetVariable(Name, Value);
                 }
                 else
                 {
-                    if (valueList != null)
+                    if (_valueList != null)
                     {
-                        if (valueList.Count == 1)
+                        if (_valueList.Count == 1)
                         {
-                            SetVariable(names, valueList[0]);
+                            SetVariable(Name, _valueList[0]);
                         }
-                        else if (valueList.Count == 0)
+                        else if (_valueList.Count == 0)
                         {
-                            SetVariable(names, AutomationNull.Value);
+                            SetVariable(Name, AutomationNull.Value);
                         }
                         else
                         {
-                            SetVariable(names, valueList.ToArray());
+                            SetVariable(Name, _valueList.ToArray());
                         }
                     }
                     else
                     {
-                        SetVariable(names, AutomationNull.Value);
+                        SetVariable(Name, AutomationNull.Value);
                     }
                 }
             }
@@ -959,9 +868,9 @@ namespace Microsoft.PowerShell.Commands
                             newOptions = ScopedItemOptions.Private;
                         }
 
-                        if (this.options != null)
+                        if (_options != null)
                         {
-                            newOptions |= (ScopedItemOptions)this.options;
+                            newOptions |= (ScopedItemOptions)_options;
                         }
 
                         object newVarValue = varValue;
@@ -976,9 +885,9 @@ namespace Microsoft.PowerShell.Commands
                                 newVarValue,
                                 newOptions);
 
-                        if (description == null)
+                        if (Description == null)
                         {
-                            this.description = String.Empty;
+                            Description = String.Empty;
                         }
                         varToSet.Description = Description;
 
@@ -1007,7 +916,7 @@ namespace Microsoft.PowerShell.Commands
                                     SessionState.Internal.SetVariableAtScope(varToSet, Scope, Force, origin);
                             }
 
-                            if (passThru && result != null)
+                            if (_passThru && result != null)
                             {
                                 WriteObject(result);
                             }
@@ -1068,14 +977,14 @@ namespace Microsoft.PowerShell.Commands
                                 }
 
 
-                                if (description != null)
+                                if (Description != null)
                                 {
-                                    matchingVariable.Description = description;
+                                    matchingVariable.Description = Description;
                                 }
 
-                                if (options != null)
+                                if (_options != null)
                                 {
-                                    matchingVariable.Options = (ScopedItemOptions)options;
+                                    matchingVariable.Options = (ScopedItemOptions)_options;
                                 }
                                 else
                                 {
@@ -1110,7 +1019,7 @@ namespace Microsoft.PowerShell.Commands
                                 continue;
                             }
 
-                            if (passThru && result != null)
+                            if (_passThru && result != null)
                             {
                                 WriteObject(result);
                             }
@@ -1133,19 +1042,7 @@ namespace Microsoft.PowerShell.Commands
         /// Name of the PSVariable(s) to set
         /// </summary>
         [Parameter(Position = 0, ValueFromPipelineByPropertyName = true, Mandatory = true)]
-        public string[] Name
-        {
-            get
-            {
-                return names;
-            }
-
-            set
-            {
-                names = value;
-            }
-        }
-        private string[] names;
+        public string[] Name { get; set; }
 
         /// <summary>
         /// The Include parameter for all the variable commands
@@ -1192,14 +1089,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return force;
+                return _force;
             }
             set
             {
-                force = value;
+                _force = value;
             }
         }
-        private bool force;
+        private bool _force;
 
         #endregion parameters
 
@@ -1218,7 +1115,7 @@ namespace Microsoft.PowerShell.Commands
             }
 
 
-            foreach (string varName in names)
+            foreach (string varName in Name)
             {
                 // First look for existing variables to set.
                 bool wasFiltered = false;
@@ -1260,11 +1157,11 @@ namespace Microsoft.PowerShell.Commands
                         {
                             if (String.IsNullOrEmpty(Scope))
                             {
-                                SessionState.Internal.RemoveVariable(matchingVariable, force);
+                                SessionState.Internal.RemoveVariable(matchingVariable, _force);
                             }
                             else
                             {
-                                SessionState.Internal.RemoveVariableAtScope(matchingVariable, Scope, force);
+                                SessionState.Internal.RemoveVariableAtScope(matchingVariable, Scope, _force);
                             }
                         }
                         catch (SessionStateException sessionStateException)
@@ -1300,19 +1197,7 @@ namespace Microsoft.PowerShell.Commands
         /// Name of the PSVariable(s) to set
         /// </summary>
         [Parameter(Position = 0, ValueFromPipelineByPropertyName = true, Mandatory = true)]
-        public string[] Name
-        {
-            get
-            {
-                return names;
-            }
-
-            set
-            {
-                names = value;
-            }
-        }
-        private string[] names;
+        public string[] Name { get; set; }
 
         /// <summary>
         /// The Include parameter for all the variable commands
@@ -1358,15 +1243,15 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return force;
+                return _force;
             }
 
             set
             {
-                force = value;
+                _force = value;
             }
         }
-        private bool force;
+        private bool _force;
 
         /// <summary>
         /// The variable object should be passed down the pipeline.
@@ -1376,14 +1261,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return passThru;
+                return _passThru;
             }
             set
             {
-                passThru = value;
+                _passThru = value;
             }
         }
-        private bool passThru;
+        private bool _passThru;
 
         #endregion parameters
 
@@ -1393,7 +1278,7 @@ namespace Microsoft.PowerShell.Commands
         /// 
         protected override void ProcessRecord()
         {
-            foreach (string varName in names)
+            foreach (string varName in Name)
             {
                 bool wasFiltered = false;
 
@@ -1434,7 +1319,7 @@ namespace Microsoft.PowerShell.Commands
 
                         try
                         {
-                            if (force &&
+                            if (_force &&
                                 (matchingVariable.Options & ScopedItemOptions.ReadOnly) != 0)
                             {
                                 // Remove the ReadOnly bit to set the value and then reapply
@@ -1467,7 +1352,7 @@ namespace Microsoft.PowerShell.Commands
                             continue;
                         }
 
-                        if (passThru)
+                        if (_passThru)
                         {
                             WriteObject(result);
                         }

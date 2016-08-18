@@ -2,8 +2,6 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace System.Management.Automation.Provider
@@ -91,7 +89,7 @@ namespace System.Management.Automation.Provider
         /// The default implemenation returns null. (no additional parameters)
         /// </returns>
         object GetPropertyDynamicParameters(
-            string path, 
+            string path,
             Collection<string> providerSpecificPickList);
 
         /// <summary>
@@ -157,7 +155,7 @@ namespace System.Management.Automation.Provider
         /// The default implemenation returns null. (no additional parameters)
         /// </returns>
         object SetPropertyDynamicParameters(
-            string path, 
+            string path,
             PSObject propertyValue);
 
         /// <summary>
@@ -218,13 +216,11 @@ namespace System.Management.Automation.Provider
         /// The default implemenation returns null. (no additional parameters)
         /// </returns>
         object ClearPropertyDynamicParameters(
-            string path, 
+            string path,
             Collection<string> propertyToClear);
-
     } // IPropertyCmdletProvider
 
     #endregion IPropertyCmdletProvider
-
 } // namespace System.Management.Automation
 
 

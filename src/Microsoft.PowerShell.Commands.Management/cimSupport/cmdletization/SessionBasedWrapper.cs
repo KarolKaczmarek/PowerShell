@@ -35,7 +35,7 @@ namespace Microsoft.PowerShell.Cmdletization
 
         #region IDisposable Members
 
-        private bool disposed;
+        private bool _disposed;
 
         /// <summary>
         /// Releases resources associated with this object
@@ -51,17 +51,17 @@ namespace Microsoft.PowerShell.Cmdletization
         /// </summary>
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposed)
+            if (!_disposed)
             {
                 if (disposing)
                 {
-                    if (this.parentJob != null)
+                    if (_parentJob != null)
                     {
-                        this.parentJob.Dispose();
-                        this.parentJob = null;
+                        _parentJob.Dispose();
+                        _parentJob = null;
                     }
                 }
-                disposed = true;
+                _disposed = true;
             }
         }
 
@@ -72,17 +72,10 @@ namespace Microsoft.PowerShell.Cmdletization
         /// <summary>
         /// Session to operate on
         /// </summary>
-        [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")] 
+        [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
         protected TSession[] Session
         {
-            get
-            {
-                if (this.session == null)
-                {
-                    this.session = new TSession[] {this.DefaultSession};
-                }
-                return this.session;
-            }
+            get { return _session ?? (_session = new TSession[] {this.DefaultSession}); }
             set
             {
                 if (value == null)
@@ -90,12 +83,12 @@ namespace Microsoft.PowerShell.Cmdletization
                     throw new ArgumentNullException("value");
                 }
 
-                this.session = value;
-                this.sessionWasSpecified = true;
+                _session = value;
+                _sessionWasSpecified = true;
             }
         }
-        private TSession[] session;
-        private bool sessionWasSpecified;
+        private TSession[] _session;
+        private bool _sessionWasSpecified;
 
         /// <summary>
         /// Whether to wrap and emit the whole operation as a background job
@@ -103,10 +96,10 @@ namespace Microsoft.PowerShell.Cmdletization
         [Parameter]
         public SwitchParameter AsJob
         {
-            get { return this.asJob; }
-            set { this.asJob = value; }
+            get { return _asJob; }
+            set { _asJob = value; }
         }
-        private bool asJob;
+        private bool _asJob;
 
         /// <summary>
         /// Maximum number of remote connections that can remain active at any given time.
@@ -153,12 +146,12 @@ namespace Microsoft.PowerShell.Cmdletization
                     sessionForJob,
                     discardNonPipelineResults,
                     actionAgainstResults == null
-                        ? (Action<PSObject>) null
-                        : delegate(PSObject pso)
+                        ? (Action<PSObject>)null
+                        : delegate (PSObject pso)
                               {
                                   var objectInstance =
                                       (TObjectInstance)
-                                      LanguagePrimitives.ConvertTo(pso, typeof (TObjectInstance),
+                                      LanguagePrimitives.ConvertTo(pso, typeof(TObjectInstance),
                                                                    CultureInfo.InvariantCulture);
                                   actionAgainstResults(sessionForJob, objectInstance);
                               });
@@ -189,17 +182,17 @@ namespace Microsoft.PowerShell.Cmdletization
 
         private StartableJob DoCreateInstanceMethodInvocationJob(TSession sessionForJob, TObjectInstance objectInstance, MethodInvocationInfo methodInvocationInfo, bool passThru, bool asJob)
         {
-             StartableJob methodInvocationJob = this.CreateInstanceMethodInvocationJob(sessionForJob, objectInstance, methodInvocationInfo, passThru);
+            StartableJob methodInvocationJob = this.CreateInstanceMethodInvocationJob(sessionForJob, objectInstance, methodInvocationInfo, passThru);
 
-             if (methodInvocationJob != null)
-             {
-                 bool discardNonPipelineResults = !asJob;
-                 HandleJobOutput(
-                     methodInvocationJob,
-                     sessionForJob,
-                     discardNonPipelineResults,
-                     outputAction: null);
-             }
+            if (methodInvocationJob != null)
+            {
+                bool discardNonPipelineResults = !asJob;
+                HandleJobOutput(
+                    methodInvocationJob,
+                    sessionForJob,
+                    discardNonPipelineResults,
+                    outputAction: null);
+            }
 
             return methodInvocationJob;
         }
@@ -242,7 +235,7 @@ namespace Microsoft.PowerShell.Cmdletization
         private void HandleJobOutput(Job job, TSession sessionForJob, bool discardNonPipelineResults, Action<PSObject> outputAction)
         {
             Action<PSObject> processOutput =
-                    delegate(PSObject pso)
+                    delegate (PSObject pso)
                     {
                         if (pso == null)
                         {
@@ -256,9 +249,9 @@ namespace Microsoft.PowerShell.Cmdletization
                     };
 
             job.Output.DataAdded +=
-                    delegate(object sender, DataAddedEventArgs eventArgs)
+                    delegate (object sender, DataAddedEventArgs eventArgs)
                     {
-                        var dataCollection = (PSDataCollection<PSObject>) sender;
+                        var dataCollection = (PSDataCollection<PSObject>)sender;
 
                         if (discardNonPipelineResults)
                         {
@@ -306,7 +299,7 @@ namespace Microsoft.PowerShell.Cmdletization
         private static void DiscardJobOutputs<T>(PSDataCollection<T> psDataCollection)
         {
             psDataCollection.DataAdded +=
-                    delegate(object sender, DataAddedEventArgs e)
+                    delegate (object sender, DataAddedEventArgs e)
                     {
                         var localDataCollection = (PSDataCollection<T>)sender;
                         localDataCollection.Clear();
@@ -369,7 +362,7 @@ namespace Microsoft.PowerShell.Cmdletization
 
         #region Implementation of ObjectModelWrapper functionality
 
-        private ThrottlingJob parentJob;
+        private ThrottlingJob _parentJob;
 
         /// <summary>
         /// Queries for object instances in the object model.
@@ -378,7 +371,7 @@ namespace Microsoft.PowerShell.Cmdletization
         /// <returns>A lazy evaluated collection of object instances</returns>
         public override void ProcessRecord(QueryBuilder query)
         {
-            this.parentJob.DisableFlowControlForPendingCmdletActionsQueue();
+            _parentJob.DisableFlowControlForPendingCmdletActionsQueue();
             foreach (TSession sessionForJob in this.GetSessionsToActAgainst(query))
             {
                 StartableJob childJob = this.DoCreateQueryJob(sessionForJob, query, actionAgainstResults: null);
@@ -386,11 +379,11 @@ namespace Microsoft.PowerShell.Cmdletization
                 {
                     if (!this.AsJob.IsPresent)
                     {
-                        this.parentJob.AddChildJobAndPotentiallyBlock(this.Cmdlet, childJob, ThrottlingJob.ChildJobFlags.None);
+                        _parentJob.AddChildJobAndPotentiallyBlock(this.Cmdlet, childJob, ThrottlingJob.ChildJobFlags.None);
                     }
                     else
                     {
-                        this.parentJob.AddChildJobWithoutBlocking(childJob, ThrottlingJob.ChildJobFlags.None);
+                        _parentJob.AddChildJobWithoutBlocking(childJob, ThrottlingJob.ChildJobFlags.None);
                     }
                 }
             }
@@ -404,9 +397,9 @@ namespace Microsoft.PowerShell.Cmdletization
         /// <param name="passThru"><c>true</c> if successful method invocations should emit downstream the object instance being operated on</param>
         public override void ProcessRecord(QueryBuilder query, MethodInvocationInfo methodInvocationInfo, bool passThru)
         {
-            this.parentJob.DisableFlowControlForPendingJobsQueue();
+            _parentJob.DisableFlowControlForPendingJobsQueue();
 
-            ThrottlingJob closureOverParentJob = this.parentJob;
+            ThrottlingJob closureOverParentJob = _parentJob;
             SwitchParameter closureOverAsJob = this.AsJob;
 
             foreach (TSession sessionForJob in this.GetSessionsToActAgainst(query))
@@ -414,30 +407,30 @@ namespace Microsoft.PowerShell.Cmdletization
                 StartableJob queryJob = this.DoCreateQueryJob(
                     sessionForJob,
                     query,
-                    delegate(TSession sessionForMethodInvocationJob, TObjectInstance objectInstance)
+                    delegate (TSession sessionForMethodInvocationJob, TObjectInstance objectInstance)
                     {
-                         StartableJob methodInvocationJob = this.DoCreateInstanceMethodInvocationJob(
-                             sessionForMethodInvocationJob, 
-                             objectInstance, 
-                             methodInvocationInfo, 
-                             passThru, 
-                             closureOverAsJob.IsPresent);
+                        StartableJob methodInvocationJob = this.DoCreateInstanceMethodInvocationJob(
+                            sessionForMethodInvocationJob,
+                            objectInstance,
+                            methodInvocationInfo,
+                            passThru,
+                            closureOverAsJob.IsPresent);
 
-                         if (methodInvocationJob != null)
-                         {
-                             closureOverParentJob.AddChildJobAndPotentiallyBlock(methodInvocationJob, ThrottlingJob.ChildJobFlags.None);
-                         }
+                        if (methodInvocationJob != null)
+                        {
+                            closureOverParentJob.AddChildJobAndPotentiallyBlock(methodInvocationJob, ThrottlingJob.ChildJobFlags.None);
+                        }
                     });
 
                 if (queryJob != null)
                 {
                     if (!this.AsJob.IsPresent)
                     {
-                        this.parentJob.AddChildJobAndPotentiallyBlock(this.Cmdlet, queryJob, ThrottlingJob.ChildJobFlags.CreatesChildJobs);
+                        _parentJob.AddChildJobAndPotentiallyBlock(this.Cmdlet, queryJob, ThrottlingJob.ChildJobFlags.CreatesChildJobs);
                     }
                     else
                     {
-                        this.parentJob.AddChildJobWithoutBlocking(queryJob, ThrottlingJob.ChildJobFlags.CreatesChildJobs);
+                        _parentJob.AddChildJobWithoutBlocking(queryJob, ThrottlingJob.ChildJobFlags.CreatesChildJobs);
                     }
                 }
             }
@@ -445,7 +438,7 @@ namespace Microsoft.PowerShell.Cmdletization
 
         private IEnumerable<TSession> GetSessionsToActAgainst(TObjectInstance objectInstance)
         {
-            if (this.sessionWasSpecified)
+            if (_sessionWasSpecified)
             {
                 return this.Session;
             }
@@ -453,7 +446,7 @@ namespace Microsoft.PowerShell.Cmdletization
             TSession associatedSession = this.GetSessionOfOriginFromInstance(objectInstance);
             if (associatedSession != null)
             {
-                return new[] {associatedSession};
+                return new[] { associatedSession };
             }
 
             return new[] { this.GetImpliedSession() };
@@ -491,7 +484,7 @@ namespace Microsoft.PowerShell.Cmdletization
 
         private IEnumerable<TSession> GetSessionsToActAgainst(QueryBuilder queryBuilder)
         {
-            if (this.sessionWasSpecified)
+            if (_sessionWasSpecified)
             {
                 return this.Session;
             }
@@ -517,7 +510,7 @@ namespace Microsoft.PowerShell.Cmdletization
 
         private IEnumerable<TSession> GetSessionsToActAgainst(MethodInvocationInfo methodInvocationInfo)
         {
-            if (this.sessionWasSpecified)
+            if (_sessionWasSpecified)
             {
                 return this.Session;
             }
@@ -547,8 +540,8 @@ namespace Microsoft.PowerShell.Cmdletization
 
         internal PSModuleInfo PSModuleInfo
         {
-            get 
-            { 
+            get
+            {
                 var scriptCommandInfo = this.Cmdlet.CommandInfo as IScriptCommandInfo;
                 return scriptCommandInfo.ScriptBlock.Module;
             }
@@ -592,11 +585,11 @@ namespace Microsoft.PowerShell.Cmdletization
                 {
                     if (!this.AsJob.IsPresent)
                     {
-                        this.parentJob.AddChildJobAndPotentiallyBlock(this.Cmdlet, childJob, ThrottlingJob.ChildJobFlags.None);
+                        _parentJob.AddChildJobAndPotentiallyBlock(this.Cmdlet, childJob, ThrottlingJob.ChildJobFlags.None);
                     }
                     else
                     {
-                        this.parentJob.AddChildJobWithoutBlocking(childJob, ThrottlingJob.ChildJobFlags.None);
+                        _parentJob.AddChildJobWithoutBlocking(childJob, ThrottlingJob.ChildJobFlags.None);
                     }
                 }
             }
@@ -617,11 +610,11 @@ namespace Microsoft.PowerShell.Cmdletization
                 {
                     if (!this.AsJob.IsPresent)
                     {
-                        this.parentJob.AddChildJobAndPotentiallyBlock(this.Cmdlet, childJob, ThrottlingJob.ChildJobFlags.None);
+                        _parentJob.AddChildJobAndPotentiallyBlock(this.Cmdlet, childJob, ThrottlingJob.ChildJobFlags.None);
                     }
                     else
                     {
-                        this.parentJob.AddChildJobWithoutBlocking(childJob, ThrottlingJob.ChildJobFlags.None);
+                        _parentJob.AddChildJobWithoutBlocking(childJob, ThrottlingJob.ChildJobFlags.None);
                     }
                 }
             }
@@ -654,7 +647,7 @@ namespace Microsoft.PowerShell.Cmdletization
                 }
             }
 
-            this.parentJob = new ThrottlingJob(
+            _parentJob = new ThrottlingJob(
                 command: Job.GetCommandTextFromInvocationInfo(this.Cmdlet.MyInvocation),
                 jobName: this.GenerateParentJobName(),
                 jobTypeName: CIMJobType,
@@ -667,17 +660,17 @@ namespace Microsoft.PowerShell.Cmdletization
         /// </summary>
         public override void EndProcessing()
         {
-            this.parentJob.EndOfChildJobs();
+            _parentJob.EndOfChildJobs();
             if (this.AsJob.IsPresent)
             {
-                this.Cmdlet.WriteObject(this.parentJob);
-                this.Cmdlet.JobRepository.Add(this.parentJob);
-                this.parentJob = null; // this class doesn't own parentJob after it has been emitted to the outside world
+                this.Cmdlet.WriteObject(_parentJob);
+                this.Cmdlet.JobRepository.Add(_parentJob);
+                _parentJob = null; // this class doesn't own parentJob after it has been emitted to the outside world
             }
             else
             {
-                this.parentJob.ForwardAllResultsToCmdlet(this.Cmdlet);
-                this.parentJob.Finished.WaitOne();
+                _parentJob.ForwardAllResultsToCmdlet(this.Cmdlet);
+                _parentJob.Finished.WaitOne();
             }
         }
 
@@ -686,7 +679,7 @@ namespace Microsoft.PowerShell.Cmdletization
         /// </summary>
         public override void StopProcessing()
         {
-            Job jobToStop = this.parentJob;
+            Job jobToStop = _parentJob;
             if (jobToStop != null)
             {
                 jobToStop.StopJob();

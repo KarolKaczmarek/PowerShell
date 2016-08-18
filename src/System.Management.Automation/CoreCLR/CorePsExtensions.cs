@@ -16,9 +16,9 @@ using Microsoft.Win32;
 
 namespace System.Management.Automation
 {
-#region Reflection and Type related extensions
+    #region Reflection and Type related extensions
 
-#region Enums
+    #region Enums
 
     [Flags]
     internal enum MemberTypes
@@ -31,7 +31,7 @@ namespace System.Management.Automation
         All = 0xbf,
     }
 
-#endregion Enums
+    #endregion Enums
 
     /// <summary>
     /// The type extension methods within this partial class are only used for CoreCLR powershell.
@@ -42,17 +42,17 @@ namespace System.Management.Automation
     /// </summary>
     internal static partial class PSTypeExtensions
     {
-#region Miscs
+        #region Miscs
 
         internal static bool IsSubclassOf(this Type targetType, Type type)
         {
             return targetType.GetTypeInfo().IsSubclassOf(type);
         }
 
-#endregion Miscs
+        #endregion Miscs
 
-#region Interface
-        
+        #region Interface
+
         internal static Type GetInterface(this Type type, string name)
         {
             // The search is case-sensitive, as it's in the full CLR version
@@ -66,10 +66,10 @@ namespace System.Management.Automation
                        implementedInterface => String.Equals(name, implementedInterface.Name, stringComparison));
         }
 
-#endregion Interface
+        #endregion Interface
 
-#region Member
-        
+        #region Member
+
         internal static MemberInfo[] GetMember(this Type type, string name, MemberTypes memberType, BindingFlags bindingAttr)
         {
             if (bindingAttr == 0)
@@ -105,10 +105,10 @@ namespace System.Management.Automation
             return members.ToArray();
         }
 
-#endregion Member
+        #endregion Member
 
-#region Field
-        
+        #region Field
+
         internal static FieldInfo[] GetFields(this Type type, string name, BindingFlags bindingFlags)
         {
             return GetFields(type, name, bindingFlags, false);
@@ -188,10 +188,10 @@ namespace System.Management.Automation
             return fields.ToArray();
         }
 
-#endregion Field
+        #endregion Field
 
-#region Property
-        
+        #region Property
+
         internal static PropertyInfo[] GetProperties(this Type type, string name, BindingFlags bindingFlags)
         {
             return GetProperties(type, name, bindingFlags, false);
@@ -272,7 +272,7 @@ namespace System.Management.Automation
             return properties.ToArray();
         }
 
-#region Property Helper Methods
+        #region Property Helper Methods
 
         private static bool IsInstanceProperty(PropertyInfo property)
         {
@@ -364,11 +364,11 @@ namespace System.Management.Automation
             return true;
         }
 
-#endregion Property Helper Methods
+        #endregion Property Helper Methods
 
-#endregion Property
+        #endregion Property
 
-#region Constructor
+        #region Constructor
 
         /// <summary>
         /// Search for a constructor that matches the specified bindingFlags and parameter types
@@ -389,7 +389,7 @@ namespace System.Management.Automation
             return results != null ? GetMatchingConstructor(results, types) : null;
         }
 
-        internal static ConstructorInfo GetConstructor(this Type type, BindingFlags bindingFlags, string binderNotUsed, 
+        internal static ConstructorInfo GetConstructor(this Type type, BindingFlags bindingFlags, string binderNotUsed,
                                                        CallingConventions callConvention, Type[] types, string modifiersNotUsed)
         {
             if (binderNotUsed != null || modifiersNotUsed != null)
@@ -523,9 +523,9 @@ namespace System.Management.Automation
             return ctors.ToArray();
         }
 
-#endregion Constructor
+        #endregion Constructor
 
-#region Method
+        #region Method
 
         internal static MethodInfo GetMethod(this Type targetType, string name, BindingFlags bindingFlags, string binderNotUsed, Type[] types, string modifierNotUsed)
         {
@@ -696,11 +696,11 @@ namespace System.Management.Automation
             return methods.ToArray();
         }
 
-#endregion Method
+        #endregion Method
 
-#region TypeCode
+        #region TypeCode
 
-        private static readonly Dictionary<Type, TypeCode> TypeCodeMap =
+        private static readonly Dictionary<Type, TypeCode> s_typeCodeMap =
             new Dictionary<Type, TypeCode>()
                 {
                     // 'DBNull = 2' is removed from 'System.TypeCode' in CoreCLR. We return
@@ -720,7 +720,7 @@ namespace System.Management.Automation
                     {typeof(Double),TypeCode.Double},
                     {typeof(string),TypeCode.String},
                     {typeof(Decimal),TypeCode.Decimal},
-                    {typeof(DateTime),TypeCode.DateTime},                    
+                    {typeof(DateTime),TypeCode.DateTime},
                 };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -728,19 +728,20 @@ namespace System.Management.Automation
         {
             if (type == null)
                 return TypeCode.Empty;
-            if (TypeCodeMap.ContainsKey(type))
-                return TypeCodeMap[type];
+            if (s_typeCodeMap.ContainsKey(type))
+                return s_typeCodeMap[type];
             if (type.GetTypeInfo().IsEnum)
                 return GetTypeCode(Enum.GetUnderlyingType(type));
             return TypeCode.Object;
         }
 
-#endregion TypeCode
+        #endregion TypeCode
     }
 
-#endregion Reflection and Type related extensions
+    #endregion Reflection and Type related extensions
 
-#region Environment Extensions
+    #region Environment Extensions
+
     // TODO:CORECLR - Environment Extensions need serious work to refine.
     internal enum EnvironmentVariableTarget
     {
@@ -751,13 +752,13 @@ namespace System.Management.Automation
 
     internal static partial class Environment
     {
-#region Forward_To_System.Environment
+        #region Forward_To_System.Environment
 
-#region Properties
+        #region Properties
 
         public static int CurrentManagedThreadId
-        { 
-            get 
+        {
+            get
             {
                 return System.Environment.CurrentManagedThreadId;
             }
@@ -803,9 +804,9 @@ namespace System.Management.Automation
             }
         }
 
-#endregion Properties
+        #endregion Properties
 
-#region Methods
+        #region Methods
 
         public static string ExpandEnvironmentVariables(string name)
         {
@@ -824,37 +825,7 @@ namespace System.Management.Automation
 
         public static string GetEnvironmentVariable(string variable)
         {
-            string value = System.Environment.GetEnvironmentVariable(variable);
-
-            // Porting note: if not otherwise defined, map Windows environment
-            // variables to their corresponding Linux counterparts
-            if (!Platform.IsWindows && String.IsNullOrEmpty(value))
-            {
-                switch (variable)
-                {
-                    case "OS":
-                        return "Linux";
-
-                    case "COMPUTERNAME":
-                        return System.Environment.GetEnvironmentVariable("HOSTNAME");
-
-                    case "USERNAME":
-                        return System.Environment.GetEnvironmentVariable("USER");
-
-                    case "HOMEPATH":
-                    case "USERPROFILE":
-                        return System.Environment.GetEnvironmentVariable("HOME");
-
-                    case "TMP":
-                    case "TEMP":
-                        return System.Environment.GetEnvironmentVariable("TMPDIR");
-
-                    default:
-                        break;
-                }
-            }
-
-            return value;
+            return System.Environment.GetEnvironmentVariable(variable);
         }
 
         public static IDictionary GetEnvironmentVariables()
@@ -867,19 +838,19 @@ namespace System.Management.Automation
             System.Environment.SetEnvironmentVariable(variable, value);
         }
 
-#endregion Methods
+        #endregion Methods
 
-#endregion Forward_To_System.Environment
-        
+        #endregion Forward_To_System.Environment
+
         private const int MaxMachineNameLength = 256;
-        private static string[] commandLineArgs = new string[0];
+        private static string[] s_commandLineArgs = new string[0];
 
         public static string[] GetCommandLineArgs()
         {
-            return commandLineArgs;
+            return s_commandLineArgs;
         }
 
-#region EnvironmentVariable_Extensions
+        #region EnvironmentVariable_Extensions
 
         /// <summary>
         /// The code is mostly copied from the .NET implementation.
@@ -896,7 +867,6 @@ namespace System.Management.Automation
 #if UNIX
             return null;
 #else
-
             if( target == EnvironmentVariableTarget.Machine)
             {
                 using (RegistryKey environmentKey =
@@ -957,7 +927,6 @@ namespace System.Management.Automation
 #if UNIX
             return null;
 #else
-
             if (target == EnvironmentVariableTarget.Machine)
             {
                 using (RegistryKey environmentKey =
@@ -982,34 +951,9 @@ namespace System.Management.Automation
 #endif
         }
 
-#endregion EnvironmentVariable_Extensions
+        #endregion EnvironmentVariable_Extensions
 
-#region Property_Extensions
-
-        internal static string WinGetUserDomainName()
-        {
-            StringBuilder domainName = new StringBuilder(1024);
-            uint domainNameLen = (uint)domainName.Capacity;
-
-            byte ret = Win32Native.GetUserNameEx(Win32Native.NameSamCompatible, domainName, ref domainNameLen);
-            if (ret == 1)
-            {
-                string samName = domainName.ToString();
-                int index = samName.IndexOf('\\');
-                if (index != -1)
-                {
-                    return samName.Substring(0, index);
-                }
-            }
-            else
-            {
-                int errorCode = Marshal.GetLastWin32Error();
-                throw new InvalidOperationException(Win32Native.GetMessage(errorCode));
-            }
-
-            // Cannot use LookupAccountNameW to get DomainName because 'GetUserName' is not available in CSS and thus we cannot get the account.
-            throw new InvalidOperationException(CoreClrStubResources.CannotGetDomainName);
-        }
+        #region Property_Extensions
 
         /// <summary>
         /// UserDomainName
@@ -1018,33 +962,12 @@ namespace System.Management.Automation
         {
             get
             {
-                if (Platform.IsWindows)
-                {
-                    return WinGetUserDomainName();
-                }
-                else
-                {
-                    return Platform.NonWindowsGetDomainName();
-                }
+#if UNIX
+                return Platform.NonWindowsGetDomainName();
+#else
+                return WinGetUserDomainName();
+#endif
             }
-        }
-        
-        internal static string WinGetUserName()
-        {
-            StringBuilder domainName = new StringBuilder(1024);
-            uint domainNameLen = (uint)domainName.Capacity;
-
-            byte ret = Win32Native.GetUserNameEx(Win32Native.NameSamCompatible, domainName, ref domainNameLen);
-            if (ret == 1)
-            {
-                string samName = domainName.ToString();
-                int index = samName.IndexOf('\\');
-                if (index != -1)
-                {
-                    return samName.Substring(index + 1);
-                }
-            }
-            return string.Empty;
         }
 
         /// <summary>
@@ -1054,14 +977,11 @@ namespace System.Management.Automation
         {
             get
             {
-                if (Platform.IsWindows)
-                {
-                    return WinGetUserName();
-                }
-                else
-                {
-                    return Platform.NonWindowsGetUserName();
-                }
+#if UNIX
+                return Platform.Unix.UserName;
+#else
+                return WinGetUserName();
+#endif
             }
         }
 
@@ -1083,50 +1003,24 @@ namespace System.Management.Automation
         {
             get
             {
-                if (m_os == null)
+                if (s_os == null)
                 {
-                    if (Platform.IsWindows)
-                    {
-                        m_os = WinOSVersion;
-                    }
-                    else
-                    {
-                        // TODO:PSL use P/Invoke to provide proper version
-
-                        // Porting note: cannot put this in CorePsPlatform since
-                        // System.Management.Automation.Environment only exists in CoreCLR
-                        // builds of monad.
-                        m_os = new Environment.OperatingSystem(new Version(1,0,0,0),"");
-                    }
+#if UNIX
+                    // TODO:PSL use P/Invoke to provide proper version
+                    // OSVersion will be back in CoreCLR 1.1
+                    s_os = new Environment.OperatingSystem(new Version(1, 0, 0, 0), "");
+#else
+                    s_os = WinGetOSVersion();
+#endif
                 }
-                return m_os;
+                return s_os;
             }
         }
-        private static volatile OperatingSystem m_os;
+        private static volatile OperatingSystem s_os;
 
-        /// <summary>
-        /// Windows OSVersion implementation
-        /// </summary>
-        private static OperatingSystem WinOSVersion
-        {
-            get
-            {
-                Win32Native.OSVERSIONINFOEX osviex = new Win32Native.OSVERSIONINFOEX();
-                osviex.OSVersionInfoSize = Marshal.SizeOf(osviex);
-                if (!Win32Native.GetVersionEx(ref osviex))
-                {
-                    int errorCode = Marshal.GetLastWin32Error();
-                    throw new Win32Exception(errorCode);
-                }
+        #endregion Property_Extensions
 
-                Version v = new Version(osviex.MajorVersion, osviex.MinorVersion, osviex.BuildNumber, (osviex.ServicePackMajor << 16) | osviex.ServicePackMinor);
-                return new OperatingSystem(v, osviex.CSDVersion);
-            }
-        }
-        
-#endregion Property_Extensions
-
-#region SpecialFolder_Extensions
+        #region SpecialFolder_Extensions
 
         /// <summary>
         /// The code is copied from the .NET implementation.
@@ -1146,13 +1040,36 @@ namespace System.Management.Automation
         /// </returns>
         private static string InternalGetFolderPath(SpecialFolder folder)
         {
-            if (!Platform.IsWindows)
-            {
-                return Platform.NonWindowsGetFolderPath(folder);
-            }
-
             // The API 'SHGetFolderPath' is not available on OneCore, so we have to rely on environment variables
             string folderPath = null;
+
+#if UNIX
+            switch (folder)
+            {
+                case SpecialFolder.ProgramFiles:
+                    folderPath = "/bin";
+                    if (!System.IO.Directory.Exists(folderPath)) { folderPath = null; }
+                    break;
+                case SpecialFolder.ProgramFilesX86:
+                    folderPath = "/usr/bin";
+                    if (!System.IO.Directory.Exists(folderPath)) { folderPath = null; }
+                    break;
+                case SpecialFolder.System:
+                case SpecialFolder.SystemX86:
+                    folderPath = "/sbin";
+                    if (!System.IO.Directory.Exists(folderPath)) { folderPath = null; }
+                    break;
+                case SpecialFolder.Personal:
+                    folderPath = System.Environment.GetEnvironmentVariable("HOME");
+                    break;
+                case SpecialFolder.LocalApplicationData:
+                    folderPath = System.IO.Path.Combine(System.Environment.GetEnvironmentVariable("HOME"), ".config");
+                    if (!System.IO.Directory.Exists(folderPath)) { System.IO.Directory.CreateDirectory(folderPath); }
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
+#else
             string systemRoot = null;
             string userProfile = null;
 
@@ -1219,19 +1136,86 @@ namespace System.Management.Automation
                 default:
                     throw new NotSupportedException();
             }
+#endif
 
             return folderPath ?? string.Empty;
         }
 
-#endregion SpecialFolder_Extensions
+        #endregion SpecialFolder_Extensions
 
-#region NativeMethods
+        #region WinPlatform_Specific_Methods
+#if !UNIX
+        /// <summary>
+        /// Windows UserDomainName implementation
+        /// </summary>
+        private static string WinGetUserDomainName()
+        {
+            StringBuilder domainName = new StringBuilder(1024);
+            uint domainNameLen = (uint)domainName.Capacity;
+
+            byte ret = Win32Native.GetUserNameEx(Win32Native.NameSamCompatible, domainName, ref domainNameLen);
+            if (ret == 1)
+            {
+                string samName = domainName.ToString();
+                int index = samName.IndexOf('\\');
+                if (index != -1)
+                {
+                    return samName.Substring(0, index);
+                }
+            }
+            else
+            {
+                int errorCode = Marshal.GetLastWin32Error();
+                throw new InvalidOperationException(Win32Native.GetMessage(errorCode));
+            }
+
+            // Cannot use LookupAccountNameW to get DomainName because 'GetUserName' is not available in CSS and thus we cannot get the account.
+            throw new InvalidOperationException(CoreClrStubResources.CannotGetDomainName);
+        }
+
+        /// <summary>
+        /// Windows UserName implementation
+        /// </summary>
+        private static string WinGetUserName()
+        {
+            StringBuilder domainName = new StringBuilder(1024);
+            uint domainNameLen = (uint)domainName.Capacity;
+
+            byte ret = Win32Native.GetUserNameEx(Win32Native.NameSamCompatible, domainName, ref domainNameLen);
+            if (ret == 1)
+            {
+                string samName = domainName.ToString();
+                int index = samName.IndexOf('\\');
+                if (index != -1)
+                {
+                    return samName.Substring(index + 1);
+                }
+            }
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Windows OSVersion implementation
+        /// </summary>
+        private static OperatingSystem WinGetOSVersion()
+        {
+            Win32Native.OSVERSIONINFOEX osviex = new Win32Native.OSVERSIONINFOEX();
+            osviex.OSVersionInfoSize = Marshal.SizeOf(osviex);
+            if (!Win32Native.GetVersionEx(ref osviex))
+            {
+                int errorCode = Marshal.GetLastWin32Error();
+                throw new Win32Exception(errorCode);
+            }
+
+            Version v = new Version(osviex.MajorVersion, osviex.MinorVersion, osviex.BuildNumber, (osviex.ServicePackMajor << 16) | osviex.ServicePackMinor);
+            return new OperatingSystem(v, osviex.CSDVersion);
+        }
 
         /// <summary>
         /// DllImport uses the ApiSet dll that is available on CSS, since this code
         /// will only be included when building targeting CoreCLR.
         /// </summary>
-        internal static class Win32Native
+        private static class Win32Native
         {
             internal const int NameSamCompatible = 2;             // EXTENDED_NAME_FORMAT - NameSamCompatible
 
@@ -1244,7 +1228,7 @@ namespace System.Management.Automation
             internal static extern byte GetUserNameEx(int format, [Out] StringBuilder domainName, ref uint domainNameLen);
 
             [DllImport("api-ms-win-core-localization-l1-2-1.dll", CharSet = CharSet.Unicode)]
-            internal static extern int FormatMessage(int dwFlags, IntPtr lpSource, int dwMessageId, 
+            internal static extern int FormatMessage(int dwFlags, IntPtr lpSource, int dwMessageId,
                                                      int dwLanguageId, [Out]StringBuilder lpBuffer,
                                                      int nSize, IntPtr va_list_arguments);
 
@@ -1290,10 +1274,10 @@ namespace System.Management.Automation
                 }
             }
         }
+#endif
+        #endregion WinPlatform_Specific_Methods
 
-#endregion NativeMethods
-
-#region NestedTypes
+        #region NestedTypes
 
         // Porting note: MyDocuments does not exist on .NET Core, but Personal does, and
         // they both point to your "documents repository," which on linux, is just the
@@ -1367,12 +1351,12 @@ namespace System.Management.Automation
             }
         }
 
-#endregion NestedTypes
+        #endregion NestedTypes
     }
 
-#endregion Environment Extensions
+    #endregion Environment Extensions
 
-#region Non-generic collection extensions
+    #region Non-generic collection extensions
 
     /// <summary>
     /// Add the AttributeCollection type with stripped functionalities for powershell on CoreCLR.
@@ -1388,7 +1372,7 @@ namespace System.Management.Automation
         /// </summary>
         public static readonly AttributeCollection Empty = new AttributeCollection(null);
 
-#region Constructors
+        #region Constructors
 
         /// <summary>
         /// AttributeCollection protected constructor
@@ -1396,7 +1380,7 @@ namespace System.Management.Automation
         protected AttributeCollection()
         {
         }
-        
+
         /// <summary>
         /// AttributeCollection public constructor
         /// </summary>
@@ -1408,7 +1392,7 @@ namespace System.Management.Automation
                 attributes = new Attribute[0];
             }
 
-            this._attributes = attributes;
+            _attributes = attributes;
             for (int i = 0; i < attributes.Length; i++)
             {
                 if (attributes[i] == null)
@@ -1418,9 +1402,9 @@ namespace System.Management.Automation
             }
         }
 
-#endregion Constructors
+        #endregion Constructors
 
-#region Methods
+        #region Methods
 
         /// <summary>
         /// Copies the collection to an array, starting at the specified index.
@@ -1446,9 +1430,9 @@ namespace System.Management.Automation
             return this.GetEnumerator();
         }
 
-#endregion Methods
+        #endregion Methods
 
-#region Properties
+        #region Properties
 
         private readonly Attribute[] _attributes;
         /// <summary>
@@ -1459,7 +1443,7 @@ namespace System.Management.Automation
         {
             get
             {
-                return this._attributes;
+                return _attributes;
             }
         }
 
@@ -1511,12 +1495,12 @@ namespace System.Management.Automation
             }
         }
 
-#endregion Properties
+        #endregion Properties
     }
 
-#endregion Non-generic collection extensions
+    #endregion Non-generic collection extensions
 
-#region Misc extensions
+    #region Misc extensions
 
     /// <summary>
     /// Add the Pointer type with stripped functionalities for PowerShell on CoreCLR.
@@ -1531,7 +1515,7 @@ namespace System.Management.Automation
         {
         }
 
-#region Methods
+        #region Methods
 
         /// <summary>
         /// Boxes the supplied unmanaged memory pointer and the type associated with that pointer into a managed Pointer wrapper object. 
@@ -1572,7 +1556,7 @@ namespace System.Management.Automation
             return ((Pointer)ptr)._ptr;
         }
 
-#endregion Methods
+        #endregion Methods
     }
 
     internal static class ListExtensions
@@ -1609,7 +1593,7 @@ namespace System.Management.Automation
         }
     }
 
-#endregion Misc extensions
+    #endregion Misc extensions
 }
 
 
@@ -1631,7 +1615,7 @@ namespace Microsoft.PowerShell.CoreCLR
         public static Assembly LoadFrom(string assemblyPath)
         {
             return ClrFacade.LoadFrom(assemblyPath);
-            }
+        }
 
         /// <summary>
         /// Load an assembly given its byte stream

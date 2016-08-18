@@ -12,7 +12,6 @@ using Dbg = System.Management.Automation;
 
 namespace Microsoft.PowerShell.Commands
 {
-
     /// <summary> 
     /// implementation for the set-date command 
     /// </summary> 
@@ -26,55 +25,22 @@ namespace Microsoft.PowerShell.Commands
         /// Allows user to override the date/time object that will be processed
         /// </summary>
         [Parameter(Position = 0, Mandatory = true, ParameterSetName = "Date", ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
-        public DateTime Date
-        {
-            get
-            {
-                return to;
-            }
-            set
-            {
-                to = value;
-            }
-        }
-        private DateTime to;
+        public DateTime Date { get; set; }
 
 
         /// <summary>
         /// Allows a use to specify a timespan with which to apply to the current time
         /// </summary>
-        [Parameter(Position = 0, Mandatory = true, ParameterSetName = "Adjust", ValueFromPipelineByPropertyName = true )]
+        [Parameter(Position = 0, Mandatory = true, ParameterSetName = "Adjust", ValueFromPipelineByPropertyName = true)]
         [AllowNull]
-        public TimeSpan Adjust
-        {
-            get
-            {
-                return adjust;
-            }
-            set
-            {
-                adjust = value;
-            }
-        }
-        private TimeSpan adjust;
+        public TimeSpan Adjust { get; set; }
 
 
         /// <summary>
         /// This option determines the default output format used to display the object set-date emits
         /// </summary>
         [Parameter]
-        public DisplayHintType DisplayHint
-        {
-            get
-            {
-                return displayHint;
-            }
-            set
-            {
-                displayHint = value;
-            }
-        }
-        private DisplayHintType displayHint = DisplayHintType.DateTime;
+        public DisplayHintType DisplayHint { get; set; } = DisplayHintType.DateTime;
 
         #endregion
 
@@ -88,18 +54,18 @@ namespace Microsoft.PowerShell.Commands
         {
             DateTime dateToUse;
 
-            switch ( ParameterSetName )
+            switch (ParameterSetName)
             {
                 case "Date":
                     dateToUse = Date;
                     break;
 
                 case "Adjust":
-                    dateToUse = DateTime.Now.Add( Adjust );
+                    dateToUse = DateTime.Now.Add(Adjust);
                     break;
 
                 default:
-                    Dbg.Diagnostics.Assert(false, "Only one of the specified parameter sets should be called." );
+                    Dbg.Diagnostics.Assert(false, "Only one of the specified parameter sets should be called.");
                     goto case "Date";
             }
 
@@ -107,19 +73,19 @@ namespace Microsoft.PowerShell.Commands
 
             // build up the SystemTime struct to pass to SetSystemTime
             NativeMethods.SystemTime systemTime = new NativeMethods.SystemTime();
-            systemTime.Year = (UInt16) dateToUse.Year;
-            systemTime.Month = (UInt16) dateToUse.Month;
-            systemTime.Day = (UInt16) dateToUse.Day;
-            systemTime.Hour = (UInt16) dateToUse.Hour;
-            systemTime.Minute = (UInt16) dateToUse.Minute;
-            systemTime.Second = (UInt16) dateToUse.Second;
-            systemTime.Milliseconds = (UInt16) dateToUse.Millisecond;
+            systemTime.Year = (UInt16)dateToUse.Year;
+            systemTime.Month = (UInt16)dateToUse.Month;
+            systemTime.Day = (UInt16)dateToUse.Day;
+            systemTime.Hour = (UInt16)dateToUse.Hour;
+            systemTime.Minute = (UInt16)dateToUse.Minute;
+            systemTime.Second = (UInt16)dateToUse.Second;
+            systemTime.Milliseconds = (UInt16)dateToUse.Millisecond;
 
-            if ( ShouldProcess( dateToUse.ToString() ) )
+            if (ShouldProcess(dateToUse.ToString()))
             {
                 if (Platform.IsWindows)
                 {
-                    #pragma warning disable 56523
+#pragma warning disable 56523
 
                     if (!NativeMethods.SetLocalTime(ref systemTime))
                     {
@@ -133,7 +99,7 @@ namespace Microsoft.PowerShell.Commands
                         throw new Win32Exception(Marshal.GetLastWin32Error());
                     }
 
-                    #pragma warning restore 56523
+#pragma warning restore 56523
                 }
                 else
                 {
@@ -142,11 +108,11 @@ namespace Microsoft.PowerShell.Commands
             }
 
             //output DateTime object wrapped in an PSObject with DisplayHint attached
-            PSObject outputObj = new PSObject( dateToUse );
-            PSNoteProperty note = new PSNoteProperty( "DisplayHint", DisplayHint );
-            outputObj.Properties.Add( note );
+            PSObject outputObj = new PSObject(dateToUse);
+            PSNoteProperty note = new PSNoteProperty("DisplayHint", DisplayHint);
+            outputObj.Properties.Add(note);
 
-            WriteObject( outputObj );
+            WriteObject(outputObj);
         } // EndProcessing
 
         #endregion
@@ -167,15 +133,12 @@ namespace Microsoft.PowerShell.Commands
                 public UInt16 Milliseconds;
             }
 
-            [DllImport(PinvokeDllNames.SetLocalTimeDllName, SetLastError = true )]
-            public static extern bool SetLocalTime( ref SystemTime systime );
-
+            [DllImport(PinvokeDllNames.SetLocalTimeDllName, SetLastError = true)]
+            public static extern bool SetLocalTime(ref SystemTime systime);
         } // NativeMethods
 
         #endregion
     } // SetDateCommand
-
-
 } // namespace Microsoft.PowerShell.Commands
 
 

@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -35,10 +34,9 @@ namespace System.Management.Automation
     /// </summary>
     public static class HostUtilities
     {
-
         #region Internal Access
 
-        private static string checkForCommandInCurrentDirectoryScript = @"
+        private static string s_checkForCommandInCurrentDirectoryScript = @"
             [System.Diagnostics.DebuggerHidden()]
             param()
 
@@ -54,22 +52,22 @@ namespace System.Management.Automation
             $foundSuggestion
         ";
 
-        private static string createCommandExistsInCurrentDirectoryScript = @"
+        private static string s_createCommandExistsInCurrentDirectoryScript = @"
             [System.Diagnostics.DebuggerHidden()]
             param([string] $formatString)
 
             $formatString -f $lastError.TargetObject,"".\$($lastError.TargetObject)""
         ";
 
-        private static ArrayList suggestions = new ArrayList(
+        private static ArrayList s_suggestions = new ArrayList(
             new Hashtable[] {
                 NewSuggestion(1, "Transactions", SuggestionMatchType.Command, "^Start-Transaction",
                     SuggestionStrings.Suggestion_StartTransaction, true),
                 NewSuggestion(2, "Transactions", SuggestionMatchType.Command, "^Use-Transaction",
                     SuggestionStrings.Suggestion_UseTransaction, true),
                 NewSuggestion(3, "General", SuggestionMatchType.Dynamic,
-                    ScriptBlock.CreateDelayParsedScriptBlock(checkForCommandInCurrentDirectoryScript, isProductCode: true),
-                    ScriptBlock.CreateDelayParsedScriptBlock(createCommandExistsInCurrentDirectoryScript, isProductCode: true),
+                    ScriptBlock.CreateDelayParsedScriptBlock(s_checkForCommandInCurrentDirectoryScript, isProductCode: true),
+                    ScriptBlock.CreateDelayParsedScriptBlock(s_createCommandExistsInCurrentDirectoryScript, isProductCode: true),
                     new object[] { CodeGeneration.EscapeSingleQuotedStringContent(SuggestionStrings.Suggestion_CommandExistsInCurrentDirectory) },
                     true)
             }
@@ -184,8 +182,12 @@ namespace System.Management.Automation
 
             if (forCurrentUser)
             {
+#if UNIX
+                basePath = Platform.SelectProductNameForDirectory(Platform.XDG_Type.CONFIG);   
+#else
                 basePath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
                 basePath = IO.Path.Combine(basePath, Utils.ProductNameForDirectory);
+#endif
             }
             else
             {
@@ -226,7 +228,7 @@ namespace System.Management.Automation
 
             return folderPath;
         }
-#endregion GetProfileCommands
+        #endregion GetProfileCommands
 
         /// <summary>
         /// Gets the first <paramref name="maxLines"/> lines of <paramref name="source"/>.
@@ -351,7 +353,7 @@ namespace System.Management.Automation
             int initialErrorCount = 0;
 
             // Go through all of the suggestions
-            foreach (Hashtable suggestion in suggestions)
+            foreach (Hashtable suggestion in s_suggestions)
             {
                 initialErrorCount = errorList.Count;
 
@@ -728,7 +730,7 @@ namespace System.Management.Automation
                   int ulUserNameMaxChars, StringBuilder pszPassword, int ulPasswordMaxChars, ref int pfSave, CREDUI_FLAGS dwFlags);
 
         [Flags]
-        enum CREDUI_FLAGS
+        private enum CREDUI_FLAGS
         {
             INCORRECT_PASSWORD = 0x1,
             DO_NOT_PERSIST = 0x2,
@@ -749,7 +751,7 @@ namespace System.Management.Automation
             KEEP_USERNAME = 0x100000,
         }
 
-        struct CREDUI_INFO
+        private struct CREDUI_INFO
         {
             public int cbSize;
             public IntPtr hwndParent;
@@ -760,7 +762,7 @@ namespace System.Management.Automation
             public IntPtr hbmBanner;
         }
 
-        enum CredUIReturnCodes
+        private enum CredUIReturnCodes
         {
             NO_ERROR = 0,
             ERROR_CANCELLED = 1223,
@@ -778,7 +780,7 @@ namespace System.Management.Automation
         internal static string GetRemotePrompt(RemoteRunspace runspace, string basePrompt, bool configuredSession = false)
         {
             if (configuredSession ||
-                runspace.ConnectionInfo is NamedPipeConnectionInfo || 
+                runspace.ConnectionInfo is NamedPipeConnectionInfo ||
                 runspace.ConnectionInfo is VMConnectionInfo ||
                 runspace.ConnectionInfo is ContainerConnectionInfo)
             {
@@ -862,11 +864,11 @@ namespace System.Management.Automation
             return remoteRunspace;
         }
 
-#endregion
+        #endregion
 
-#region Public Access
+        #region Public Access
 
-#region PSEdit Support
+        #region PSEdit Support
 
         /// <summary>
         /// PSEditFunction script string.
@@ -933,10 +935,10 @@ namespace System.Management.Automation
         /// </summary>
         public const string RemoteSessionOpenFileEvent = "PSISERemoteSessionOpenFile";
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
     }
 
-#endregion
+    #endregion
 }

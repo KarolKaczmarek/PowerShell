@@ -2,12 +2,9 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
 using System.Collections;
 using System.Management.Automation.Language;
-using System.Text;
 using System.Collections.ObjectModel;
-using System.Management.Automation;
 using System.Management.Automation.Internal;
 using Dbg = System.Management.Automation.Diagnostics;
 
@@ -29,7 +26,7 @@ namespace System.Management.Automation
         internal CommandProcessorBase()
         {
         }
-        
+
         /// <summary>
         /// Initializes the base command processor class with the command metadata
         /// </summary>
@@ -39,21 +36,21 @@ namespace System.Management.Automation
         /// </param>
         /// 
         internal CommandProcessorBase(
-            CommandInfo commandInfo) 
+            CommandInfo commandInfo)
         {
             if (commandInfo == null)
             {
                 throw PSTraceSource.NewArgumentNullException("commandInfo");
             }
 
-            this.commandInfo = commandInfo;
+            CommandInfo = commandInfo;
         }
-        
+
         #endregion ctor
 
         #region properties
 
-        private InternalCommand command;
+        private InternalCommand _command;
 
         // marker of whether BeginProcessing() has already run,
         // also used by CommandProcessor
@@ -73,12 +70,7 @@ namespace System.Management.Automation
         /// Gets the CommandInfo for the command this command processor represents
         /// </summary>
         /// <value></value>
-        internal CommandInfo CommandInfo
-        {
-            get { return commandInfo; }
-            set { commandInfo = value; }
-        }
-        private CommandInfo commandInfo;
+        internal CommandInfo CommandInfo { get; set; }
 
         /// <summary>
         /// This indicates whether this command processor is created from
@@ -107,35 +99,30 @@ namespace System.Management.Automation
         /// (see the comment in Pipeline.RedirectShellErrorOutputPipe for an 
         /// explanation of why this flag is needed)
         /// </summary>
-        internal bool RedirectShellErrorOutputPipe
-        {
-            get { return this._redirectShellErrorOutputPipe; }
-            set { this._redirectShellErrorOutputPipe = value; }
-        }
-        private bool _redirectShellErrorOutputPipe = false;
+        internal bool RedirectShellErrorOutputPipe { get; set; } = false;
 
         /// <summary>
         /// Gets or sets the command object.
         /// </summary>
         internal InternalCommand Command
         {
-            get{ return command;}
-            set 
+            get { return _command; }
+            set
             {
                 // The command runtime needs to be set up...
                 if (value != null)
                 {
                     value.commandRuntime = this.commandRuntime;
-                    if (command != null)
-                        value.CommandInfo = command.CommandInfo;
+                    if (_command != null)
+                        value.CommandInfo = _command.CommandInfo;
 
                     // Set the execution context for the command it's currently
                     // null and our context has already been set up.
                     if (value.Context == null && _context != null)
                         value.Context = _context;
                 }
-                command = value;
-            }   
+                _command = value;
+            }
         }
 
         /// <summary>
@@ -207,7 +194,8 @@ namespace System.Management.Automation
         /// The execution context used by the system.
         /// </summary>
         protected ExecutionContext _context;
-        internal ExecutionContext Context {
+        internal ExecutionContext Context
+        {
             get { return _context; }
             set { _context = value; }
         }
@@ -215,12 +203,7 @@ namespace System.Management.Automation
         /// <summary>
         /// Etw activity for this pipeline
         /// </summary>
-        internal Guid PipelineActivityId
-        {
-            get { return _pipelineActivityId; }
-            set { _pipelineActivityId = value; }
-        }
-        private Guid _pipelineActivityId = Guid.Empty;
+        internal Guid PipelineActivityId { get; set; } = Guid.Empty;
 
         #endregion properties
 
@@ -251,8 +234,8 @@ namespace System.Management.Automation
         /// <param name="helpTarget">help target</param>
         /// <param name="helpCategory">help category</param>
         /// <returns>command processor for "get-help [helpTarget]"</returns>
-        static internal CommandProcessorBase CreateGetHelpCommandProcessor(
-            ExecutionContext context, 
+        internal static CommandProcessorBase CreateGetHelpCommandProcessor(
+            ExecutionContext context,
             string helpTarget,
             HelpCategory helpCategory)
         {
@@ -294,18 +277,7 @@ namespace System.Management.Automation
         /// If you want this command to execute in other than the default session
         /// state, use this API to get and set that session state instance...
         /// </summary>
-        internal SessionStateInternal CommandSessionState
-        {
-            get
-            {
-                return _commandSessionState;
-            }
-            set
-            {
-                _commandSessionState = value;
-            }
-        }
-        private SessionStateInternal _commandSessionState;
+        internal SessionStateInternal CommandSessionState { get; set; }
 
         /// <summary>
         /// Gets sets the session state scope for this command processor object
@@ -329,18 +301,18 @@ namespace System.Management.Automation
             // Make sure we have a session state instance for this command.
             // If one hasn't been explicitly set, then use the session state
             // available on the engine execution context...
-            if (_commandSessionState == null)
+            if (CommandSessionState == null)
             {
-                _commandSessionState = Context.EngineSessionState;
+                CommandSessionState = Context.EngineSessionState;
             }
 
             // Store off the current scope
-            _previousScope = _commandSessionState.CurrentScope;
+            _previousScope = CommandSessionState.CurrentScope;
             _previousCommandSessionState = Context.EngineSessionState;
-            Context.EngineSessionState = _commandSessionState;
+            Context.EngineSessionState = CommandSessionState;
 
             // Set the current scope to the pipeline execution scope
-            _commandSessionState.CurrentScope = CommandScope;
+            CommandSessionState.CurrentScope = CommandScope;
 
             OnSetCurrentScope();
         }
@@ -361,7 +333,7 @@ namespace System.Management.Automation
                 // Restore the scope but use the same session state instance we
                 // got it from because the command may have changed the execution context
                 // session state...
-                _commandSessionState.CurrentScope = _previousScope;
+                CommandSessionState.CurrentScope = _previousScope;
             }
         }
 
@@ -387,7 +359,7 @@ namespace System.Management.Automation
             Diagnostics.Assert(parameter != null, "Caller to verify parameter argument");
             arguments.Add(parameter);
         } // AddParameter
-        
+
         /// <summary>
         /// Prepares the command for execution.
         /// This should be called once before ProcessRecord().
@@ -401,10 +373,10 @@ namespace System.Management.Automation
         private void HandleObsoleteCommand(ObsoleteAttribute obsoleteAttr)
         {
             string commandName =
-                String.IsNullOrEmpty(this.commandInfo.Name)
+                String.IsNullOrEmpty(CommandInfo.Name)
                     ? "script block"
                     : String.Format(System.Globalization.CultureInfo.InvariantCulture,
-                                    CommandBaseStrings.ObsoleteCommand, this.commandInfo.Name);
+                                    CommandBaseStrings.ObsoleteCommand, CommandInfo.Name);
 
             string warningMsg = String.Format(
                 System.Globalization.CultureInfo.InvariantCulture,
@@ -445,7 +417,7 @@ namespace System.Management.Automation
                 {
                     // If we had an exception during Prepare, we're done trying to execute the command
                     // so the scope we created needs to release any resources it hold.s
-                    _commandSessionState.RemoveScope(CommandScope);
+                    CommandSessionState.RemoveScope(CommandScope);
                 }
                 throw;
             }
@@ -641,7 +613,7 @@ namespace System.Management.Automation
                 // Destroy the local scope at this point if there is one...
                 if (_useLocalScope && CommandScope != null)
                 {
-                    _commandSessionState.RemoveScope(CommandScope);
+                    CommandSessionState.RemoveScope(CommandScope);
                 }
 
                 // and the previous scope...
@@ -650,7 +622,7 @@ namespace System.Management.Automation
                     // Restore the scope but use the same session state instance we
                     // got it from because the command may have changed the execution context
                     // session state...
-                    _commandSessionState.CurrentScope = _previousScope;
+                    CommandSessionState.CurrentScope = _previousScope;
                 }
 
                 // Restore the previous session state
@@ -667,15 +639,15 @@ namespace System.Management.Automation
         /// <returns></returns>
         public override string ToString()
         {
-            if (null != commandInfo)
-                return commandInfo.ToString();
+            if (null != CommandInfo)
+                return CommandInfo.ToString();
             return "<NullCommandInfo>"; // does not require localization
         }
 
         /// <summary>
         /// True if Read() has not be called, false otherwise.
         /// </summary>
-        private bool firstCallToRead = true;
+        private bool _firstCallToRead = true;
 
         /// <summary>
         /// Entry point used by the engine to reads the input pipeline object
@@ -693,9 +665,9 @@ namespace System.Management.Automation
         internal virtual bool Read()
         {
             // Prepare the default value parameter list if this is the first call to Read
-            if (firstCallToRead)
+            if (_firstCallToRead)
             {
-                firstCallToRead = false;
+                _firstCallToRead = false;
             }
 
             // Retrieve the object from the input pipeline
@@ -707,7 +679,7 @@ namespace System.Management.Automation
             }
 
             // If we are reading input for the first command in the pipeline increment PipelineIterationInfo[0], which is the number of items read from the input 
-            if (this.Command.MyInvocation.PipelinePosition == 1) 
+            if (this.Command.MyInvocation.PipelinePosition == 1)
             {
                 this.Command.MyInvocation.PipelineIterationInfo[0]++;
             }
@@ -819,7 +791,7 @@ namespace System.Management.Automation
         /// stopped by CTRL-C etc, in which case we choose not to
         /// re-wrap the exception as with CmdletInvocationException.
         /// </remarks>
-        internal PipelineStoppedException ManageInvocationException (Exception e)
+        internal PipelineStoppedException ManageInvocationException(Exception e)
         {
             try
             {
@@ -905,8 +877,8 @@ namespace System.Management.Automation
 
                         // Rollback the transaction in the case of errors.
                         if (
-                            _context.TransactionManager.HasTransaction 
-                            && 
+                            _context.TransactionManager.HasTransaction
+                            &&
                             _context.TransactionManager.RollbackPreference != RollbackSeverity.Never
                            )
                         {
@@ -915,7 +887,6 @@ namespace System.Management.Automation
                     }
 
                     return (PipelineStoppedException)this.commandRuntime.ManageException(e);
-
                 }
 
                 // Upstream cmdlets see only that execution stopped
@@ -978,7 +949,7 @@ namespace System.Management.Automation
         // 2004/03/05-JonN BrucePay has suggested that the IDispose
         // implementations in PipelineProcessor and CommandProcessor can be
         // removed.
-        private bool disposed;
+        private bool _disposed;
 
         /// <summary>
         /// IDisposable implementation
@@ -987,15 +958,15 @@ namespace System.Management.Automation
         /// without waiting for garbage collection
         /// </summary>
         /// <remarks>We use the standard IDispose pattern</remarks>
-        public void Dispose ()
+        public void Dispose()
         {
-            Dispose (true);
-            GC.SuppressFinalize (this);
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-        private void Dispose (bool disposing)
+        private void Dispose(bool disposing)
         {
-            if (disposed)
+            if (_disposed)
                 return;
 
             if (disposing)
@@ -1006,19 +977,19 @@ namespace System.Management.Automation
                 IDisposable id = Command as IDisposable;
                 if (null != id)
                 {
-                    id.Dispose ();
+                    id.Dispose();
                 }
             }
 
-            disposed = true;
+            _disposed = true;
         }
 
         /// <summary>
         /// Finalizer for class CommandProcessorBase
         /// </summary>
-        ~CommandProcessorBase ()
+        ~CommandProcessorBase()
         {
-            Dispose (false);
+            Dispose(false);
         }
 
         #endregion IDispose

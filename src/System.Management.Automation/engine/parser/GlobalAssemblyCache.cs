@@ -21,10 +21,10 @@ namespace Microsoft.CodeAnalysis
         /// Represents the current Processor architecture
         /// </summary>
         public static readonly ProcessorArchitecture[] CurrentArchitectures = (IntPtr.Size == 4)
-            ? new []{ProcessorArchitecture.None, ProcessorArchitecture.MSIL, ProcessorArchitecture.X86}
-            : new []{ProcessorArchitecture.None, ProcessorArchitecture.MSIL, ProcessorArchitecture.Amd64};
+            ? new[] { ProcessorArchitecture.None, ProcessorArchitecture.MSIL, ProcessorArchitecture.X86 }
+            : new[] { ProcessorArchitecture.None, ProcessorArchitecture.MSIL, ProcessorArchitecture.Amd64 };
 
-        #region Interop
+#region Interop
 
         private const int MAX_PATH = 260;
 
@@ -81,7 +81,7 @@ namespace Microsoft.CodeAnalysis
         [DllImport("clr", CharSet = CharSet.Auto, PreserveSig = false)]
         private static extern void CreateAssemblyCache(out IAssemblyCache ppAsmCache, uint dwReserved);
 
-        #endregion
+#endregion
 
         private const int S_OK = 0;
         private const int S_FALSE = 1;
@@ -92,9 +92,8 @@ namespace Microsoft.CodeAnalysis
             ProcessorArchitecture[] architectureFilter)
         {
             IAssemblyEnum enumerator;
-            FusionAssemblyIdentity.IApplicationContext applicationContext = null;
 
-            int hr = CreateAssemblyEnum(out enumerator, applicationContext, partialNameFilter, ASM_CACHE.GAC, IntPtr.Zero);
+            int hr = CreateAssemblyEnum(out enumerator, null, partialNameFilter, ASM_CACHE.GAC, IntPtr.Zero);
             if (hr == S_FALSE)
             {
                 // no assembly found
@@ -120,6 +119,7 @@ namespace Microsoft.CodeAnalysis
             {
                 FusionAssemblyIdentity.IAssemblyName nameObject;
 
+                FusionAssemblyIdentity.IApplicationContext applicationContext;
                 hr = enumerator.GetNextAssembly(out applicationContext, out nameObject, 0);
                 if (hr != 0)
                 {

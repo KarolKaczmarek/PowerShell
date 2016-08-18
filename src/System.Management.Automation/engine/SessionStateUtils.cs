@@ -2,20 +2,18 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Management.Automation;
 using Microsoft.PowerShell.Commands;
 
-namespace System.Management.Automation 
+namespace System.Management.Automation
 {
     /// <summary>
     /// This class holds the integer constants used in Session State
     /// </summary>
-    internal static class SessionStateConstants 
+    internal static class SessionStateConstants
     {
         /// <summary>
         /// The default maximum for the number of variables
@@ -108,7 +106,7 @@ namespace System.Management.Automation
     /// <summary>
     /// This class has static methods that are used in Session State
     /// </summary>
-    internal static class SessionStateUtilities 
+    internal static class SessionStateUtilities
     {
         /// <summary>
         /// Converts the specified array into a collection of the specified type.
@@ -167,7 +165,7 @@ namespace System.Management.Automation
             {
                 throw new ArgumentNullException("collection");
             }
-            
+
             bool result = false;
 
             foreach (object item in collection)
@@ -226,7 +224,7 @@ namespace System.Management.Automation
                     {
                         result.Add(
                             WildcardPattern.Get(
-                                pattern, 
+                                pattern,
                                 options));
                     }
                 }
@@ -322,7 +320,6 @@ namespace System.Management.Automation
             return result;
         }
     }
-
 }
 
 namespace Microsoft.PowerShell.Commands
@@ -349,6 +346,5 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         Overwrite
     }
-
 }
 

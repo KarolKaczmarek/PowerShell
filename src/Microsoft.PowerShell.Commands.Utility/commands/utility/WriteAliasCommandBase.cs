@@ -1,9 +1,10 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System;
 using System.Management.Automation;
-using Dbg=System.Management.Automation;
+using Dbg = System.Management.Automation;
 
 namespace Microsoft.PowerShell.Commands
 {
@@ -19,56 +20,22 @@ namespace Microsoft.PowerShell.Commands
         /// The Name parameter for the command
         /// </summary>
         /// 
-        [Parameter (Position = 0, Mandatory = true, ValueFromPipelineByPropertyName = true)]
-        public string Name
-        {
-            get
-            {
-                return name;
-            }
-            set
-            {
-                name = value;
-            }
-        }
-        private string name;
+        [Parameter(Position = 0, Mandatory = true, ValueFromPipelineByPropertyName = true)]
+        public string Name { get; set; }
 
         /// <summary>
         /// The Value parameter for the command
         /// </summary>
         /// 
         [Parameter(Position = 1, Mandatory = true, ValueFromPipelineByPropertyName = true)]
-        public string Value
-        {
-            get
-            {
-                return aliasValue;
-            }
-            set
-            {
-                aliasValue = value;
-            }
-        }
-        private string aliasValue;
+        public string Value { get; set; }
 
         /// <summary>
         /// The description for the alias.
         /// </summary>
         /// 
         [Parameter]
-        public string Description
-        {
-            get
-            {
-                return description;
-            }
-
-            set
-            {
-                description = value;
-            }
-        }
-        private string description = String.Empty;
+        public string Description { get; set; } = String.Empty;
 
         /// <summary>
         /// The Option parameter allows the alias to be set to 
@@ -77,19 +44,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         /// 
         [Parameter]
-        public ScopedItemOptions Option
-        {
-            get
-            {
-                return options;
-            }
-
-            set
-            {
-                options = value;
-            }
-        }
-        private ScopedItemOptions options = ScopedItemOptions.None;
+        public ScopedItemOptions Option { get; set; } = ScopedItemOptions.None;
 
         /// <summary>
         /// If set to true, the alias that is set is passed to the
@@ -101,15 +56,15 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return passThru;
+                return _passThru;
             }
 
             set
             {
-                passThru = value;
+                _passThru = value;
             }
         }
-        private bool passThru;
+        private bool _passThru;
 
         /// <summary>
         /// The scope parameter for the command determines
@@ -117,19 +72,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         /// 
         [Parameter]
-        public string Scope
-        {
-            get
-            {
-                return scope;
-            }
-
-            set
-            {
-                scope = value;
-            }
-        }
-        private string scope;
+        public string Scope { get; set; }
 
 
         /// <summary>
@@ -142,15 +85,15 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return force;
+                return _force;
             }
 
             set
             {
-                force = value;
+                _force = value;
             }
         }
-        private bool force;
+        private bool _force;
         #endregion Parameters
 
     } // class WriteAliasCommandBase

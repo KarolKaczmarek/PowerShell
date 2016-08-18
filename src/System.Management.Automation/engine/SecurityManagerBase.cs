@@ -2,15 +2,11 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using Dbg=System.Management.Automation;
-using System.Reflection;
-using System.Collections;
-using System.Security;
+using Dbg = System.Management.Automation;
 using System.Management.Automation.Host;
 
 namespace System.Management.Automation
 {
-    
     /// <summary>
     /// This enum defines the dispatch origin of a command. 
     /// </summary>    
@@ -47,7 +43,6 @@ namespace System.Management.Automation
     {
         #region constructor
 
-        private string shellId;
         /// <summary>
         /// Creates an instance of authorization manager using specified shellID
         /// </summary>
@@ -55,12 +50,12 @@ namespace System.Management.Automation
         /// </param>
         public AuthorizationManager(string shellId)
         {
-            this.shellId = shellId;
+            ShellId = shellId;
         }
 
         #endregion constructor
 
-        private object policyCheckLock = new object();
+        private object _policyCheckLock = new object();
 
         #region methods to use internally
 
@@ -111,7 +106,7 @@ namespace System.Management.Automation
 
             try
             {
-                lock (policyCheckLock)
+                lock (_policyCheckLock)
                 {
                     result = this.ShouldRun(commandInfo, origin, host, out authorizationManagerException);
                 }
@@ -123,8 +118,6 @@ namespace System.Management.Automation
                     while(Environment.GetEnvironmentVariable("PSCommandDiscoveryPostDelay") != null) { System.Threading.Thread.Sleep(100); }
                 }
 #endif
-
-
             }
             catch (Exception e) // Catch-all OK. 3rd party callout
             {
@@ -166,13 +159,7 @@ namespace System.Management.Automation
         /// <summary>
         /// Get the shell ID from the authorization manager...
         /// </summary>
-        internal string ShellId
-        {
-            get
-            {
-                return shellId;
-            }
-        }
+        internal string ShellId { get; }
 
         #endregion methods to use internally
 
@@ -206,7 +193,6 @@ namespace System.Management.Automation
         }
 
         #endregion methods for derived class to override
-
     }
 }
 

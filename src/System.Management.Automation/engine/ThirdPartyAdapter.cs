@@ -1,6 +1,7 @@
 //
 //    Copyright (C) Microsoft.  All rights reserved.
 //
+
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reflection;
@@ -14,29 +15,23 @@ namespace System.Management.Automation
     {
         internal ThirdPartyAdapter(Type adaptedType, PSPropertyAdapter externalAdapter)
         {
-            this.adaptedType = adaptedType;
-            this.externalAdapter = externalAdapter;
+            AdaptedType = adaptedType;
+            _externalAdapter = externalAdapter;
         }
 
         /// <summary>
         /// The type this instance is adapting
         /// </summary>
-        internal Type AdaptedType
-        {
-            get
-            {
-                return this.adaptedType;
-            }
-        }
+        internal Type AdaptedType { get; }
 
         /// <summary>
         /// The type of the external adapter
         /// </summary>
         internal Type ExternalAdapterType
         {
-            get 
-            { 
-                return this.externalAdapter.GetType();
+            get
+            {
+                return _externalAdapter.GetType();
             }
         }
 
@@ -49,7 +44,7 @@ namespace System.Management.Automation
 
             try
             {
-                typeNameHierarchy = this.externalAdapter.GetTypeNameHierarchy(obj);
+                typeNameHierarchy = _externalAdapter.GetTypeNameHierarchy(obj);
             }
             catch (Exception exception)
             {
@@ -81,7 +76,7 @@ namespace System.Management.Automation
 
             try
             {
-                properties = this.externalAdapter.GetProperties(obj);
+                properties = _externalAdapter.GetProperties(obj);
             }
             catch (Exception exception)
             {
@@ -104,7 +99,7 @@ namespace System.Management.Automation
             foreach (PSAdaptedProperty property in properties)
             {
                 InitializeProperty(property, obj);
-            
+
                 members.Add(property as T);
             }
         }
@@ -120,7 +115,7 @@ namespace System.Management.Automation
 
             try
             {
-                property = this.externalAdapter.GetProperty(obj, propertyName);
+                property = _externalAdapter.GetProperty(obj, propertyName);
             }
             catch (Exception exception)
             {
@@ -136,7 +131,7 @@ namespace System.Management.Automation
             {
                 InitializeProperty(property, obj);
             }
-            
+
             return property;
         }
 
@@ -163,15 +158,15 @@ namespace System.Management.Automation
 
             try
             {
-                return this.externalAdapter.IsSettable(adaptedProperty);
+                return _externalAdapter.IsSettable(adaptedProperty);
             }
             catch (Exception exception)
             {
                 CommandProcessorBase.CheckForSevereException(exception);
 
                 throw new ExtendedTypeSystemException(
-                    "PSPropertyAdapter.PropertyIsSettableError", 
-                    exception, 
+                    "PSPropertyAdapter.PropertyIsSettableError",
+                    exception,
                     ExtendedTypeSystem.PropertyIsSettableError, property.Name);
             }
         }
@@ -187,15 +182,15 @@ namespace System.Management.Automation
 
             try
             {
-                return this.externalAdapter.IsGettable(adaptedProperty);
+                return _externalAdapter.IsGettable(adaptedProperty);
             }
             catch (Exception exception)
             {
                 CommandProcessorBase.CheckForSevereException(exception);
 
                 throw new ExtendedTypeSystemException(
-                    "PSPropertyAdapter.PropertyIsGettableError", 
-                    exception, 
+                    "PSPropertyAdapter.PropertyIsGettableError",
+                    exception,
                     ExtendedTypeSystem.PropertyIsGettableError, property.Name);
             }
         }
@@ -211,7 +206,7 @@ namespace System.Management.Automation
 
             try
             {
-                return this.externalAdapter.GetPropertyValue(adaptedProperty);
+                return _externalAdapter.GetPropertyValue(adaptedProperty);
             }
             catch (Exception exception)
             {
@@ -235,7 +230,7 @@ namespace System.Management.Automation
 
             try
             {
-                this.externalAdapter.SetPropertyValue(adaptedProperty, setValue);
+                _externalAdapter.SetPropertyValue(adaptedProperty, setValue);
             }
             catch (SetValueException) { throw; }
             catch (Exception exception)
@@ -262,7 +257,7 @@ namespace System.Management.Automation
 
             try
             {
-                propertyTypeName = this.externalAdapter.GetPropertyTypeName(adaptedProperty);
+                propertyTypeName = _externalAdapter.GetPropertyTypeName(adaptedProperty);
             }
             catch (Exception exception)
             {
@@ -277,8 +272,7 @@ namespace System.Management.Automation
             return propertyTypeName ?? "System.Object";
         }
 
-        private Type adaptedType;
-        private PSPropertyAdapter externalAdapter;
+        private PSPropertyAdapter _externalAdapter;
     }
 
     /// <summary>

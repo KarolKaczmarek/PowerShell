@@ -1,12 +1,8 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
-using System.Collections.Generic;
+
 using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Management.Automation;
-using System.Management.Automation.Internal;
 
 namespace System.Management.Automation
 {
@@ -21,29 +17,14 @@ namespace System.Management.Automation
         /// 
         internal PositionalCommandParameter(MergedCompiledCommandParameter parameter)
         {
-            this.parameter = parameter;
+            Parameter = parameter;
         }
 
         #endregion ctor
 
-        internal MergedCompiledCommandParameter Parameter
-        {
-            get
-            {
-                return parameter;
-            }
-        }
-        private MergedCompiledCommandParameter parameter;
+        internal MergedCompiledCommandParameter Parameter { get; }
 
-        internal Collection<ParameterSetSpecificMetadata> ParameterSetData
-        {
-            get
-            {
-                return parameterSetData;
-            }
-        }
-        private Collection<ParameterSetSpecificMetadata> parameterSetData = new Collection<ParameterSetSpecificMetadata>();
-
+        internal Collection<ParameterSetSpecificMetadata> ParameterSetData { get; } = new Collection<ParameterSetSpecificMetadata>();
     }
 }
 

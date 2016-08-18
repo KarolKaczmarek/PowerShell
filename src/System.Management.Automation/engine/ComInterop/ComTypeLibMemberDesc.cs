@@ -4,20 +4,17 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 
 #if !SILVERLIGHT // ComObject
 
-namespace System.Management.Automation.ComInterop {
-
-    internal class ComTypeLibMemberDesc {
-        readonly ComType _kind;
-
-        internal ComTypeLibMemberDesc(ComType kind) {
-            _kind = kind;
+namespace System.Management.Automation.ComInterop
+{
+    internal class ComTypeLibMemberDesc
+    {
+        internal ComTypeLibMemberDesc(ComType kind)
+        {
+            Kind = kind;
         }
 
-        public ComType Kind {
-            get { return _kind; }
-        }
+        public ComType Kind { get; }
     }
-
 }
 
 #endif

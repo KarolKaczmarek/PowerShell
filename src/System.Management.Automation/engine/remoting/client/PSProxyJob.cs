@@ -1,12 +1,12 @@
 ﻿/********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Globalization;
 using System.Linq;
 using System.Management.Automation.Internal;
 using System.Management.Automation.Remoting;
@@ -185,7 +185,7 @@ namespace System.Management.Automation
         /// </summary>
         /// <param name="force"></param>
         /// <param name="reason"></param>
-        public override void StopJob(bool force, string reason) 
+        public override void StopJob(bool force, string reason)
         {
             throw PSTraceSource.NewNotSupportedException(PowerShellStrings.ProxyJobControlNotSupported);
         }
@@ -195,7 +195,7 @@ namespace System.Management.Automation
         /// </summary>
         /// <param name="force"></param>
         /// <param name="reason"></param>
-        public override void StopJobAsync(bool force, string reason) 
+        public override void StopJobAsync(bool force, string reason)
         {
             throw PSTraceSource.NewNotSupportedException(PowerShellStrings.ProxyJobControlNotSupported);
         }
@@ -260,7 +260,7 @@ namespace System.Management.Automation
         /// </summary>
         /// <param name="force"></param>
         /// <param name="reason"></param>
-        public override void SuspendJob(bool force, string reason) 
+        public override void SuspendJob(bool force, string reason)
         {
             throw PSTraceSource.NewNotSupportedException(PowerShellStrings.ProxyJobControlNotSupported);
         }
@@ -270,7 +270,7 @@ namespace System.Management.Automation
         /// </summary>
         /// <param name="force"></param>
         /// <param name="reason"></param>
-        public override void SuspendJobAsync(bool force, string reason) 
+        public override void SuspendJobAsync(bool force, string reason)
         {
             throw PSTraceSource.NewNotSupportedException(PowerShellStrings.ProxyJobControlNotSupported);
         }
@@ -348,7 +348,7 @@ namespace System.Management.Automation
         }
 
         #endregion
-        
+
         #region Additional State Management Methods
 
         /// <summary>
@@ -471,7 +471,7 @@ namespace System.Management.Automation
                     // this is true.
                     if (!_removeCalled)
                     {
-                        Diagnostics.Assert(false, "remove called is false after calling remove. No exception was thrown."); 
+                        Diagnostics.Assert(false, "remove called is false after calling remove. No exception was thrown.");
                         return;
                     }
                 }
@@ -799,7 +799,7 @@ namespace System.Management.Automation
 
             Collection<PSJobProxy> jobs = new Collection<PSJobProxy>();
             foreach (var deserializedJob in jobResults)
-            { 
+            {
                 if (!Deserializer.IsDeserializedInstanceOfType(deserializedJob, typeof(Job)))
                 {
                     // Do not create proxies if jobs are live.
@@ -1194,7 +1194,7 @@ namespace System.Management.Automation
 
             _tracer.WriteMessage(ClassNameTrace, "DoStartAsync", _remoteJobInstanceId, this,
                                     "Starting command invocation.", null);
-            StructuredTracer.BeginProxyJobExecution(InstanceId);
+            s_structuredTracer.BeginProxyJobExecution(InstanceId);
 
             DoStartPrepare();
 
@@ -1412,7 +1412,6 @@ namespace System.Management.Automation
                 {
                     DoSetJobState(JobState.Stopped);
                 }
-
             }
             catch (Exception)
             {
@@ -1632,7 +1631,7 @@ namespace System.Management.Automation
             TryGetJobPropertyValue(o, "StatusMessage", out _remoteJobStatusMessage);
             TryGetJobPropertyValue(o, "Location", out _remoteJobLocation);
 
-            StructuredTracer.ProxyJobRemoteJobAssociation(InstanceId, _remoteJobInstanceId);
+            s_structuredTracer.ProxyJobRemoteJobAssociation(InstanceId, _remoteJobInstanceId);
 
             string name;
             TryGetJobPropertyValue(o, "Name", out name);
@@ -1785,13 +1784,14 @@ namespace System.Management.Automation
         {
             JobState computedJobState;
             if (!ContainerParentJob.ComputeJobStateFromChildJobStates(ClassNameTrace, e, ref _blockedChildJobsCount,
-                                                                      ref _suspendedChildJobsCount, 
+                                                                      ref _suspendedChildJobsCount,
                                                                       ref _suspendingChildJobsCount,
-                                                                      ref _finishedChildJobsCount, 
-                                                                      ref _failedChildJobsCount, 
-                                                                      ref _stoppedChildJobsCount, 
+                                                                      ref _finishedChildJobsCount,
+                                                                      ref _failedChildJobsCount,
+                                                                      ref _stoppedChildJobsCount,
                                                                       ChildJobs.Count,
-                                                                      out computedJobState)) return;
+                                                                      out computedJobState))
+                return;
             if (computedJobState == JobState.Suspending) return; // Ignor for proxy job
 
             _tracer.WriteMessage(ClassNameTrace, "HandleChildProxyJobStateChanged", Guid.Empty, this,
@@ -1999,10 +1999,10 @@ namespace System.Management.Automation
             {
                 _tracer.WriteMessage(ClassNameTrace, "DoSetJobState", _remoteJobInstanceId, this,
                                                  "BEGIN Set job state to {0} and call event handlers", state.ToString());
-                StructuredTracer.EndProxyJobExecution(InstanceId);
-                StructuredTracer.BeginProxyJobEventHandler(InstanceId);
+                s_structuredTracer.EndProxyJobExecution(InstanceId);
+                s_structuredTracer.BeginProxyJobEventHandler(InstanceId);
                 SetJobState(state, reason);
-                StructuredTracer.EndProxyJobEventHandler(InstanceId);
+                s_structuredTracer.EndProxyJobEventHandler(InstanceId);
                 _tracer.WriteMessage(ClassNameTrace, "DoSetJobState", _remoteJobInstanceId, this,
                                                  "END Set job state to {0} and call event handlers", state.ToString());
             }
@@ -2050,7 +2050,6 @@ namespace System.Management.Automation
                 // as an indication of a failed command execution.
                 if (!Deserializer.IsDeserializedInstanceOfType(newObject, typeof(Job)))
                 {
-
                     _tracer.WriteMessage(ClassNameTrace, "DataAddedToOutput", _remoteJobInstanceId, this,
                                          "Setting job state to failed. Command did not return a job object.",
                                          null);
@@ -2122,12 +2121,11 @@ namespace System.Management.Automation
                     _tracer.WriteMessage(ClassNameTrace, "DataAddedToOutput", Guid.Empty, this,
                                          "Updating child job {0} state to {1} ", sourceJobId.ToString(),
                                          jobStateEventArgs.JobStateInfo.State.ToString());
-                    ((PSChildJobProxy) _childJobsMapping[sourceJobId]).DoSetJobState(
+                    ((PSChildJobProxy)_childJobsMapping[sourceJobId]).DoSetJobState(
                         jobStateEventArgs.JobStateInfo.State, jobStateEventArgs.JobStateInfo.Reason);
                     _tracer.WriteMessage(ClassNameTrace, "DataAddedToOutput", Guid.Empty, this,
                                          "Finished updating child job {0} state to {1} ", sourceJobId.ToString(),
                                          jobStateEventArgs.JobStateInfo.State.ToString());
-
                 }
                 return;
             }
@@ -2491,7 +2489,7 @@ namespace System.Management.Automation
         private JobState _previousState = JobState.NotStarted;
         private JobState _computedJobState;
         private readonly PowerShellTraceSource _tracer = PowerShellTraceSourceFactory.GetTraceSource();
-        private static Tracer StructuredTracer = new Tracer();
+        private static Tracer s_structuredTracer = new Tracer();
         private bool _jobInitialized;
         private bool _removeCalled;
         private bool _startCalled;
@@ -2607,7 +2605,7 @@ namespace System.Management.Automation
             OnJobDataAdded(new JobDataAddedEventArgs(this, PowerShellStreamType.Information, e.Index));
         }
 
-        private static Tracer StructuredTracer = new Tracer();
+        private static Tracer s_structuredTracer = new Tracer();
         internal void DoSetJobState(JobState state, Exception reason = null)
         {
             if (_disposed) return;
@@ -2661,9 +2659,9 @@ namespace System.Management.Automation
                 Dbg.Assert(state != JobStateInfo.State, "Setting job state should always change the state.");
                 _tracer.WriteMessage("PSChildJobProxy", "DoSetJobState", Guid.Empty, this,
                                                  "BEGIN Set job state to {0} and call event handlers", state.ToString());
-                StructuredTracer.BeginProxyChildJobEventHandler(InstanceId);                
+                s_structuredTracer.BeginProxyChildJobEventHandler(InstanceId);
                 SetJobState(state, reason);
-                StructuredTracer.EndProxyJobEventHandler(InstanceId);
+                s_structuredTracer.EndProxyJobEventHandler(InstanceId);
                 _tracer.WriteMessage("PSChildJobProxy", "DoSetJobState", Guid.Empty, this,
                                                  "END Set job state to {0} and call event handlers", state.ToString());
             }
@@ -2719,7 +2717,7 @@ namespace System.Management.Automation
         /// </summary>
         /// <param name="force"></param>
         /// <param name="reason"></param>
-        public override void StopJob(bool force, string reason) 
+        public override void StopJob(bool force, string reason)
         {
             throw PSTraceSource.NewNotSupportedException(PowerShellStrings.ProxyChildJobControlNotSupported);
         }
@@ -2763,7 +2761,7 @@ namespace System.Management.Automation
         /// </summary>
         /// <param name="force"></param>
         /// <param name="reason"></param>
-        public override void SuspendJob(bool force, string reason) 
+        public override void SuspendJob(bool force, string reason)
         {
             throw PSTraceSource.NewNotSupportedException(PowerShellStrings.ProxyChildJobControlNotSupported);
         }
@@ -2882,10 +2880,6 @@ namespace System.Management.Automation
     /// </summary>
     public sealed class JobDataAddedEventArgs : EventArgs
     {
-        private readonly Job _job;
-        private readonly PowerShellStreamType _dataType;
-        private readonly int _index;
-
         /// <summary>
         /// Constructor
         /// </summary>
@@ -2896,27 +2890,27 @@ namespace System.Management.Automation
         /// </param>
         internal JobDataAddedEventArgs(Job job, PowerShellStreamType dataType, int index)
         {
-            _job = job;
-            _dataType = dataType;
-            _index = index;
+            SourceJob = job;
+            DataType = dataType;
+            Index = index;
         }
 
         /// <summary>
         /// The job that contains the PSDataCollection which is the sender.
         /// </summary>
-        public Job SourceJob { get { return _job; } }
+        public Job SourceJob { get; }
 
         /// <summary>
         /// Identifies the type of the sending collection as one of the six collections
         /// associated with a job.
         /// If data type = output, sender is PSDataCollection of PSObject, Error is of ErrorRecord, etc.
         /// </summary>
-        public PowerShellStreamType DataType { get { return _dataType; } }
+        public PowerShellStreamType DataType { get; }
 
         /// <summary>
         /// Index at which the data is added.
         /// </summary>
-        public int Index { get { return _index; } }
+        public int Index { get; }
     }
 
     /// <summary>

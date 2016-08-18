@@ -1,7 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
+
 using System.Management.Automation;
 using Dbg = System.Management.Automation;
 
@@ -10,7 +10,7 @@ namespace Microsoft.PowerShell.Commands
     /// <summary>
     /// A command to create a new property on an object.
     /// </summary>
-    [Cmdlet (VerbsCommon.New, "ItemProperty", DefaultParameterSetName = "Path", SupportsShouldProcess = true, SupportsTransactions = true,
+    [Cmdlet(VerbsCommon.New, "ItemProperty", DefaultParameterSetName = "Path", SupportsShouldProcess = true, SupportsTransactions = true,
         HelpUri = "http://go.microsoft.com/fwlink/?LinkID=113354")]
     public class NewItemPropertyCommand : ItemPropertyCommandBase
     {
@@ -59,18 +59,7 @@ namespace Microsoft.PowerShell.Commands
         ///
         [Parameter(Mandatory = true, Position = 1, ValueFromPipelineByPropertyName = true)]
         [Alias("PSProperty")]
-        public string Name
-        {
-            get
-            {
-                return property;
-            } // get
-
-            set
-            {
-                property = value;
-            }
-        } // Property
+        public string Name { get; set; }
 
         /// <summary>
         /// The type of the property to create on the item.
@@ -78,36 +67,14 @@ namespace Microsoft.PowerShell.Commands
         /// 
         [Parameter(ValueFromPipelineByPropertyName = true)]
         [Alias("Type")]
-        public string PropertyType
-        {
-            get
-            {
-                return type;
-            } // get
+        public string PropertyType { get; set; }
 
-            set
-            {
-                type = value;
-            }
-        } // Type
-            
         /// <summary>
         /// The value of the property to create on the item.
         /// </summary>
         /// 
         [Parameter(ValueFromPipelineByPropertyName = true)]
-        public object Value
-        {
-            get
-            {
-                return propertyValue;
-            } // get
-
-            set
-            {
-                propertyValue = value;
-            }
-        } // Value
+        public object Value { get; set; }
 
         /// <summary>
         /// Gets or sets the force property
@@ -159,25 +126,10 @@ namespace Microsoft.PowerShell.Commands
             }
             return InvokeProvider.Property.NewPropertyDynamicParameters(".", Name, PropertyType, Value, context);
         } // GetDynamicParameters
-        
+
         #endregion Parameters
 
         #region parameter data
-        
-        /// <summary>
-        /// The property to be created.
-        /// </summary>
-        private string property;
-
-        /// <summary>
-        /// The type of the property to be created.
-        /// </summary>
-        private string type;
-
-        /// <summary>
-        /// The value of the property to be created.
-        /// </summary>
-        private object propertyValue;
 
         #endregion parameter data
 
@@ -186,7 +138,7 @@ namespace Microsoft.PowerShell.Commands
         /// <summary>
         /// Creates the property on the item
         /// </summary>
-        protected override void ProcessRecord ()
+        protected override void ProcessRecord()
         {
             foreach (string path in Path)
             {
@@ -226,12 +178,10 @@ namespace Microsoft.PowerShell.Commands
                             pathNotFound));
                     continue;
                 }
-
             }
         } // ProcessRecord
         #endregion Command code
 
 
     } // NewItemPropertyCommand
-
 } // namespace Microsoft.PowerShell.Commands

@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -27,23 +28,10 @@ namespace Microsoft.PowerShell.Commands
         [Parameter(ParameterSetName = "Default", Position = 0, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
         public string[] Name
         {
-            get
-            {
-                return names;
-            }
-            set
-            {
-                if (value == null)
-                {
-                    names = new string[] { "*" };
-                }
-                else
-                {
-                    names = value;
-                }
-            }
+            get { return _names; }
+            set { _names = value ?? new string[] { "*" }; }
         }
-        private string[] names = new string[] { "*" };
+        private string[] _names = new string[] { "*" };
 
         /// <summary>
         /// The Exclude parameter for the command
@@ -52,23 +40,10 @@ namespace Microsoft.PowerShell.Commands
         [Parameter]
         public string[] Exclude
         {
-            get
-            {
-                return excludes;
-            }
-            set
-            {
-                if (value == null)
-                {
-                    excludes = new string[0];
-                }
-                else
-                {
-                    excludes = value;
-                }
-            }
+            get { return _excludes; }
+            set { _excludes = value ?? new string[0]; }
         }
-        private string[] excludes = new string[0];
+        private string[] _excludes = new string[0];
 
         /// <summary>
         /// The scope parameter for the command determines
@@ -76,19 +51,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         /// 
         [Parameter]
-        public string Scope
-        {
-            get
-            {
-                return scope;
-            }
-
-            set
-            {
-                scope = value;
-            }
-        }
-        private string scope;
+        public string Scope { get; set; }
 
         /// <summary>
         /// Parameter definition to retrieve aliases based on their definitions.
@@ -96,13 +59,7 @@ namespace Microsoft.PowerShell.Commands
         [Parameter(ParameterSetName = "Definition")]
         [ValidateNotNullOrEmpty]
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
-        public String[] Definition
-        {
-            get { return _definition; }
-            set { _definition = value; }
-        }
-        private string[] _definition;
-
+        public String[] Definition { get; set; }
 
         #endregion Parameters
 
@@ -116,14 +73,14 @@ namespace Microsoft.PowerShell.Commands
         {
             if (ParameterSetName.Equals("Definition"))
             {
-                foreach (string defn in _definition)
+                foreach (string defn in Definition)
                 {
                     WriteMatches(defn, "Definition");
                 }
             }
             else
             {
-                foreach (string aliasName in names)
+                foreach (string aliasName in _names)
                 {
                     WriteMatches(aliasName, "Default");
                 }
@@ -133,20 +90,19 @@ namespace Microsoft.PowerShell.Commands
 
         private void WriteMatches(string value, string parametersetname)
         {
-
             // First get the alias table (from the proper scope if necessary)
             IDictionary<string, AliasInfo> aliasTable = null;
 
             //get the command origin
             CommandOrigin origin = MyInvocation.CommandOrigin;
             string displayString = "name";
-            if (!String.IsNullOrEmpty(scope))
+            if (!String.IsNullOrEmpty(Scope))
             {
                 // This can throw PSArgumentException and PSArgumentOutOfRangeException
                 // but just let them go as this is terminal for the pipeline and the
                 // exceptions are already properly adorned with an ErrorRecord.
 
-                aliasTable = SessionState.Internal.GetAliasTableAtScope(scope);
+                aliasTable = SessionState.Internal.GetAliasTableAtScope(Scope);
             }
             else
             {
@@ -162,7 +118,7 @@ namespace Microsoft.PowerShell.Commands
             // exlucing patter for Default paramset.
             Collection<WildcardPattern> excludePatterns =
                       SessionStateUtilities.CreateWildcardsFromStrings(
-                          excludes,
+                          _excludes,
                           WildcardOptions.IgnoreCase);
 
             List<AliasInfo> results = new List<AliasInfo>();
@@ -179,7 +135,6 @@ namespace Microsoft.PowerShell.Commands
                     {
                         continue;
                     }
-
                 }
                 else
                 {
@@ -192,7 +147,6 @@ namespace Microsoft.PowerShell.Commands
                     {
                         continue;
                     }
-
                 }
                 if (ContainsWildcard)
                 {
@@ -225,11 +179,10 @@ namespace Microsoft.PowerShell.Commands
                         continue;
                     }
                 }
-
             }
 
             results.Sort(
-                delegate(AliasInfo left, AliasInfo right)
+                delegate (AliasInfo left, AliasInfo right)
                 {
                     return StringComparer.CurrentCultureIgnoreCase.Compare(left.Name, right.Name);
                 });

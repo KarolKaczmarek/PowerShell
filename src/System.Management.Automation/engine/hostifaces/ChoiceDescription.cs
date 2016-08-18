@@ -3,8 +3,6 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
 
-
-using System;
 using Dbg = System.Management.Automation.Diagnostics;
 
 
@@ -37,7 +35,7 @@ namespace System.Management.Automation.Host
         /// 
         /// </exception>
 
-        public 
+        public
         ChoiceDescription(string label)
         {
             // the only required parameter is label.
@@ -48,7 +46,7 @@ namespace System.Management.Automation.Host
                 throw PSTraceSource.NewArgumentException("label", DescriptionsStrings.NullOrEmptyErrorTemplate, "label");
             }
 
-            this.label = label;
+            _label = label;
         }
 
         /// <summary>
@@ -77,13 +75,13 @@ namespace System.Management.Automation.Host
         /// 
         /// </exception>
 
-        public 
+        public
         ChoiceDescription(string label, string helpMessage)
         {
             // the only required parameter is label.
 
             if (String.IsNullOrEmpty(label))
-            {   
+            {
                 // "label" is not localizable
                 throw PSTraceSource.NewArgumentException("label", DescriptionsStrings.NullOrEmptyErrorTemplate, "label");
             }
@@ -94,8 +92,8 @@ namespace System.Management.Automation.Host
                 throw PSTraceSource.NewArgumentNullException("helpMessage");
             }
 
-            this.label = label;
-            this.helpMessage = helpMessage;
+            _label = label;
+            _helpMessage = helpMessage;
         }
 
         /// <summary>
@@ -121,15 +119,15 @@ namespace System.Management.Automation.Host
         /// 
         /// </remarks>
 
-        public 
+        public
         string
         Label
         {
             get
             {
-                Dbg.Assert(label != null, "label should not be null");
+                Dbg.Assert(_label != null, "label should not be null");
 
-                return label;
+                return _label;
             }
         }
 
@@ -152,15 +150,15 @@ namespace System.Management.Automation.Host
         /// 
         /// </remarks>
 
-        public 
-        string 
+        public
+        string
         HelpMessage
         {
             get
             {
-                Dbg.Assert(helpMessage != null, "helpMessage should not be null");
+                Dbg.Assert(_helpMessage != null, "helpMessage should not be null");
 
-                return helpMessage;
+                return _helpMessage;
             }
             set
             {
@@ -169,12 +167,12 @@ namespace System.Management.Automation.Host
                     throw PSTraceSource.NewArgumentNullException("value");
                 }
 
-                helpMessage = value;
+                _helpMessage = value;
             }
         }
 
-        private readonly string label = null;
-        private string helpMessage = "";
+        private readonly string _label = null;
+        private string _helpMessage = "";
     }
 }
 

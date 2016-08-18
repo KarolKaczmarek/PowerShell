@@ -10,12 +10,11 @@ using Microsoft.Win32;
 using System.Management.Automation;
 using System.Management.Automation.Internal;
 using System.Management.Automation.Provider;
-using Dbg=System.Management.Automation;
+using Dbg = System.Management.Automation;
 using Microsoft.PowerShell.Commands.Internal;
 
 namespace Microsoft.PowerShell.Commands
 {
-
     /// <summary>
     /// Provider that provides access to Registry through cmdlets. This provider
     /// implements <see cref="System.Management.Automation.Provider.NavigationCmdletProvider"/>,
@@ -61,7 +60,7 @@ namespace Microsoft.PowerShell.Commands
     [OutputType(typeof(RegistryKey), ProviderCmdlet = ProviderCmdlet.GetItem)]
     [OutputType(typeof(RegistryKey), typeof(string), typeof(Int32), typeof(Int64), ProviderCmdlet = ProviderCmdlet.GetItemProperty)]
     [OutputType(typeof(RegistryKey), ProviderCmdlet = ProviderCmdlet.NewItem)]
-    public sealed partial class RegistryProvider :  
+    public sealed partial class RegistryProvider :
         NavigationCmdletProvider,
         IPropertyCmdletProvider,
 #if SUPPORTS_IMULTIVALUEPROPERTYCMDLETPROVIDER
@@ -77,10 +76,10 @@ namespace Microsoft.PowerShell.Commands
         /// using "ProviderProvider" as the category.
         /// </summary>
         [Dbg.TraceSourceAttribute(
-            "RegistryProvider", 
+            "RegistryProvider",
             "The namespace navigation provider for the Windows Registry")]
-        private static Dbg.PSTraceSource tracer =
-            Dbg.PSTraceSource.GetTracer ("RegistryProvider",
+        private static Dbg.PSTraceSource s_tracer =
+            Dbg.PSTraceSource.GetTracer("RegistryProvider",
             "The namespace navigation provider for the Windows Registry");
 
         #endregion tracer
@@ -103,13 +102,13 @@ namespace Microsoft.PowerShell.Commands
         /// or reliability reasons or toprovide extra data to all calls 
         /// using the drive 
         /// -->
-        protected override PSDriveInfo NewDrive(PSDriveInfo drive) 
+        protected override PSDriveInfo NewDrive(PSDriveInfo drive)
         {
             if (drive == null)
             {
                 throw PSTraceSource.NewArgumentNullException("drive");
             }
-            
+
             if (!ItemExists(drive.Root))
             {
                 Exception e = new ArgumentException(RegistryProviderStrings.NewDriveRootDoesNotExist);
@@ -132,7 +131,7 @@ namespace Microsoft.PowerShell.Commands
         /// provider might mount a drive for the defaultNamingContext if the 
         /// machine is joined to a domain.  The FileSystem mounts all drives then available.
         /// </remarks>
-        protected override Collection<PSDriveInfo> InitializeDefaultDrives() 
+        protected override Collection<PSDriveInfo> InitializeDefaultDrives()
         {
             Collection<PSDriveInfo> drives = new Collection<PSDriveInfo>();
 
@@ -156,7 +155,7 @@ namespace Microsoft.PowerShell.Commands
 
             return drives;
         } // InitializeDefaultDrives
-       
+
         #endregion DriveCmdletProvider overrides
 
         #region ItemCmdletProvider overrides
@@ -172,7 +171,7 @@ namespace Microsoft.PowerShell.Commands
         /// <returns>
         /// True if the path is valid, or False otherwise.
         /// </returns>
-        protected override bool IsValidPath (string path)
+        protected override bool IsValidPath(string path)
         {
             bool result = true;
 
@@ -182,17 +181,17 @@ namespace Microsoft.PowerShell.Commands
                 // to validate, so just ensure that the path starts with one of the hive roots.
 
                 string root = NormalizePath(path);
-                root = root.TrimStart (StringLiterals.DefaultPathSeparator);
-                root = root.TrimEnd (StringLiterals.DefaultPathSeparator);
+                root = root.TrimStart(StringLiterals.DefaultPathSeparator);
+                root = root.TrimEnd(StringLiterals.DefaultPathSeparator);
 
-                int pathSeparator = root.IndexOf (StringLiterals.DefaultPathSeparator);
+                int pathSeparator = root.IndexOf(StringLiterals.DefaultPathSeparator);
 
                 if (pathSeparator != -1)
                 {
-                    root = root.Substring (0, pathSeparator);
+                    root = root.Substring(0, pathSeparator);
                 }
 
-                if (String.IsNullOrEmpty (root))
+                if (String.IsNullOrEmpty(root))
                 {
                     // An empty path means that we are at the root and should
                     // enumerate the hives. So that is a valid path.
@@ -200,7 +199,7 @@ namespace Microsoft.PowerShell.Commands
                     break;
                 }
 
-                if (GetHiveRoot (root) == null)
+                if (GetHiveRoot(root) == null)
                 {
                     result = false;
                 }
@@ -218,8 +217,8 @@ namespace Microsoft.PowerShell.Commands
         /// <param name="path">
         /// The path to the key to retrieve.
         /// </param>
-        protected override void GetItem(string path) 
-        { 
+        protected override void GetItem(string path)
+        {
             // Get the registry item
 
             IRegistryWrapper result = GetRegkeyForPathWriteIfError(path, false);
@@ -228,10 +227,10 @@ namespace Microsoft.PowerShell.Commands
             {
                 return;
             }
-               
+
             // Write out the result
 
-            WriteRegistryItemObject(result, path); 
+            WriteRegistryItemObject(result, path);
         } // GetItem
 
 
@@ -247,30 +246,28 @@ namespace Microsoft.PowerShell.Commands
         /// <param name="value">
         /// The new value for the registry value.
         /// </param>
-        protected override void SetItem(string path, object value) 
+        protected override void SetItem(string path, object value)
         {
             if (String.IsNullOrEmpty(path))
             {
                 throw PSTraceSource.NewArgumentException("path");
             }
-            
+
             // Confirm the set item with the user
 
             string action = RegistryProviderStrings.SetItemAction;
-            
-            string resourceTemplate =RegistryProviderStrings.SetItemResourceTemplate;
 
-            string resource = 
+            string resourceTemplate = RegistryProviderStrings.SetItemResourceTemplate;
+
+            string resource =
                 String.Format(
-                    Host.CurrentCulture, 
+                    Host.CurrentCulture,
                     resourceTemplate,
                     path,
                     value);
 
             if (ShouldProcess(resource, action))
             {
-                string valueName = null;
-
                 // Get the registry item
 
                 IRegistryWrapper key = GetRegkeyForPathWriteIfError(path, true);
@@ -279,9 +276,9 @@ namespace Microsoft.PowerShell.Commands
                 {
                     return;
                 }
-                   
+
                 // Check to see if the type was specified by the user
-                
+
                 bool valueSet = false;
                 if (DynamicParameters != null)
                 {
@@ -296,12 +293,12 @@ namespace Microsoft.PowerShell.Commands
 
                             RegistryValueKind kind = dynParams.Type;
 
-                            key.SetValue(valueName, value, kind);
+                            key.SetValue(null, value, kind);
                             valueSet = true;
                         }
                         catch (ArgumentException argException)
                         {
-                            WriteError (new ErrorRecord (argException, argException.GetType().FullName, ErrorCategory.InvalidArgument, valueName));
+                            WriteError(new ErrorRecord(argException, argException.GetType().FullName, ErrorCategory.InvalidArgument, null));
                             key.Close();
                             return;
                         }
@@ -310,7 +307,7 @@ namespace Microsoft.PowerShell.Commands
                             // An exception occurred while trying to get the key. Write
                             // out the error.
 
-                            WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
+                            WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
                             key.Close();
                             return;
                         }
@@ -319,7 +316,7 @@ namespace Microsoft.PowerShell.Commands
                             // An exception occurred while trying to get the key. Write
                             // out the error.
 
-                            WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                            WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                             key.Close();
                             return;
                         }
@@ -327,7 +324,7 @@ namespace Microsoft.PowerShell.Commands
                         {
                             // An exception occurred while trying to get the key. Write
                             // out the error.
-                            WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                            WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                             key.Close();
                             return;
                         }
@@ -339,14 +336,14 @@ namespace Microsoft.PowerShell.Commands
                     try
                     {
                         // Set the value
-                        key.SetValue(valueName, value);
+                        key.SetValue(null, value);
                     }
                     catch (System.IO.IOException ioException)
                     {
                         // An exception occurred while trying to get the key. Write
                         // out the error.
 
-                        WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
+                        WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
                         key.Close();
                         return;
                     }
@@ -355,7 +352,7 @@ namespace Microsoft.PowerShell.Commands
                         // An exception occurred while trying to get the key. Write
                         // out the error.
 
-                        WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                        WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                         key.Close();
                         return;
                     }
@@ -364,11 +361,10 @@ namespace Microsoft.PowerShell.Commands
                         // An exception occurred while trying to get the key. Write
                         // out the error.
 
-                        WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                        WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                         key.Close();
                         return;
                     }
-
                 }
 
                 // Write out the result
@@ -377,10 +373,10 @@ namespace Microsoft.PowerShell.Commands
                 // Since SetValue can munge the data to a specified 
                 // type (RegistryValueKind), retrieve the value again
                 // to output it in the correct form to the user.
-                result = ReadExistingKeyValue (key, valueName);
+                result = ReadExistingKeyValue(key, null);
                 key.Close();
 
-                WriteItemObject(result, path, false); 
+                WriteItemObject(result, path, false);
             } // ShouldProcess
         } // SetItem
 
@@ -400,7 +396,7 @@ namespace Microsoft.PowerShell.Commands
         /// An instance of the <see cref="Microsoft.PowerShell.Commands.RegistryProviderSetItemDynamicParameter"/> class which
         /// contains a parameter for the Type.
         /// </returns>
-        protected override object SetItemDynamicParameters (string path, object value)
+        protected override object SetItemDynamicParameters(string path, object value)
         {
             return new RegistryProviderSetItemDynamicParameter();
         } // SetItemDynamicParameters
@@ -423,22 +419,21 @@ namespace Microsoft.PowerShell.Commands
             {
                 throw PSTraceSource.NewArgumentException("path");
             }
-            
+
             // Confirm the clear item with the user
 
             string action = RegistryProviderStrings.ClearItemAction;
-            
+
             string resourceTemplate = RegistryProviderStrings.ClearItemResourceTemplate;
 
-            string resource = 
+            string resource =
                 String.Format(
-                    Host.CurrentCulture, 
+                    Host.CurrentCulture,
                     resourceTemplate,
                     path);
 
             if (ShouldProcess(resource, action))
             {
-
                 // Get the registry item
 
                 IRegistryWrapper key = GetRegkeyForPathWriteIfError(path, true);
@@ -460,7 +455,7 @@ namespace Microsoft.PowerShell.Commands
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.ReadError, path));
+                    WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.ReadError, path));
                     return;
                 }
                 catch (System.Security.SecurityException securityException)
@@ -468,7 +463,7 @@ namespace Microsoft.PowerShell.Commands
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                     return;
                 }
                 catch (System.UnauthorizedAccessException unauthorizedAccessException)
@@ -476,7 +471,7 @@ namespace Microsoft.PowerShell.Commands
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                     return;
                 }
 
@@ -491,27 +486,27 @@ namespace Microsoft.PowerShell.Commands
                         // An exception occurred while trying to delete the value. Write
                         // out the error.
 
-                        WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
+                        WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
                     }
                     catch (System.Security.SecurityException securityException)
                     {
                         // An exception occurred while trying to delete the value. Write
                         // out the error.
 
-                        WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                        WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                     }
                     catch (System.UnauthorizedAccessException unauthorizedAccessException)
                     {
                         // An exception occurred while trying to get the key. Write
                         // out the error.
 
-                        WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                        WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                     }
                 }
 
                 // Write out the key
 
-                WriteRegistryItemObject(key, path); 
+                WriteRegistryItemObject(key, path);
             } // ShouldProcess
         } // ClearItem
 
@@ -538,7 +533,7 @@ namespace Microsoft.PowerShell.Commands
             bool recurse,
             uint depth)
         {
-            tracer.WriteLine("recurse = {0}, depth = {1}", recurse, depth);
+            s_tracer.WriteLine("recurse = {0}, depth = {1}", recurse, depth);
 
             if (path == null)
             {
@@ -549,7 +544,7 @@ namespace Microsoft.PowerShell.Commands
             {
                 // If the path is empty or it is / or \, return all the hives
 
-                foreach (string hiveName in hiveNames)
+                foreach (string hiveName in s_hiveNames)
                 {
                     // Making sure to obey the StopProcessing.
                     if (Stopping)
@@ -580,7 +575,6 @@ namespace Microsoft.PowerShell.Commands
 
                     if (keyNames != null)
                     {
-
                         foreach (string subkeyName in keyNames)
                         {
                             // Making sure to obey the StopProcessing.
@@ -588,7 +582,7 @@ namespace Microsoft.PowerShell.Commands
                             {
                                 return;
                             }
-                            
+
                             if (!String.IsNullOrEmpty(subkeyName))
                             {
                                 string keypath = path;
@@ -628,21 +622,21 @@ namespace Microsoft.PowerShell.Commands
                                     // An exception occurred while trying to get the key. Write
                                     // out the error.
 
-                                    WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.ReadError, keypath));
+                                    WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.ReadError, keypath));
                                 }
                                 catch (System.Security.SecurityException securityException)
                                 {
                                     // An exception occurred while trying to get the key. Write
                                     // out the error.
 
-                                    WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, keypath));
+                                    WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, keypath));
                                 }
                                 catch (System.UnauthorizedAccessException unauthorizedAccessException)
                                 {
                                     // An exception occurred while trying to get the key. Write
                                     // out the error.
 
-                                    WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, keypath));
+                                    WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, keypath));
                                 }
                             }
                         } // foreach subkeyName in keyNames
@@ -653,23 +647,22 @@ namespace Microsoft.PowerShell.Commands
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.ReadError, path));
+                    WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.ReadError, path));
                 }
                 catch (System.Security.SecurityException securityException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 }
                 catch (System.UnauthorizedAccessException unauthorizedAccessException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 }
-
             }
         } // GetChildItems
 
@@ -689,8 +682,8 @@ namespace Microsoft.PowerShell.Commands
         /// </param>
         protected override void GetChildNames(
             string path,
-            ReturnContainers returnContainers) 
-        { 
+            ReturnContainers returnContainers)
+        {
             if (path == null)
             {
                 throw PSTraceSource.NewArgumentNullException("path");
@@ -700,14 +693,14 @@ namespace Microsoft.PowerShell.Commands
             {
                 // If the path is empty get the names of the hives
 
-                foreach (string hiveName in hiveNames)
+                foreach (string hiveName in s_hiveNames)
                 {
                     // Making sure to obey the StopProcessing.
                     if (Stopping)
                     {
                         return;
                     }
-                    
+
                     WriteItemObject(hiveName, hiveName, true);
                 }
             }
@@ -738,7 +731,7 @@ namespace Microsoft.PowerShell.Commands
                         {
                             return;
                         }
-                        
+
                         string childName = EscapeChildName(results[index]);
                         string childPath = MakePath(path, childName, childIsLeaf: true);
 
@@ -750,21 +743,21 @@ namespace Microsoft.PowerShell.Commands
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.ReadError, path));
+                    WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.ReadError, path));
                 }
                 catch (System.Security.SecurityException securityException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 }
                 catch (System.UnauthorizedAccessException unauthorizedAccessException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 }
             }
         } // GetChildNames
@@ -873,7 +866,7 @@ namespace Microsoft.PowerShell.Commands
 
             return result.ToString();
         } // EscapeChildName
-        
+
         /// <summary>
         /// Renames the key at the specified <paramref name="path"/> to <paramref name="newName"/>.
         /// </summary>
@@ -887,8 +880,8 @@ namespace Microsoft.PowerShell.Commands
         /// </param>
         protected override void RenameItem(
             string path,
-            string newName) 
-        { 
+            string newName)
+        {
             if (String.IsNullOrEmpty(path))
             {
                 throw PSTraceSource.NewArgumentException("path");
@@ -899,7 +892,7 @@ namespace Microsoft.PowerShell.Commands
                 throw PSTraceSource.NewArgumentException("newName");
             }
 
-            tracer.WriteLine("newName = {0}", newName);
+            s_tracer.WriteLine("newName = {0}", newName);
 
             string parentPath = GetParentPath(path, null);
             string newPath = MakePath(parentPath, newName);
@@ -922,12 +915,12 @@ namespace Microsoft.PowerShell.Commands
             // Confirm the rename item with the user
 
             string action = RegistryProviderStrings.RenameItemAction;
-            
+
             string resourceTemplate = RegistryProviderStrings.RenameItemResourceTemplate;
 
-            string resource = 
+            string resource =
                 String.Format(
-                    Host.CurrentCulture, 
+                    Host.CurrentCulture,
                     resourceTemplate,
                     path,
                     newPath);
@@ -936,7 +929,7 @@ namespace Microsoft.PowerShell.Commands
             {
                 // Implement rename as a move operation
 
-                MoveRegistryItem(path, newPath);   
+                MoveRegistryItem(path, newPath);
             } // ShouldProcess
         } // RenameItem
 
@@ -961,8 +954,8 @@ namespace Microsoft.PowerShell.Commands
         protected override void NewItem(
             string path,
             string type,
-            object newItem) 
-        { 
+            object newItem)
+        {
             if (String.IsNullOrEmpty(path))
             {
                 throw PSTraceSource.NewArgumentException("path");
@@ -971,12 +964,12 @@ namespace Microsoft.PowerShell.Commands
             // Confirm the new item with the user
 
             string action = RegistryProviderStrings.NewItemAction;
-            
+
             string resourceTemplate = RegistryProviderStrings.NewItemResourceTemplate;
 
-            string resource = 
+            string resource =
                 String.Format(
-                    Host.CurrentCulture, 
+                    Host.CurrentCulture,
                     resourceTemplate,
                     path);
             if (ShouldProcess(resource, action))
@@ -989,7 +982,7 @@ namespace Microsoft.PowerShell.Commands
                     if (!Force)
                     {
                         Exception e = new System.IO.IOException(RegistryProviderStrings.KeyAlreadyExists);
-                        WriteError (new ErrorRecord (
+                        WriteError(new ErrorRecord(
                             e,
                             e.GetType().FullName,
                             ErrorCategory.ResourceExists,
@@ -1052,7 +1045,7 @@ namespace Microsoft.PowerShell.Commands
                     {
                         // The key has been created, but the default value failed to be set.
                         // If possible, just write an error instead of failing the entire operation.
-                        
+
                         if ((exception is ArgumentException) ||
                             (exception is InvalidCastException) ||
                             (exception is System.IO.IOException) ||
@@ -1080,25 +1073,25 @@ namespace Microsoft.PowerShell.Commands
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
+                    WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
                 }
                 catch (System.Security.SecurityException securityException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 }
                 catch (System.UnauthorizedAccessException unauthorizedAccessException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 }
                 catch (ArgumentException argException)
                 {
-                    WriteError (new ErrorRecord (argException, argException.GetType().FullName, ErrorCategory.InvalidArgument, path));
+                    WriteError(new ErrorRecord(argException, argException.GetType().FullName, ErrorCategory.InvalidArgument, path));
                 }
                 catch (NotSupportedException notSupportedException)
                 {
@@ -1121,14 +1114,14 @@ namespace Microsoft.PowerShell.Commands
         /// </param>
         protected override void RemoveItem(
             string path,
-            bool recurse) 
+            bool recurse)
         {
             if (String.IsNullOrEmpty(path))
             {
                 throw PSTraceSource.NewArgumentException("path");
             }
 
-            tracer.WriteLine("recurse = {0}", recurse);
+            s_tracer.WriteLine("recurse = {0}", recurse);
 
             // Get the parent and child portions of the path
 
@@ -1147,12 +1140,12 @@ namespace Microsoft.PowerShell.Commands
             // Confirm the remove item with the user
 
             string action = RegistryProviderStrings.RemoveKeyAction;
-            
+
             string resourceTemplate = RegistryProviderStrings.RemoveKeyResourceTemplate;
 
-            string resource = 
+            string resource =
                     String.Format(
-                        Host.CurrentCulture, 
+                        Host.CurrentCulture,
                         resourceTemplate,
                         path);
 
@@ -1164,28 +1157,28 @@ namespace Microsoft.PowerShell.Commands
                 }
                 catch (ArgumentException argumentException)
                 {
-                    WriteError (new ErrorRecord (argumentException, argumentException.GetType().FullName, ErrorCategory.WriteError, path));
+                    WriteError(new ErrorRecord(argumentException, argumentException.GetType().FullName, ErrorCategory.WriteError, path));
                 }
                 catch (System.IO.IOException ioException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
+                    WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
                 }
                 catch (System.Security.SecurityException securityException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 }
                 catch (System.UnauthorizedAccessException unauthorizedAccessException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 }
                 catch (NotSupportedException notSupportedException)
                 {
@@ -1207,7 +1200,7 @@ namespace Microsoft.PowerShell.Commands
         /// <returns>
         /// True if the key at the specified path exists, false otherwise.
         /// </returns>
-        protected override bool ItemExists(string path) 
+        protected override bool ItemExists(string path)
         {
             bool result = false;
 
@@ -1263,22 +1256,22 @@ namespace Microsoft.PowerShell.Commands
         /// <returns>
         /// True if the specified key has subkeys, false otherwise.
         /// </returns>
-        protected override bool HasChildItems(string path) 
-        { 
+        protected override bool HasChildItems(string path)
+        {
             bool result = false;
-            
+
             if (path == null)
             {
                 throw PSTraceSource.NewArgumentNullException("path");
             }
-            
+
             try
             {
                 if (IsHiveContainer(path))
                 {
                     // An empty path will enumerate the hives
 
-                    result = hiveNames.Length > 0;
+                    result = s_hiveNames.Length > 0;
                 }
                 else
                 {
@@ -1304,7 +1297,7 @@ namespace Microsoft.PowerShell.Commands
                 result = false;
             }
 
-            return result; 
+            return result;
         } // HasChildItems
 
         /// <summary>
@@ -1326,8 +1319,8 @@ namespace Microsoft.PowerShell.Commands
         protected override void CopyItem(
             string path,
             string destination,
-            bool recurse) 
-        {  
+            bool recurse)
+        {
             if (String.IsNullOrEmpty(path))
             {
                 throw PSTraceSource.NewArgumentException("path");
@@ -1338,8 +1331,8 @@ namespace Microsoft.PowerShell.Commands
                 throw PSTraceSource.NewArgumentException("destination");
             }
 
-            tracer.WriteLine("destination = {0}", destination);
-            tracer.WriteLine("recurse = {0}", recurse);
+            s_tracer.WriteLine("destination = {0}", destination);
+            s_tracer.WriteLine("recurse = {0}", recurse);
 
             IRegistryWrapper key = GetRegkeyForPathWriteIfError(path, false);
 
@@ -1357,21 +1350,21 @@ namespace Microsoft.PowerShell.Commands
                 // An exception occurred while trying to get the key. Write
                 // out the error.
 
-                WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
+                WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
             }
             catch (System.Security.SecurityException securityException)
             {
                 // An exception occurred while trying to get the key. Write
                 // out the error.
 
-                WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
             }
             catch (System.UnauthorizedAccessException unauthorizedAccessException)
             {
                 // An exception occurred while trying to get the key. Write
                 // out the error.
 
-                WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
             }
 
             key.Close();
@@ -1380,8 +1373,8 @@ namespace Microsoft.PowerShell.Commands
 
         private bool CopyRegistryKey(
             IRegistryWrapper key,
-            string path, 
-            string destination, 
+            string path,
+            string destination,
             bool recurse,
             bool streamResult,
             bool streamFirstOnly)
@@ -1411,7 +1404,7 @@ namespace Microsoft.PowerShell.Commands
                 !String.IsNullOrEmpty(destination),
                 "The destination should have been validated by the caller");
 
-            tracer.WriteLine("destination = {0}", destination);
+            s_tracer.WriteLine("destination = {0}", destination);
 
             // Get the parent key of the destination
             // If the destination already exists and is a key, then it becomes
@@ -1443,12 +1436,12 @@ namespace Microsoft.PowerShell.Commands
             // Confirm the copy item with the user
 
             string action = RegistryProviderStrings.CopyKeyAction;
-            
+
             string resourceTemplate = RegistryProviderStrings.CopyKeyResourceTemplate;
 
-            string resource = 
+            string resource =
                     String.Format(
-                        Host.CurrentCulture, 
+                        Host.CurrentCulture,
                         resourceTemplate,
                         path,
                         destination);
@@ -1469,7 +1462,6 @@ namespace Microsoft.PowerShell.Commands
 
                 if (newKey != null)
                 {
-
                     // Now copy all the properties from the source to the destination
 
                     string[] valueNames = key.GetValueNames();
@@ -1545,7 +1537,7 @@ namespace Microsoft.PowerShell.Commands
             string sourcePath,
             string destinationPath)
         {
-            tracer.WriteLine("destinationPath = {0}", destinationPath);
+            s_tracer.WriteLine("destinationPath = {0}", destinationPath);
 
             // Note the paths have already been normalized so case-insensitive
             // comparisons should be sufficient
@@ -1592,7 +1584,7 @@ namespace Microsoft.PowerShell.Commands
                 Exception e =
                     new ArgumentException(
                         RegistryProviderStrings.DestinationChildOfSource);
-                WriteError (new ErrorRecord (
+                WriteError(new ErrorRecord(
                     e,
                     e.GetType().FullName,
                     ErrorCategory.InvalidArgument,
@@ -1616,7 +1608,7 @@ namespace Microsoft.PowerShell.Commands
         /// to see if the key exists and returns true if it is does or 
         /// false otherwise.
         /// </returns>
-        protected override bool IsItemContainer(string path) 
+        protected override bool IsItemContainer(string path)
         {
             if (path == null)
             {
@@ -1633,7 +1625,7 @@ namespace Microsoft.PowerShell.Commands
             {
                 try
                 {
-                    IRegistryWrapper key = GetRegkeyForPath (path, false);
+                    IRegistryWrapper key = GetRegkeyForPath(path, false);
 
                     if (key != null)
                     {
@@ -1643,22 +1635,22 @@ namespace Microsoft.PowerShell.Commands
                         result = true;
                     }
                 }
-                    // Catch known exceptions that are not terminating
+                // Catch known exceptions that are not terminating
                 catch (System.IO.IOException ioException)
                 {
-                    WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.ReadError, path));
+                    WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.ReadError, path));
                 }
                 catch (System.Security.SecurityException securityException)
                 {
-                    WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 }
                 catch (UnauthorizedAccessException unauthorizedAccess)
                 {
-                    WriteError (new ErrorRecord (unauthorizedAccess, unauthorizedAccess.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(unauthorizedAccess, unauthorizedAccess.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 }
             }
 
-            return result; 
+            return result;
         } // IsItemContainer
 
         /// <summary>
@@ -1674,7 +1666,7 @@ namespace Microsoft.PowerShell.Commands
         /// </param>
         protected override void MoveItem(
             string path,
-            string destination) 
+            string destination)
         {
             if (String.IsNullOrEmpty(path))
             {
@@ -1686,17 +1678,17 @@ namespace Microsoft.PowerShell.Commands
                 throw PSTraceSource.NewArgumentException("destination");
             }
 
-            tracer.WriteLine("destination = {0}", destination);
+            s_tracer.WriteLine("destination = {0}", destination);
 
             // Confirm the rename item with the user
 
             string action = RegistryProviderStrings.MoveItemAction;
-            
+
             string resourceTemplate = RegistryProviderStrings.MoveItemResourceTemplate;
 
-            string resource = 
+            string resource =
                 String.Format(
-                    Host.CurrentCulture, 
+                    Host.CurrentCulture,
                     resourceTemplate,
                     path,
                     destination);
@@ -1723,14 +1715,13 @@ namespace Microsoft.PowerShell.Commands
             try
             {
                 continueWithRemove = CopyRegistryKey(key, path, destination, true, true, true);
-
             }
             catch (System.IO.IOException ioException)
             {
                 // An exception occurred while trying to get the key. Write
                 // out the error.
 
-                WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
+                WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
                 key.Close();
                 return;
             }
@@ -1739,7 +1730,7 @@ namespace Microsoft.PowerShell.Commands
                 // An exception occurred while trying to get the key. Write
                 // out the error.
 
-                WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 key.Close();
                 return;
             }
@@ -1748,7 +1739,7 @@ namespace Microsoft.PowerShell.Commands
                 // An exception occurred while trying to get the key. Write
                 // out the error.
 
-                WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 key.Close();
                 return;
             }
@@ -1776,7 +1767,7 @@ namespace Microsoft.PowerShell.Commands
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
+                    WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
                     return;
                 }
                 catch (System.Security.SecurityException securityException)
@@ -1784,7 +1775,7 @@ namespace Microsoft.PowerShell.Commands
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                     return;
                 }
                 catch (System.UnauthorizedAccessException unauthorizedAccessException)
@@ -1792,10 +1783,9 @@ namespace Microsoft.PowerShell.Commands
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                     return;
                 }
-
             }
         } // MoveRegistryItem
 
@@ -1870,7 +1860,6 @@ namespace Microsoft.PowerShell.Commands
             {
                 WritePropertyObject(propertyResults, path);
             }
-
         } // GetProperty
 
         /// <summary>
@@ -1922,7 +1911,7 @@ namespace Microsoft.PowerShell.Commands
 
             if (DynamicParameters != null)
             {
-                RegistryProviderSetItemDynamicParameter dynParams  =
+                RegistryProviderSetItemDynamicParameter dynParams =
                     DynamicParameters as RegistryProviderSetItemDynamicParameter;
 
                 if (dynParams != null)
@@ -1932,16 +1921,16 @@ namespace Microsoft.PowerShell.Commands
             }
 
             string action = RegistryProviderStrings.SetPropertyAction;
-            
+
             string resourceTemplate = RegistryProviderStrings.SetPropertyResourceTemplate;
 
             foreach (PSMemberInfo property in propertyValue.Properties)
             {
                 object newPropertyValue = property.Value;
 
-                string resource = 
+                string resource =
                     String.Format(
-                        Host.CurrentCulture, 
+                        Host.CurrentCulture,
                         resourceTemplate,
                         path,
                         property.Name);
@@ -1954,35 +1943,33 @@ namespace Microsoft.PowerShell.Commands
                     }
                     catch (InvalidCastException invalidCast)
                     {
-                        WriteError (new ErrorRecord (invalidCast, invalidCast.GetType().FullName, ErrorCategory.WriteError, path));
+                        WriteError(new ErrorRecord(invalidCast, invalidCast.GetType().FullName, ErrorCategory.WriteError, path));
                     }
                     catch (System.IO.IOException ioException)
                     {
                         // An exception occurred while trying to set the value. Write
                         // out the error.
 
-                        WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.WriteError, property.Name));
+                        WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.WriteError, property.Name));
                     }
                     catch (System.Security.SecurityException securityException)
                     {
                         // An exception occurred while trying to set the value. Write
                         // out the error.
 
-                        WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, property.Name));
+                        WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, property.Name));
                     }
                     catch (System.UnauthorizedAccessException unauthorizedAccessException)
                     {
                         // An exception occurred while trying to get the key. Write
                         // out the error.
 
-                        WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, property.Name));
+                        WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, property.Name));
                     }
-
                 }
             }
 
             key.Close();
-
         } // SetProperty
 
 
@@ -2007,7 +1994,7 @@ namespace Microsoft.PowerShell.Commands
         /// parsing attributes similar to a cmdlet class.
         /// </returns>
         public object SetPropertyDynamicParameters(
-            string path, 
+            string path,
             PSObject propertyValue)
         {
             return new RegistryProviderSetItemDynamicParameter();
@@ -2112,13 +2099,13 @@ namespace Microsoft.PowerShell.Commands
         /// parsing attributes similar to a cmdlet class.
         /// </returns>
         public object GetPropertyDynamicParameters(
-            string path, 
+            string path,
             Collection<string> providerSpecificPickList)
         {
             return null;
         }
 
-        
+
         /// <summary>
         /// Gives the provider a chance to attach additional parameters to the
         /// clear-itemproperty cmdlet.
@@ -2138,7 +2125,7 @@ namespace Microsoft.PowerShell.Commands
         /// parsing attributes similar to a cmdlet class.
         /// </returns>
         public object ClearPropertyDynamicParameters(
-            string path, 
+            string path,
             Collection<string> propertyToClear)
         {
             return null;
@@ -3028,12 +3015,12 @@ namespace Microsoft.PowerShell.Commands
             // Confirm the set item with the user
 
             string action = RegistryProviderStrings.NewPropertyAction;
-            
+
             string resourceTemplate = RegistryProviderStrings.NewPropertyResourceTemplate;
 
-            string resource = 
+            string resource =
                 String.Format(
-                    Host.CurrentCulture, 
+                    Host.CurrentCulture,
                     resourceTemplate,
                     path,
                     propertyName);
@@ -3061,48 +3048,46 @@ namespace Microsoft.PowerShell.Commands
                     {
                         // The property already exists
 
-                        System.IO.IOException e = 
+                        System.IO.IOException e =
                             new System.IO.IOException(
                                 RegistryProviderStrings.PropertyAlreadyExists);
-                        WriteError (new ErrorRecord (e, e.GetType().FullName, ErrorCategory.ResourceExists, path));
+                        WriteError(new ErrorRecord(e, e.GetType().FullName, ErrorCategory.ResourceExists, path));
                         key.Close();
                         return;
                     }
-                        
                 }
                 catch (ArgumentException argumentException)
                 {
-                    WriteError (new ErrorRecord (argumentException, argumentException.GetType().FullName, ErrorCategory.WriteError, path));
+                    WriteError(new ErrorRecord(argumentException, argumentException.GetType().FullName, ErrorCategory.WriteError, path));
                 }
                 catch (InvalidCastException invalidCast)
                 {
-                    WriteError (new ErrorRecord (invalidCast, invalidCast.GetType().FullName, ErrorCategory.WriteError, path));
+                    WriteError(new ErrorRecord(invalidCast, invalidCast.GetType().FullName, ErrorCategory.WriteError, path));
                 }
                 catch (System.IO.IOException ioException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
+                    WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
                 }
                 catch (System.Security.SecurityException securityException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 }
                 catch (System.UnauthorizedAccessException unauthorizedAccessException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 }
             }
 
             key.Close();
-
         }
 
         /// <summary>
@@ -3143,15 +3128,15 @@ namespace Microsoft.PowerShell.Commands
             }
 
             WildcardPattern propertyNamePattern =
-                WildcardPattern.Get(propertyName,  WildcardOptions.IgnoreCase);
+                WildcardPattern.Get(propertyName, WildcardOptions.IgnoreCase);
 
             bool hadAMatch = false;
 
             foreach (string valueName in key.GetValueNames())
             {
                 if (
-                    ((! Context.SuppressWildcardExpansion) && (! propertyNamePattern.IsMatch(valueName))) ||
-                    (Context.SuppressWildcardExpansion && (! String.Equals(valueName, propertyName, StringComparison.OrdinalIgnoreCase))))
+                    ((!Context.SuppressWildcardExpansion) && (!propertyNamePattern.IsMatch(valueName))) ||
+                    (Context.SuppressWildcardExpansion && (!String.Equals(valueName, propertyName, StringComparison.OrdinalIgnoreCase))))
                 {
                     continue;
                 }
@@ -3159,12 +3144,12 @@ namespace Microsoft.PowerShell.Commands
                 // Confirm the set item with the user
 
                 string action = RegistryProviderStrings.RemovePropertyAction;
-                
+
                 string resourceTemplate = RegistryProviderStrings.RemovePropertyResourceTemplate;
 
-                string resource = 
+                string resource =
                     String.Format(
-                        Host.CurrentCulture, 
+                        Host.CurrentCulture,
                         resourceTemplate,
                         path,
                         valueName);
@@ -3183,21 +3168,21 @@ namespace Microsoft.PowerShell.Commands
                         // An exception occurred while trying to get the key. Write
                         // out the error.
 
-                        WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.WriteError, propertyNameToRemove));
+                        WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.WriteError, propertyNameToRemove));
                     }
                     catch (System.Security.SecurityException securityException)
                     {
                         // An exception occurred while trying to get the key. Write
                         // out the error.
 
-                        WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, propertyNameToRemove));
+                        WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, propertyNameToRemove));
                     }
                     catch (System.UnauthorizedAccessException unauthorizedAccessException)
                     {
                         // An exception occurred while trying to get the key. Write
                         // out the error.
 
-                        WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, propertyNameToRemove));
+                        WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, propertyNameToRemove));
                     }
                 } // if should process
             } // foreach
@@ -3206,7 +3191,7 @@ namespace Microsoft.PowerShell.Commands
             WriteErrorIfPerfectMatchNotFound(hadAMatch, path, propertyName);
         }
 
-       
+
         /// <summary>
         /// Renames a property of the item at the specified <paramref name="path"/>.
         /// </summary>
@@ -3252,12 +3237,12 @@ namespace Microsoft.PowerShell.Commands
             // Confirm the set item with the user
 
             string action = RegistryProviderStrings.RenamePropertyAction;
-            
+
             string resourceTemplate = RegistryProviderStrings.RenamePropertyResourceTemplate;
 
-            string resource = 
+            string resource =
                 String.Format(
-                    Host.CurrentCulture, 
+                    Host.CurrentCulture,
                     resourceTemplate,
                     path,
                     sourceProperty,
@@ -3274,21 +3259,21 @@ namespace Microsoft.PowerShell.Commands
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
+                    WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.WriteError, path));
                 }
                 catch (System.Security.SecurityException securityException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 }
                 catch (System.UnauthorizedAccessException unauthorizedAccessException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                    WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 }
             }
 
@@ -3357,12 +3342,12 @@ namespace Microsoft.PowerShell.Commands
             // Confirm the set item with the user
 
             string action = RegistryProviderStrings.CopyPropertyAction;
-            
+
             string resourceTemplate = RegistryProviderStrings.CopyPropertyResourceTemplate;
 
-            string resource = 
+            string resource =
                 String.Format(
-                    Host.CurrentCulture, 
+                    Host.CurrentCulture,
                     resourceTemplate,
                     sourcePath,
                     sourceProperty,
@@ -3380,21 +3365,21 @@ namespace Microsoft.PowerShell.Commands
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.WriteError, sourcePath));
+                    WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.WriteError, sourcePath));
                 }
                 catch (System.Security.SecurityException securityException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, sourcePath));
+                    WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, sourcePath));
                 }
                 catch (System.UnauthorizedAccessException unauthorizedAccessException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, sourcePath));
+                    WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, sourcePath));
                 }
             }
 
@@ -3462,12 +3447,12 @@ namespace Microsoft.PowerShell.Commands
             // Confirm the set item with the user
 
             string action = RegistryProviderStrings.MovePropertyAction;
-            
+
             string resourceTemplate = RegistryProviderStrings.MovePropertyResourceTemplate;
 
-            string resource = 
+            string resource =
                 String.Format(
-                    Host.CurrentCulture, 
+                    Host.CurrentCulture,
                     resourceTemplate,
                     sourcePath,
                     sourceProperty,
@@ -3485,21 +3470,21 @@ namespace Microsoft.PowerShell.Commands
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.WriteError, sourcePath));
+                    WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.WriteError, sourcePath));
                 }
                 catch (System.Security.SecurityException securityException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, sourcePath));
+                    WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, sourcePath));
                 }
                 catch (System.UnauthorizedAccessException unauthorizedAccessException)
                 {
                     // An exception occurred while trying to get the key. Write
                     // out the error.
 
-                    WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, sourcePath));
+                    WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, sourcePath));
                 }
             }
 
@@ -3540,9 +3525,9 @@ namespace Microsoft.PowerShell.Commands
             {
                 bool originalPathExists = ItemExists(path);
                 bool originalPathExistsWithRoot = false;
-                
+
                 // This is an expensive test, only do it if we need to.
-                if(! originalPathExists)
+                if (!originalPathExists)
                     originalPathExistsWithRoot = ItemExists(MakePath(root, path));
 
                 if ((!String.IsNullOrEmpty(parentPath)) && (originalPathExists || originalPathExistsWithRoot))
@@ -3640,14 +3625,14 @@ namespace Microsoft.PowerShell.Commands
         /// parsing attributes similar to a cmdlet class.
         /// </returns>
         public object NewPropertyDynamicParameters(
-            string path, 
+            string path,
             string propertyName,
             string type,
             object value)
         {
             return null;
         }
-        
+
         /// <summary>
         /// Gives the provider a chance to attach additional parameters to the
         /// remove-itemproperty cmdlet.
@@ -3667,12 +3652,12 @@ namespace Microsoft.PowerShell.Commands
         /// parsing attributes similar to a cmdlet class.
         /// </returns>
         public object RemovePropertyDynamicParameters(
-            string path, 
+            string path,
             string propertyName)
         {
             return null;
         }
-        
+
         /// <summary>
         /// Gives the provider a chance to attach additional parameters to the
         /// rename-itemproperty cmdlet.
@@ -3696,7 +3681,7 @@ namespace Microsoft.PowerShell.Commands
         /// parsing attributes similar to a cmdlet class.
         /// </returns>
         public object RenamePropertyDynamicParameters(
-            string path, 
+            string path,
             string sourceProperty,
             string destinationProperty)
         {
@@ -3730,14 +3715,14 @@ namespace Microsoft.PowerShell.Commands
         /// parsing attributes similar to a cmdlet class.
         /// </returns>
         public object CopyPropertyDynamicParameters(
-            string sourcePath, 
+            string sourcePath,
             string sourceProperty,
             string destinationPath,
             string destinationProperty)
         {
             return null;
         }
-        
+
         /// <summary>
         /// Gives the provider a chance to attach additional parameters to the
         /// move-itemproperty cmdlet.
@@ -3765,7 +3750,7 @@ namespace Microsoft.PowerShell.Commands
         /// parsing attributes similar to a cmdlet class.
         /// </returns>
         public object MovePropertyDynamicParameters(
-            string sourcePath, 
+            string sourcePath,
             string sourceProperty,
             string destinationPath,
             string destinationProperty)
@@ -3781,7 +3766,7 @@ namespace Microsoft.PowerShell.Commands
         #region Private members
 
         private void CopyProperty(
-            IRegistryWrapper sourceKey, 
+            IRegistryWrapper sourceKey,
             IRegistryWrapper destinationKey,
             string sourceProperty,
             string destinationProperty,
@@ -3800,9 +3785,9 @@ namespace Microsoft.PowerShell.Commands
                 WriteWrappedPropertyObject(sourceValue, realSourceProperty, sourceKey.Name);
             }
         } // CopyProperty
-        
+
         private void MoveProperty(
-            IRegistryWrapper sourceKey, 
+            IRegistryWrapper sourceKey,
             IRegistryWrapper destinationKey,
             string sourceProperty,
             string destinationProperty)
@@ -3826,9 +3811,9 @@ namespace Microsoft.PowerShell.Commands
                 // Copy property will throw an exception if it fails
 
                 CopyProperty(
-                    sourceKey, 
-                    destinationKey, 
-                    realSourceProperty, 
+                    sourceKey,
+                    destinationKey,
+                    realSourceProperty,
                     realDestinationProperty,
                     false);
 
@@ -3839,14 +3824,14 @@ namespace Microsoft.PowerShell.Commands
                 }
 
                 object newValue = destinationKey.GetValue(realDestinationProperty);
-                WriteWrappedPropertyObject(newValue,destinationProperty, destinationKey.Name);
+                WriteWrappedPropertyObject(newValue, destinationProperty, destinationKey.Name);
             }
             catch (System.IO.IOException ioException)
             {
                 // An exception occurred while trying to get the key. Write
                 // out the error.
 
-                WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.WriteError, sourceKey.Name));
+                WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.WriteError, sourceKey.Name));
                 return;
             }
             catch (System.Security.SecurityException securityException)
@@ -3854,7 +3839,7 @@ namespace Microsoft.PowerShell.Commands
                 // An exception occurred while trying to get the key. Write
                 // out the error.
 
-                WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, sourceKey.Name));
+                WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, sourceKey.Name));
                 return;
             }
             catch (System.UnauthorizedAccessException unauthorizedAccessException)
@@ -3862,7 +3847,7 @@ namespace Microsoft.PowerShell.Commands
                 // An exception occurred while trying to get the key. Write
                 // out the error.
 
-                WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, sourceKey.Name));
+                WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, sourceKey.Name));
                 return;
             }
         } // MoveProperty
@@ -3938,7 +3923,6 @@ namespace Microsoft.PowerShell.Commands
             if (propertyNames == null)
             {
                 propertyNames = new Collection<string>();
-
             }
 
             if (propertyNames.Count == 0 && getAll)
@@ -4003,7 +3987,7 @@ namespace Microsoft.PowerShell.Commands
                         }
                     }
 
-                    if(
+                    if (
                         expandAll ||
                         ((Context.SuppressWildcardExpansion == false) && (valueNameMatcher.IsMatch(valueNameToMatch))) ||
                        ((Context.SuppressWildcardExpansion == true) && (String.Equals(valueNameToMatch, requestedValueName, StringComparison.OrdinalIgnoreCase))))
@@ -4217,26 +4201,26 @@ namespace Microsoft.PowerShell.Commands
             }
 
             if (TransactionAvailable())
-            {           
-                for (int k = 0; k < wellKnownHivesTx.Length; k++)
+            {
+                for (int k = 0; k < s_wellKnownHivesTx.Length; k++)
                 {
-                    if (String.Equals(path, hiveNames[k], StringComparison.OrdinalIgnoreCase) ||
-                        String.Equals(path, hiveShortNames[k], StringComparison.OrdinalIgnoreCase))
+                    if (String.Equals(path, s_hiveNames[k], StringComparison.OrdinalIgnoreCase) ||
+                        String.Equals(path, s_hiveShortNames[k], StringComparison.OrdinalIgnoreCase))
                     {
                         using (CurrentPSTransaction)
                         {
-                            return new TransactedRegistryWrapper(wellKnownHivesTx[k], this);
+                            return new TransactedRegistryWrapper(s_wellKnownHivesTx[k], this);
                         }
                     }
                 }
             }
             else
             {
-                for (int k = 0; k < wellKnownHives.Length; k++)
+                for (int k = 0; k < s_wellKnownHives.Length; k++)
                 {
-                    if (String.Equals(path, hiveNames[k], StringComparison.OrdinalIgnoreCase) ||
-                        String.Equals(path, hiveShortNames[k], StringComparison.OrdinalIgnoreCase))
-                        return new RegistryWrapper(wellKnownHives[k]);
+                    if (String.Equals(path, s_hiveNames[k], StringComparison.OrdinalIgnoreCase) ||
+                        String.Equals(path, s_hiveShortNames[k], StringComparison.OrdinalIgnoreCase))
+                        return new RegistryWrapper(s_wellKnownHives[k]);
                 }
             }
             return null;
@@ -4265,7 +4249,6 @@ namespace Microsoft.PowerShell.Commands
 
             try
             {
-
                 // 1. Normalize path ( for "//","." etc )
                 // 2. Open the root
                 // 3. Create subkey
@@ -4292,10 +4275,10 @@ namespace Microsoft.PowerShell.Commands
 
                 // NormalizePath will trim "\" at the end. So there is always something
                 // after index. Asserting just in case..
-                Dbg.Diagnostics.Assert( index + 1 < path.Length ,"Bad path");
+                Dbg.Diagnostics.Assert(index + 1 < path.Length, "Bad path");
                 string remainingPath = path.Substring(index + 1);
 
-                IRegistryWrapper rootKey = GetHiveRoot (keyRoot);
+                IRegistryWrapper rootKey = GetHiveRoot(keyRoot);
 
                 if (remainingPath.Length == 0 || rootKey == null)
                 {
@@ -4317,7 +4300,6 @@ namespace Microsoft.PowerShell.Commands
                 }
 
                 result = true;
-
             }
             catch (ArgumentException argumentException)
             {
@@ -4382,23 +4364,23 @@ namespace Microsoft.PowerShell.Commands
             IRegistryWrapper result = null;
             try
             {
-                result = GetRegkeyForPath (path, writeAccess);
+                result = GetRegkeyForPath(path, writeAccess);
 
                 if (result == null)
                 {
                     // The key was not found, write out an error.
 
                     ArgumentException exception =
-                        new ArgumentException (
+                        new ArgumentException(
                         RegistryProviderStrings.KeyDoesNotExist);
-                    WriteError (new ErrorRecord (exception, exception.GetType().FullName, ErrorCategory.InvalidArgument, path));
+                    WriteError(new ErrorRecord(exception, exception.GetType().FullName, ErrorCategory.InvalidArgument, path));
 
-                    return result;
+                    return null;
                 }
             }
             catch (ArgumentException argumentException)
             {
-                WriteError (new ErrorRecord (argumentException, argumentException.GetType().FullName, ErrorCategory.OpenError, path));
+                WriteError(new ErrorRecord(argumentException, argumentException.GetType().FullName, ErrorCategory.OpenError, path));
                 return result;
             }
             catch (System.IO.IOException ioException)
@@ -4406,7 +4388,7 @@ namespace Microsoft.PowerShell.Commands
                 // An exception occurred while trying to get the key. Write
                 // out the error.
 
-                WriteError (new ErrorRecord (ioException, ioException.GetType().FullName, ErrorCategory.OpenError, path));
+                WriteError(new ErrorRecord(ioException, ioException.GetType().FullName, ErrorCategory.OpenError, path));
                 return result;
             }
             catch (System.Security.SecurityException securityException)
@@ -4414,7 +4396,7 @@ namespace Microsoft.PowerShell.Commands
                 // An exception occurred while trying to get the key. Write
                 // out the error.
 
-                WriteError (new ErrorRecord (securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                WriteError(new ErrorRecord(securityException, securityException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 return result;
             }
             catch (System.UnauthorizedAccessException unauthorizedAccessException)
@@ -4422,7 +4404,7 @@ namespace Microsoft.PowerShell.Commands
                 // An exception occurred while trying to get the key. Write
                 // out the error.
 
-                WriteError (new ErrorRecord (unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                WriteError(new ErrorRecord(unauthorizedAccessException, unauthorizedAccessException.GetType().FullName, ErrorCategory.PermissionDenied, path));
                 return result;
             }
             return result;
@@ -4452,7 +4434,7 @@ namespace Microsoft.PowerShell.Commands
             {
                 // The key was not found, write out an error.
 
-                ArgumentException exception = 
+                ArgumentException exception =
                     new ArgumentException(
                     RegistryProviderStrings.KeyDoesNotExist);
                 throw exception;
@@ -4464,7 +4446,7 @@ namespace Microsoft.PowerShell.Commands
                 return null;
             }
 
-            tracer.WriteLine("writeAccess = {0}", writeAccess);
+            s_tracer.WriteLine("writeAccess = {0}", writeAccess);
 
             IRegistryWrapper result = null;
 
@@ -4482,14 +4464,14 @@ namespace Microsoft.PowerShell.Commands
 
                 if (index == -1)
                 {
-                    result = GetHiveRoot (path);
+                    result = GetHiveRoot(path);
                     break;
                 }
 
                 string keyRoot = path.Substring(0, index);
                 string remainingPath = path.Substring(index + 1);
 
-                IRegistryWrapper resultRoot = GetHiveRoot (keyRoot);
+                IRegistryWrapper resultRoot = GetHiveRoot(keyRoot);
 
                 if (remainingPath.Length == 0 || resultRoot == null)
                 {
@@ -4556,7 +4538,6 @@ namespace Microsoft.PowerShell.Commands
 
                     return currentKey;
                 }
-
             } while (false);
 
             return result;
@@ -4565,7 +4546,7 @@ namespace Microsoft.PowerShell.Commands
         // NB: The HKEY_DYN_DATA hive is left out of the following lists because
         // it is only available on Win98/ME and we do not support that platform.
 
-        private static readonly string[] hiveNames = new string[] {
+        private static readonly string[] s_hiveNames = new string[] {
             "HKEY_LOCAL_MACHINE",
             "HKEY_CURRENT_USER",
             "HKEY_CLASSES_ROOT",
@@ -4574,7 +4555,7 @@ namespace Microsoft.PowerShell.Commands
             "HKEY_PERFORMANCE_DATA"
         };
 
-        private static readonly string[] hiveShortNames = new string[] {
+        private static readonly string[] s_hiveShortNames = new string[] {
             "HKLM",
             "HKCU",
             "HKCR",
@@ -4583,7 +4564,7 @@ namespace Microsoft.PowerShell.Commands
             "HKPD"
         };
 
-        private static readonly RegistryKey[] wellKnownHives = new RegistryKey[] {
+        private static readonly RegistryKey[] s_wellKnownHives = new RegistryKey[] {
             Registry.LocalMachine,
             Registry.CurrentUser,
             Registry.ClassesRoot,
@@ -4591,15 +4572,15 @@ namespace Microsoft.PowerShell.Commands
             Registry.Users,
             Registry.PerformanceData
         };
-         
-        private static readonly TransactedRegistryKey[] wellKnownHivesTx = new TransactedRegistryKey[] {
+
+        private static readonly TransactedRegistryKey[] s_wellKnownHivesTx = new TransactedRegistryKey[] {
             TransactedRegistry.LocalMachine,
             TransactedRegistry.CurrentUser,
             TransactedRegistry.ClassesRoot,
             TransactedRegistry.CurrentConfig,
             TransactedRegistry.Users
         };
- 
+
         /// <summary>
         /// Sets or creates a registry value on a key.
         /// </summary>
@@ -4659,10 +4640,10 @@ namespace Microsoft.PowerShell.Commands
         /// </param>
         /// 
         private void SetRegistryValue(
-            IRegistryWrapper key, 
-            string propertyName, 
-            object value, 
-            RegistryValueKind kind, 
+            IRegistryWrapper key,
+            string propertyName,
+            object value,
+            RegistryValueKind kind,
             string path,
             bool writeResult)
         {
@@ -4673,7 +4654,7 @@ namespace Microsoft.PowerShell.Commands
             string propertyNameToSet = GetPropertyName(propertyName);
 
             RegistryValueKind existingKind = RegistryValueKind.Unknown;
-            
+
             // If user does not specify a kind: get the valuekind if the property
             // already exists
             if (kind == RegistryValueKind.Unknown)
@@ -4687,7 +4668,7 @@ namespace Microsoft.PowerShell.Commands
             {
                 try
                 {
-                    value = ConvertValueToKind (value, existingKind);
+                    value = ConvertValueToKind(value, existingKind);
                     kind = existingKind;
                 }
                 catch (InvalidCastException)
@@ -4717,7 +4698,7 @@ namespace Microsoft.PowerShell.Commands
                     }
                 }
 
-                value = ConvertValueToKind (value, kind);
+                value = ConvertValueToKind(value, kind);
             }
 
             key.SetValue(propertyNameToSet, value, kind);
@@ -4774,35 +4755,35 @@ namespace Microsoft.PowerShell.Commands
         {
             switch (kind)
             {
-                case RegistryValueKind.Binary :
+                case RegistryValueKind.Binary:
                     value = (value != null)
                         ? (byte[])LanguagePrimitives.ConvertTo(
                             value,
                             typeof(byte[]),
-                            CultureInfo.CurrentCulture)                                
-                        : new byte[] {} ;
+                            CultureInfo.CurrentCulture)
+                        : new byte[] { };
                     break;
 
                 case RegistryValueKind.DWord:
-                {
-                    if (value != null)
                     {
-                        try
+                        if (value != null)
                         {
-                            value = (int)LanguagePrimitives.ConvertTo(value, typeof(int), CultureInfo.CurrentCulture);
+                            try
+                            {
+                                value = (int)LanguagePrimitives.ConvertTo(value, typeof(int), CultureInfo.CurrentCulture);
+                            }
+                            catch (PSInvalidCastException)
+                            {
+                                value = (UInt32)LanguagePrimitives.ConvertTo(value, typeof(UInt32), CultureInfo.CurrentCulture);
+                            }
                         }
-                        catch (PSInvalidCastException)
+                        else
                         {
-                            value = (UInt32)LanguagePrimitives.ConvertTo(value, typeof(UInt32), CultureInfo.CurrentCulture);
+                            value = 0;
                         }
-                    }
-                    else
-                    {
-                        value = 0;
-                    }
-                }; break;
+                    }; break;
 
-                case RegistryValueKind.ExpandString :
+                case RegistryValueKind.ExpandString:
                     value = (value != null)
                         ? (string)LanguagePrimitives.ConvertTo(
                             value,
@@ -4811,35 +4792,35 @@ namespace Microsoft.PowerShell.Commands
                         : "";
                     break;
 
-                case RegistryValueKind.MultiString :
+                case RegistryValueKind.MultiString:
                     value = (value != null)
                         ? (string[])LanguagePrimitives.ConvertTo(
                             value,
                             typeof(string[]),
                             CultureInfo.CurrentCulture)
-                        : new string[] {};
+                        : new string[] { };
                     break;
 
-                case RegistryValueKind.QWord :
-                {
-                    if (value != null)
+                case RegistryValueKind.QWord:
                     {
-                        try
+                        if (value != null)
                         {
-                            value = (long) LanguagePrimitives.ConvertTo(value, typeof(long), CultureInfo.CurrentCulture);
+                            try
+                            {
+                                value = (long)LanguagePrimitives.ConvertTo(value, typeof(long), CultureInfo.CurrentCulture);
+                            }
+                            catch (PSInvalidCastException)
+                            {
+                                value = (UInt64)LanguagePrimitives.ConvertTo(value, typeof(UInt64), CultureInfo.CurrentCulture);
+                            }
                         }
-                        catch (PSInvalidCastException)
+                        else
                         {
-                            value = (UInt64) LanguagePrimitives.ConvertTo(value, typeof(UInt64), CultureInfo.CurrentCulture);
+                            value = 0;
                         }
-                    }
-                    else
-                    {
-                        value = 0;
-                    }
-                }; break;
+                    }; break;
 
-                case RegistryValueKind.String :
+                case RegistryValueKind.String:
                     value = (value != null)
                         ? (string)LanguagePrimitives.ConvertTo(
                             value,
@@ -4848,7 +4829,7 @@ namespace Microsoft.PowerShell.Commands
                         : "";
                     break;
 
-                // If kind is Unknown then just leave the value as-is.
+                    // If kind is Unknown then just leave the value as-is.
             }
             return value;
         }
@@ -4919,7 +4900,7 @@ namespace Microsoft.PowerShell.Commands
 
             return RegistryValueKind.Unknown;
         }
-      
+
         /// <summary>
         /// helper to read back an existing registry key value
         /// </summary>
@@ -4928,7 +4909,7 @@ namespace Microsoft.PowerShell.Commands
         /// <returns>value of the key, null if it could not retrieve
         /// it because known exceptions were thrown, else an exception is percolated up
         /// </returns>
-        private static object ReadExistingKeyValue (IRegistryWrapper key, string valueName)
+        private static object ReadExistingKeyValue(IRegistryWrapper key, string valueName)
         {
             try
             {
@@ -4936,7 +4917,7 @@ namespace Microsoft.PowerShell.Commands
                 // type (RegistryValueKind), retrieve the value again
                 // to output it in the correct form to the user.
 
-                return key.GetValue (valueName, null, RegistryValueOptions.DoNotExpandEnvironmentNames);
+                return key.GetValue(valueName, null, RegistryValueOptions.DoNotExpandEnvironmentNames);
             }
             catch (System.IO.IOException)
             {
@@ -5105,7 +5086,7 @@ namespace Microsoft.PowerShell.Commands
                 var stringComparer = Host.CurrentCulture.CompareInfo;
 
                 if (stringComparer.Compare(
-                        userEnteredPropertyName, 
+                        userEnteredPropertyName,
                         GetLocalizedDefaultToken(),
                         CompareOptions.IgnoreCase) == 0)
                 {
@@ -5132,23 +5113,9 @@ namespace Microsoft.PowerShell.Commands
         /// The only acceptable values for this parameter are those found
         /// in the RegistryValueKind enum
         /// </remarks>
-        [Parameter (ValueFromPipelineByPropertyName = true)]
-        public RegistryValueKind Type
-        {
-            get
-            {
-                return type;
-            }
-
-            set
-            {
-                type = value;
-            }
-        } // Type
-
-        private RegistryValueKind type = RegistryValueKind.Unknown;
-    } // class RegistryProviderSetItemDynamicParameter
-
+        [Parameter(ValueFromPipelineByPropertyName = true)]
+        public RegistryValueKind Type { get; set; } = RegistryValueKind.Unknown;
+    }
 } // namespace System.Management.Automation
 
 

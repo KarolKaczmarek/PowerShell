@@ -9,7 +9,7 @@ Environment
 ===========
 
 In addition to the dependencies specified in the .NET Core
-instructions, we need:
+instructions, you'll need to:
 
 Install the Visual C++ Compiler via Visual Studio 2015.
 -------------------------------------------------------
@@ -48,14 +48,11 @@ Build using our module
 Use `Start-PSBuild -FullCLR` from the `build.psm1`
 module.
 
-Because the `ConsoleHost` project (*not* the `Host` project) is a
-library and not an application (in the sense that .NET CLI does not
-emit a native executable using .NET Core's `corehost`), it targets the
-framework `netstandard1.6`, *not* `netcoreapp1.0`, and the build
-output will *not* have a runtime identifier in the path.
+The output location of `powershell.exe` will be
 
-Thus the output location of `powershell.exe` will be
-`./src/Microsoft.PowerShell.ConsoleHost/bin/Debug/net451/powershell.exe`
+```
+.\src\powershell-win-full\bin\Debug\net451\win10-x64\publish\powershell.exe
+```
 
 Build manually
 ==============
@@ -68,18 +65,17 @@ The build contains the following steps:
 - building managed DLLs: `dotnet publish --runtime net451`
 
 
-What I can do with the produced binaries?
+What can you do with the produced binaries?
 =========================================
 
-Creating a deployable package out of them is **not a supported scenario**.
+**Important**: "We don’t support production deployments of these binaries on any platform". For PowerShell .NET (aka: FullCLR PowerShell) our recommendation is to continue using the PowerShell .NET version already shipping in Windows Client and Windows Server.
 
-The reason why we are building these binaries is
-we have components (i.e. workflows) that are not currently available in the CoreClr version.
-We want to make sure that CoreClr PowerShell changes don't introduce regressions in FullClr PowerShelll.
+The primary reason to build the PowerShell FullCLR binaries is to test backward compatibility, and interoperability between .NET and CoreCLR.  It is also important to mention some features like PowerShell Workflows are not currently available in the CoreCLR version. So we want to provide the ability for the Community to test CoreCLR PowerShell code changes while validating that these changes don't introduce regressions in .NET PowerShell (aka: as FullCLR PowerShell)
 
-It's possible to run (for test purposes) the dev version of these binaries as follows.
+To run (for test purposes) the dev version of these binaries please follow the following steps:
 
-Running Dev version of FullClr PowerShell
+
+Running Dev version of FullCLR PowerShell
 -----------------------------------------
 
 Running FullCLR version is not as simple as CoreCLR version.
@@ -89,7 +85,7 @@ process, but all the interesting DLLs (such as
 `System.Management.Automation.dll`) would be loaded from the Global
 Assembly Cache (GAC), not your output directory.
 
-Use `Start-DevPowerShell` helper funciton, to workaround it with `$env:DEVPATH`
+Use `Start-DevPowerShell` helper function to workaround it with `$env:DEVPATH`
 
 ```powershell
 Start-DevPowerShell -FullCLR
@@ -99,7 +95,7 @@ This command has a reasonable default to run `powershell.exe` from the build out
 If you are building an unusual configuration (i.e. not `Debug`), you can explicitly specify path to the bin directory
 
 ```powershell
-Start-DevPowerShell -FullCLR -binDir .\src\Microsoft.PowerShell.ConsoleHost\bin\Debug\net451
+Start-DevPowerShell -FullCLR -binDir .\src\powershell-win-full\bin\Debug\net451\win10-x64\publish
 ```
 
 Or more programmatically:

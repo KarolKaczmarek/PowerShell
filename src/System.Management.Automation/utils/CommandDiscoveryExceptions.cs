@@ -2,7 +2,6 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Collections.ObjectModel;
@@ -54,16 +53,16 @@ namespace System.Management.Automation
             string errorIdAndResourceId,
             string resourceStr,
             params object[] messageArgs)
-            : base (BuildMessage(commandName,resourceStr,messageArgs), innerException)
+            : base(BuildMessage(commandName, resourceStr, messageArgs), innerException)
         {
-            this.commandName = commandName;
+            _commandName = commandName;
             _errorId = errorIdAndResourceId;
         }
 
         /// <summary>
         /// Constructs a CommandNotFoundException.
         /// </summary>
-        public CommandNotFoundException() : base() { ;}
+        public CommandNotFoundException() : base() {; }
 
         /// <summary>
         /// Constructs a CommandNotFoundException
@@ -72,7 +71,7 @@ namespace System.Management.Automation
         /// <param name="message">
         /// The message used in the exception.
         /// </param>
-        public CommandNotFoundException(string message) : base(message) { ;}
+        public CommandNotFoundException(string message) : base(message) {; }
 
         /// <summary>
         /// Constructs a CommandNotFoundException
@@ -85,7 +84,7 @@ namespace System.Management.Automation
         /// <param name="innerException"> 
         /// An exception that led to this exception.
         /// </param>
-        public CommandNotFoundException(string message, Exception innerException) : base(message, innerException) { ;}
+        public CommandNotFoundException(string message, Exception innerException) : base(message, innerException) {; }
 
         #region Serialization
         /// <summary>
@@ -108,7 +107,7 @@ namespace System.Management.Automation
                 throw new PSArgumentNullException("info");
             }
 
-            commandName = info.GetString("CommandName");
+            _commandName = info.GetString("CommandName");
         }
 
         /// <summary>
@@ -131,7 +130,7 @@ namespace System.Management.Automation
             }
 
             base.GetObjectData(info, context);
-            info.AddValue("CommandName", commandName);
+            info.AddValue("CommandName", _commandName);
         }
         #endregion Serialization
 
@@ -149,7 +148,7 @@ namespace System.Management.Automation
                         new ParentContainsErrorRecordException(this),
                         _errorId,
                         _errorCategory,
-                        this.commandName);
+                        _commandName);
                 }
                 return _errorRecord;
             }
@@ -161,10 +160,10 @@ namespace System.Management.Automation
         /// </summary>
         public string CommandName
         {
-            get { return commandName; }
-            set { commandName = value; }
+            get { return _commandName; }
+            set { _commandName = value; }
         }
-        private string commandName = String.Empty;
+        private string _commandName = String.Empty;
 
         #endregion Properties
 
@@ -226,13 +225,13 @@ namespace System.Management.Automation
             string requiresShellId,
             string requiresShellPath,
             string errorId)
-            : base (BuildMessage(commandName, requiresShellId, requiresShellPath, true))
+            : base(BuildMessage(commandName, requiresShellId, requiresShellPath, true))
         {
             Diagnostics.Assert(!string.IsNullOrEmpty(commandName), "commandName is null or empty when constructing ScriptRequiresException");
             Diagnostics.Assert(!string.IsNullOrEmpty(errorId), "errorId is null or empty when constructing ScriptRequiresException");
-            this._commandName = commandName;
-            this._requiresShellId = requiresShellId;
-            this._requiresShellPath = requiresShellPath;
+            _commandName = commandName;
+            _requiresShellId = requiresShellId;
+            _requiresShellPath = requiresShellPath;
             this.SetErrorId(errorId);
             this.SetTargetObject(commandName);
             this.SetErrorCategory(ErrorCategory.ResourceUnavailable);
@@ -267,8 +266,8 @@ namespace System.Management.Automation
             Diagnostics.Assert(!string.IsNullOrEmpty(commandName), "commandName is null or empty when constructing ScriptRequiresException");
             Diagnostics.Assert(null != requiresPSVersion, "requiresPSVersion is null or empty when constructing ScriptRequiresException");
             Diagnostics.Assert(!string.IsNullOrEmpty(errorId), "errorId is null or empty when constructing ScriptRequiresException");
-            this._commandName = commandName;
-            this._requiresPSVersion = requiresPSVersion;
+            _commandName = commandName;
+            _requiresPSVersion = requiresPSVersion;
             this.SetErrorId(errorId);
             this.SetTargetObject(commandName);
             this.SetErrorCategory(ErrorCategory.ResourceUnavailable);
@@ -301,7 +300,6 @@ namespace System.Management.Automation
             bool forSnapins)
             : this(commandName, missingItems, errorId, forSnapins, null)
         {
-            
         }
 
         /// <summary>
@@ -339,8 +337,8 @@ namespace System.Management.Automation
             Diagnostics.Assert(!string.IsNullOrEmpty(commandName), "commandName is null or empty when constructing ScriptRequiresException");
             Diagnostics.Assert(missingItems != null && missingItems.Count > 0, "missingItems is null or empty when constructing ScriptRequiresException");
             Diagnostics.Assert(!string.IsNullOrEmpty(errorId), "errorId is null or empty when constructing ScriptRequiresException");
-            this._commandName = commandName;
-            this._missingPSSnapIns = new ReadOnlyCollection<string>(missingItems);
+            _commandName = commandName;
+            _missingPSSnapIns = new ReadOnlyCollection<string>(missingItems);
             this.SetErrorId(errorId);
             this.SetTargetObject(commandName);
             this.SetErrorCategory(ErrorCategory.ResourceUnavailable);
@@ -365,7 +363,7 @@ namespace System.Management.Automation
         {
             Diagnostics.Assert(!string.IsNullOrEmpty(commandName), "commandName is null or empty when constructing ScriptRequiresException");
             Diagnostics.Assert(!string.IsNullOrEmpty(errorId), "errorId is null or empty when constructing ScriptRequiresException");
-            this._commandName = commandName;
+            _commandName = commandName;
             this.SetErrorId(errorId);
             this.SetTargetObject(commandName);
             this.SetErrorCategory(ErrorCategory.PermissionDenied);
@@ -374,7 +372,7 @@ namespace System.Management.Automation
         /// <summary>
         /// Constructs an PSVersionNotCompatibleException
         /// </summary>
-        public ScriptRequiresException() : base() { ;}
+        public ScriptRequiresException() : base() {; }
 
         /// <summary>
         /// Constructs an PSVersionNotCompatibleException
@@ -383,7 +381,7 @@ namespace System.Management.Automation
         /// <param name="message">
         /// The message used in the exception.
         /// </param>
-        public ScriptRequiresException(string message) : base(message) { ;}
+        public ScriptRequiresException(string message) : base(message) {; }
 
         /// <summary>
         /// Constructs an PSVersionNotCompatibleException
@@ -396,7 +394,7 @@ namespace System.Management.Automation
         /// <param name="innerException"> 
         /// The exception that led to this exception.
         /// </param>
-        public ScriptRequiresException(string message, Exception innerException) : base(message, innerException) { ;}
+        public ScriptRequiresException(string message, Exception innerException) : base(message, innerException) {; }
 
         #region Serialization
         /// <summary>
@@ -416,7 +414,7 @@ namespace System.Management.Automation
         {
             _commandName = info.GetString("CommandName");
             _requiresPSVersion = (Version)info.GetValue("RequiresPSVersion", typeof(Version));
-            _missingPSSnapIns = (ReadOnlyCollection<string>) info.GetValue("MissingPSSnapIns", typeof(ReadOnlyCollection<string>));
+            _missingPSSnapIns = (ReadOnlyCollection<string>)info.GetValue("MissingPSSnapIns", typeof(ReadOnlyCollection<string>));
             _requiresShellId = info.GetString("RequiresShellId");
             _requiresShellPath = info.GetString("RequiresShellPath");
         }
@@ -505,7 +503,7 @@ namespace System.Management.Automation
             string commandName,
             Collection<string> missingItems,
             bool forSnapins)
-        {   
+        {
             StringBuilder sb = new StringBuilder();
             if (missingItems == null)
             {
@@ -535,7 +533,7 @@ namespace System.Management.Automation
                     sb.ToString());
             }
         }
-        
+
         private static string BuildMessage(
             string commandName,
             string first,
@@ -543,7 +541,7 @@ namespace System.Management.Automation
             bool forShellId)
         {
             string resourceStr = null;
-            
+
             if (forShellId)
             {
                 if (String.IsNullOrEmpty(first))
@@ -552,8 +550,8 @@ namespace System.Management.Automation
                 }
                 else
                 {
-                    resourceStr = String.IsNullOrEmpty(second) 
-                            ? DiscoveryExceptions.RequiresInterpreterNotCompatibleNoPath 
+                    resourceStr = String.IsNullOrEmpty(second)
+                            ? DiscoveryExceptions.RequiresInterpreterNotCompatibleNoPath
                             : DiscoveryExceptions.RequiresInterpreterNotCompatible;
                 }
             }

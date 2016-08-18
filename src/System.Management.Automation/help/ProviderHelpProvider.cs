@@ -19,7 +19,7 @@ namespace System.Management.Automation
     /// Provider Help information are stored in 'help.xml' files. Location of these files
     /// can be found from CommandDiscovery.
     /// </remarks>
-    internal class ProviderHelpProvider: HelpProviderWithCache
+    internal class ProviderHelpProvider : HelpProviderWithCache
     {
         /// <summary>
         /// Constructor for HelpProvider
@@ -37,7 +37,7 @@ namespace System.Management.Automation
         /// Name of this help provider.
         /// </summary>
         /// <value>Name of this help provider.</value>
-        override internal string Name
+        internal override string Name
         {
             get
             {
@@ -49,7 +49,7 @@ namespace System.Management.Automation
         /// Help category of this provider.
         /// </summary>
         /// <value>Help category of this provider</value>
-        override internal HelpCategory HelpCategory
+        internal override HelpCategory HelpCategory
         {
             get
             {
@@ -65,13 +65,13 @@ namespace System.Management.Automation
         /// Do exact match help based on the target. 
         /// </summary>
         /// <param name="helpRequest">help request object</param>
-        override internal IEnumerable<HelpInfo> ExactMatchHelp(HelpRequest helpRequest)
+        internal override IEnumerable<HelpInfo> ExactMatchHelp(HelpRequest helpRequest)
         {
             Collection<ProviderInfo> matchingProviders = null;
 
             try
             {
-                matchingProviders = this._sessionState.Provider.Get(helpRequest.Target);
+                matchingProviders = _sessionState.Provider.Get(helpRequest.Target);
             }
             catch (ProviderNotFoundException e)
             {
@@ -85,7 +85,7 @@ namespace System.Management.Automation
                     ErrorRecord errorRecord = new ErrorRecord(e, "ProviderLoadError", ErrorCategory.ResourceUnavailable, null);
                     errorRecord.ErrorDetails = new ErrorDetails(typeof(ProviderHelpProvider).GetTypeInfo().Assembly, "HelpErrors", "ProviderLoadError", helpRequest.Target, e.Message);
                     this.HelpSystem.LastErrors.Add(errorRecord);
-                }                
+                }
             }
 
             if (matchingProviders != null)
@@ -119,8 +119,8 @@ namespace System.Management.Automation
             }
         }
 
-       
-        static private string GetProviderAssemblyPath(ProviderInfo providerInfo)
+
+        private static string GetProviderAssemblyPath(ProviderInfo providerInfo)
         {
             if (providerInfo == null)
                 return null;
@@ -198,7 +198,7 @@ namespace System.Management.Automation
                 throw new FileNotFoundException(helpFile);
 
             XmlDocument doc = InternalDeserializer.LoadUnsafeXmlDocument(
-                new FileInfo(location), 
+                new FileInfo(location),
                 false, /* ignore whitespace, comments, etc. */
                 null); /* default maxCharactersInDocument */
 
@@ -248,7 +248,7 @@ namespace System.Management.Automation
                                     helpInfo.FullHelp.TypeNames.Insert(1, string.Format(CultureInfo.InvariantCulture,
                                         "ProviderHelpInfo#{0}", providerInfo.PSSnapInName));
                                 }
-                                AddCache(providerInfo.PSSnapInName+"\\"+helpInfo.Name, helpInfo);
+                                AddCache(providerInfo.PSSnapInName + "\\" + helpInfo.Name, helpInfo);
                             }
                         }
                     }
@@ -267,7 +267,7 @@ namespace System.Management.Automation
         /// If false, seraches for pattern in the command names.
         /// </param>        
         /// <returns></returns>
-        override internal IEnumerable<HelpInfo> SearchHelp(HelpRequest helpRequest, bool searchOnlyContent)
+        internal override IEnumerable<HelpInfo> SearchHelp(HelpRequest helpRequest, bool searchOnlyContent)
         {
             int countOfHelpInfoObjectsFound = 0;
             string target = helpRequest.Target;
@@ -305,7 +305,7 @@ namespace System.Management.Automation
                 yield break;
             }
 
-            foreach (ProviderInfo providerInfo in this._sessionState.Provider.GetAll())
+            foreach (ProviderInfo providerInfo in _sessionState.Provider.GetAll())
             {
                 if (providerInfo.IsMatch(pattern))
                 {
@@ -356,11 +356,10 @@ namespace System.Management.Automation
                             yield break;
                     }
                 }
-                
             }
         }
 
-        override internal IEnumerable<HelpInfo> ProcessForwardedHelp(HelpInfo helpInfo, HelpRequest helpRequest)
+        internal override IEnumerable<HelpInfo> ProcessForwardedHelp(HelpInfo helpInfo, HelpRequest helpRequest)
         {
             ProviderCommandHelpInfo providerCommandHelpInfo = new ProviderCommandHelpInfo(
                 helpInfo, helpRequest.ProviderContext);
@@ -417,7 +416,7 @@ namespace System.Management.Automation
         /// This will reset the help cache. Normally this corresponds to a 
         /// help culture change. 
         /// </summary>
-        override internal void Reset()
+        internal override void Reset()
         {
             base.Reset();
 

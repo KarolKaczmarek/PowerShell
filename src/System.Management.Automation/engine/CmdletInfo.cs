@@ -1,15 +1,11 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
+
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
-using System.Management.Automation;
-using System.Management.Automation.Runspaces;
-using System.Management.Automation.Internal;
 using System.Reflection;
 using System.Text;
-using System.Threading;
 
 namespace System.Management.Automation
 {
@@ -59,7 +55,7 @@ namespace System.Management.Automation
             }
 
             // Get the verb and noun from the name
-            if (! SplitCmdletName(name, out verb, out noun))
+            if (!SplitCmdletName(name, out _verb, out _noun))
             {
                 throw
                     PSTraceSource.NewArgumentException(
@@ -68,10 +64,10 @@ namespace System.Management.Automation
                         name);
             }
 
-            this.implementingType = implementingType;
-            this.helpFilePath = helpFile;
-            this._PSSnapin = PSSnapin;
-            this.options = ScopedItemOptions.ReadOnly;
+            _implementingType = implementingType;
+            _helpFilePath = helpFile;
+            _PSSnapin = PSSnapin;
+            _options = ScopedItemOptions.ReadOnly;
             this.DefiningLanguageMode = PSLanguageMode.FullLanguage;
         }
 
@@ -81,12 +77,12 @@ namespace System.Management.Automation
         internal CmdletInfo(CmdletInfo other)
             : base(other)
         {
-            this.verb = other.verb;
-            this.noun = other.noun;
-            this.implementingType = other.implementingType;
-            this.helpFilePath = other.helpFilePath;
-            this._PSSnapin = other._PSSnapin;
-            this.options = ScopedItemOptions.ReadOnly;
+            _verb = other._verb;
+            _noun = other._noun;
+            _implementingType = other._implementingType;
+            _helpFilePath = other._helpFilePath;
+            _PSSnapin = other._PSSnapin;
+            _options = ScopedItemOptions.ReadOnly;
         }
 
         /// <summary>
@@ -127,7 +123,7 @@ namespace System.Management.Automation
             }
 
             // Get the verb and noun from the name
-            if (!SplitCmdletName(name, out verb, out noun))
+            if (!SplitCmdletName(name, out _verb, out _noun))
             {
                 throw
                     PSTraceSource.NewArgumentException(
@@ -136,10 +132,10 @@ namespace System.Management.Automation
                         name);
             }
 
-            this.implementingType = implementingType;
-            this.helpFilePath = string.Empty;
-            this._PSSnapin = null;
-            this.options = ScopedItemOptions.ReadOnly;
+            _implementingType = implementingType;
+            _helpFilePath = string.Empty;
+            _PSSnapin = null;
+            _options = ScopedItemOptions.ReadOnly;
         }
 
         #endregion ctor
@@ -153,10 +149,10 @@ namespace System.Management.Automation
         {
             get
             {
-                return verb;
+                return _verb;
             }
         } // Verb
-        private string verb = String.Empty;
+        private string _verb = String.Empty;
 
         /// <summary>
         /// Gets the noun of the cmdlet.
@@ -165,10 +161,10 @@ namespace System.Management.Automation
         {
             get
             {
-                return noun;
+                return _noun;
             }
         } // Noun
-        private string noun = String.Empty;
+        private string _noun = String.Empty;
 
         internal static bool SplitCmdletName(string name, out string verb, out string noun)
         {
@@ -201,19 +197,19 @@ namespace System.Management.Automation
         {
             get
             {
-                return helpFilePath;
+                return _helpFilePath;
             }
             internal set
             {
-                helpFilePath = value;
+                _helpFilePath = value;
             }
         } // HelpFile
-        private string helpFilePath = String.Empty;
+        private string _helpFilePath = String.Empty;
 
         internal override HelpCategory HelpCategory
         {
-            get { return HelpCategory.Cmdlet;  }
-        } 
+            get { return HelpCategory.Cmdlet; }
+        }
 
         /// <summary>
         /// Gets the Snap-in in which the cmdlet is implemented.
@@ -257,7 +253,7 @@ namespace System.Management.Automation
                     {
                         _version = base.Version;
                     }
-                    else if(_PSSnapin != null)
+                    else if (_PSSnapin != null)
                     {
                         _version = _PSSnapin.Version;
                     }
@@ -276,10 +272,10 @@ namespace System.Management.Automation
         {
             get
             {
-                return implementingType;
+                return _implementingType;
             }
         }
-        private Type implementingType = null;
+        private Type _implementingType = null;
 
         /// <summary>
         /// Gets the synopsis of the cmdlet
@@ -299,9 +295,9 @@ namespace System.Management.Automation
                             String.Format(
                                 System.Globalization.CultureInfo.CurrentCulture,
                                 "{0}{1}{2} {3}",
-                                verb,
+                                _verb,
                                 StringLiterals.CommandVerbNounSeparator,
-                                noun,
+                                _noun,
                                 parameterSet.ToString((this.CommandType & CommandTypes.Workflow) == CommandTypes.Workflow)));
                     }
                 }
@@ -312,9 +308,9 @@ namespace System.Management.Automation
                         String.Format(
                             System.Globalization.CultureInfo.CurrentCulture,
                             "{0}{1}{2}",
-                            verb,
+                            _verb,
                             StringLiterals.CommandVerbNounSeparator,
-                            noun));
+                            _noun));
                 }
 
                 return synopsis.ToString();
@@ -367,7 +363,7 @@ namespace System.Management.Automation
                         for (int i = 0; i < Arguments.Length - 1; i++)
                         {
                             var arg = Arguments[i] as string;
-                            if (arg != null && 
+                            if (arg != null &&
                                 (arg.Equals("-Path", StringComparison.OrdinalIgnoreCase) ||
                                 (arg.Equals("-LiteralPath", StringComparison.OrdinalIgnoreCase))))
                             {
@@ -410,7 +406,7 @@ namespace System.Management.Automation
         {
             get
             {
-                return options;
+                return _options;
             }
 
             set
@@ -418,7 +414,7 @@ namespace System.Management.Automation
                 SetOptions(value, false);
             }
         }
-        private ScopedItemOptions options = ScopedItemOptions.None;
+        private ScopedItemOptions _options = ScopedItemOptions.None;
 
         /// <summary>
         /// Sets the options for the cmdlet and allows changes ReadOnly options only if force is specified.
@@ -437,7 +433,7 @@ namespace System.Management.Automation
             // Check to see if the cmdlet is readonly, if so
             // throw an exception because the options cannot be changed.
 
-            if ((options & ScopedItemOptions.ReadOnly) != 0)
+            if ((_options & ScopedItemOptions.ReadOnly) != 0)
             {
                 SessionStateUnauthorizedAccessException e =
                     new SessionStateUnauthorizedAccessException(
@@ -449,7 +445,7 @@ namespace System.Management.Automation
                 throw e;
             }
 
-            options = newOptions;
+            _options = newOptions;
         }
 
         #endregion public members
@@ -486,7 +482,7 @@ namespace System.Management.Automation
             // If this is a high-fidelity object then extract full-name normally.
             if (psObject.BaseObject is CmdletInfo)
             {
-                CmdletInfo cmdletInfo = (CmdletInfo) psObject.BaseObject;
+                CmdletInfo cmdletInfo = (CmdletInfo)psObject.BaseObject;
                 return GetFullName(cmdletInfo);
             }
 
@@ -494,10 +490,10 @@ namespace System.Management.Automation
             else
             {
                 // Handle the case in one or both of the properties might not be defined.
-                PSPropertyInfo nameProperty     = psObject.Properties["Name"];
+                PSPropertyInfo nameProperty = psObject.Properties["Name"];
                 PSPropertyInfo psSnapInProperty = psObject.Properties["PSSnapIn"];
-                string nameString     = nameProperty     == null ? "" : (string) nameProperty.Value;
-                string psSnapInString = psSnapInProperty == null ? "" : (string) psSnapInProperty.Value;
+                string nameString = nameProperty == null ? "" : (string)nameProperty.Value;
+                string psSnapInString = psSnapInProperty == null ? "" : (string)psSnapInProperty.Value;
                 return GetFullName(psSnapInString, nameString);
             }
         }
@@ -536,18 +532,14 @@ namespace System.Management.Automation
         /// If the attributes could not be read from a property or field.
         /// </exception>
         /// 
-        override internal CommandMetadata CommandMetadata
+        internal override CommandMetadata CommandMetadata
         {
-            get
-            {
-                if (cmdletMetadata == null)
-                {
-                    cmdletMetadata = CommandMetadata.Get(this.Name, this.ImplementingType, Context);
-                }
-                return cmdletMetadata;
+            get {
+                return _cmdletMetadata ??
+                       (_cmdletMetadata = CommandMetadata.Get(this.Name, this.ImplementingType, Context));
             }
         }
-        private CommandMetadata cmdletMetadata;
+        private CommandMetadata _cmdletMetadata;
 
         internal override bool ImplementsDynamicParameters
         {
@@ -561,7 +553,6 @@ namespace System.Management.Automation
                 {
                     return false;
                 }
-                
             }
         }
 

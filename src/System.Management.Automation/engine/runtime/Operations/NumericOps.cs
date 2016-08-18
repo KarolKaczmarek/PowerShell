@@ -5,17 +5,15 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 // ReSharper disable UnusedMember.Global
 // ReSharper disable RedundantCast
 
-using System.Globalization;
-
 namespace System.Management.Automation
 {
-    static class Boxed
+    internal static class Boxed
     {
         internal static object True = (object)true;
         internal static object False = (object)false;
     }
 
-    static class IntOps
+    internal static class IntOps
     {
         internal static object Add(int lhs, int rhs)
         {
@@ -128,7 +126,7 @@ namespace System.Management.Automation
         }
     }
 
-    static class UIntOps
+    internal static class UIntOps
     {
         internal static object Add(uint lhs, uint rhs)
         {
@@ -202,7 +200,7 @@ namespace System.Management.Automation
         internal static object CompareGe(uint lhs, uint rhs) { return (lhs >= rhs) ? Boxed.True : Boxed.False; }
     }
 
-    static class LongOps
+    internal static class LongOps
     {
         internal static object Add(long lhs, long rhs)
         {
@@ -293,7 +291,7 @@ namespace System.Management.Automation
         internal static object CompareGe(long lhs, long rhs) { return (lhs >= rhs) ? Boxed.True : Boxed.False; }
     }
 
-    static class ULongOps
+    internal static class ULongOps
     {
         internal static object Add(ulong lhs, ulong rhs)
         {
@@ -370,7 +368,7 @@ namespace System.Management.Automation
         internal static object CompareGe(ulong lhs, ulong rhs) { return (lhs >= rhs) ? Boxed.True : Boxed.False; }
     }
 
-    static class DecimalOps
+    internal static class DecimalOps
     {
         internal static object Add(decimal lhs, decimal rhs)
         {
@@ -465,7 +463,6 @@ namespace System.Management.Automation
             LanguagePrimitives.ThrowInvalidCastException(val, typeof(int));
             Diagnostics.Assert(false, "an exception is raised by LanguagePrimitives.ThrowInvalidCastException.");
             return null;
-
         }
 
         internal static object BOr(decimal lhs, decimal rhs)
@@ -504,14 +501,14 @@ namespace System.Management.Automation
         {
             ulong l = ConvertToUlong(lhs);
             ulong r = ConvertToUlong(rhs);
-            
+
             // If either operand is signed, return signed result
-            if (lhs <0 || rhs<0)
+            if (lhs < 0 || rhs < 0)
             {
                 unchecked
                 {
                     return (long)(l & r);
-                }    
+                }
             }
             return l & r;
         }
@@ -528,7 +525,7 @@ namespace System.Management.Automation
             }
             return LanguagePrimitives.ConvertTo<ulong>(val);
         }
-        
+
         internal static object LeftShift(decimal val, int count)
         {
             if (val <= int.MaxValue && val >= int.MinValue)
@@ -639,7 +636,7 @@ namespace System.Management.Automation
         internal static object CompareGe2(decimal lhs, double rhs) { return CompareWithDouble(lhs, rhs, DoubleOps.CompareGe, CompareGe); }
     }
 
-    static class DoubleOps
+    internal static class DoubleOps
     {
         internal static object Add(double lhs, double rhs)
         {
@@ -831,7 +828,7 @@ namespace System.Management.Automation
         internal static object CompareGe(double lhs, double rhs) { return (lhs >= rhs) ? Boxed.True : Boxed.False; }
     }
 
-    static class CharOps
+    internal static class CharOps
     {
         internal static object CompareStringIeq(char lhs, string rhs)
         {

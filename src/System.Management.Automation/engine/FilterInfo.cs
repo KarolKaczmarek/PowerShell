@@ -1,10 +1,6 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
-using System.Management.Automation;
-using System.Text;
-
 
 namespace System.Management.Automation
 {
@@ -163,8 +159,7 @@ namespace System.Management.Automation
 
         internal override HelpCategory HelpCategory
         {
-            get { return HelpCategory.Filter;  }
-        } 
-
+            get { return HelpCategory.Filter; }
+        }
     } // FilterInfo
 } // namespace System.Management.Automation

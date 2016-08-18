@@ -7,14 +7,13 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Diagnostics.CodeAnalysis;
 using System.Management.Automation;
-using System.IO;
-using System.Reflection;
-using System.Collections.ObjectModel;
-using System.Management.Automation.Internal;
-
 #if CORECLR
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Management.Automation.Internal;
+using System.Reflection;
 #else
 using System.Web.Script.Serialization;
 using System.Collections.Specialized;
@@ -196,7 +195,7 @@ namespace Microsoft.PowerShell.Commands
             {
                 // It is not, try to load it.
                 // Make sure that PSModuleAutoLoadingPreference is not set to 'None'.
-                PSModuleAutoLoadingPreference moduleAutoLoadingPreference = 
+                PSModuleAutoLoadingPreference moduleAutoLoadingPreference =
                             CommandDiscovery.GetCommandDiscoveryPreference(cmdlet.Context, SpecialVariables.PSModuleAutoLoadingPreferenceVarPath, "PSModuleAutoLoadingPreference");
                 if (moduleAutoLoadingPreference == PSModuleAutoLoadingPreference.None)
                 {

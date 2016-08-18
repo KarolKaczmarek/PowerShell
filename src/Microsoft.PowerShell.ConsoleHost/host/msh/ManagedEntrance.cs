@@ -3,13 +3,14 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
 using System;
-using System.Threading;
 using System.Reflection;
 using System.Management.Automation;
 using System.Management.Automation.Internal;
 using System.Management.Automation.Runspaces;
 using System.Management.Automation.Tracing;
+#if CORECLR
 using System.Runtime.InteropServices;
+#endif
 
 namespace Microsoft.PowerShell
 {
@@ -28,9 +29,9 @@ namespace Microsoft.PowerShell
         /// Command line arguments to the managed MSH
         /// </param>
 #if CORECLR
-        #pragma warning disable 1573
+#pragma warning disable 1573
         public static int Start(string consoleFilePath, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr, SizeParamIndex = 2)]string[] args, int argc)
-        #pragma warning restore 1573
+#pragma warning restore 1573
 #else
         public int Start(string consoleFilePath, string[] args)
 #endif
@@ -94,14 +95,14 @@ namespace Microsoft.PowerShell
                         ConsoleHost.DefaultInitialSessionState = InitialSessionState.CreateDefault2();
                         configuration = null;
                     }
-                    else 
+                    else
                     {
                         ConsoleHost.DefaultInitialSessionState = InitialSessionState.CreateDefault2();
                         configuration = null;
                     }
 #else
                     ConsoleHost.DefaultInitialSessionState = InitialSessionState.CreateDefault2();
-                configuration = null;
+                    configuration = null;
 #endif
                 }
                 else
@@ -113,9 +114,14 @@ namespace Microsoft.PowerShell
                 int exitCode = 0;
                 try
                 {
+#if CORECLR
+                    var banner = ManagedEntranceStrings.ShellBannerNonWindowsPowerShell;
+#else
+                    var banner = ManagedEntranceStrings.ShellBanner;
+#endif
                     exitCode = Microsoft.PowerShell.ConsoleShell.Start(
                         configuration,
-                        ManagedEntranceStrings.ShellBanner,
+                        banner,
                         ManagedEntranceStrings.ShellHelp,
                         warning == null ? null : warning.Message,
                         args);

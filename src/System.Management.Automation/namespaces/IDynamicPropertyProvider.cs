@@ -2,8 +2,6 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
-
 namespace System.Management.Automation.Provider
 {
     #region IDynamicPropertyCmdletProvider
@@ -103,7 +101,7 @@ namespace System.Management.Automation.Provider
         /// The default implemenation returns null. (no additional parameters)
         /// </returns>
         object NewPropertyDynamicParameters(
-            string path, 
+            string path,
             string propertyName,
             string propertyTypeName,
             object value);
@@ -162,9 +160,9 @@ namespace System.Management.Automation.Provider
         /// The default implemenation returns null. (no additional parameters)
         /// </returns>
         object RemovePropertyDynamicParameters(
-            string path, 
+            string path,
             string propertyName);
-        
+
         /// <summary>
         /// Renames a property of the item at the specified path
         /// </summary>
@@ -229,7 +227,7 @@ namespace System.Management.Automation.Provider
         /// The default implemenation returns null. (no additional parameters)
         /// </returns>
         object RenamePropertyDynamicParameters(
-            string path, 
+            string path,
             string sourceProperty,
             string destinationProperty);
 
@@ -306,7 +304,7 @@ namespace System.Management.Automation.Provider
         /// The default implemenation returns null. (no additional parameters)
         /// </returns>
         object CopyPropertyDynamicParameters(
-            string sourcePath, 
+            string sourcePath,
             string sourceProperty,
             string destinationPath,
             string destinationProperty);
@@ -383,13 +381,12 @@ namespace System.Management.Automation.Provider
         /// The default implemenation returns null. (no additional parameters)
         /// </returns>
         object MovePropertyDynamicParameters(
-            string sourcePath, 
+            string sourcePath,
             string sourceProperty,
             string destinationPath,
             string destinationProperty);
     } // IDynamicPropertyCmdletProvider
 
     #endregion IDynamicPropertyCmdletProvider
-
 } // namespace System.Management.Automation
 

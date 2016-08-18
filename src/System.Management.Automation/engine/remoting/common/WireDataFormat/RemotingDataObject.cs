@@ -2,19 +2,8 @@
  * Copyright (c) Microsoft Corporation.  All rights reserved.
  * --********************************************************************/
 
-using System;
-using System.Security;
-using System.Collections.ObjectModel;
-using System.Collections.Generic;
-using System.Threading;
-using System.Xml;
-using System.Text;
 using System.IO;
-
-using System.Management.Automation.Remoting;
-using System.Management.Automation.Internal;
 using Dbg = System.Management.Automation.Diagnostics;
-using Fragmentor = System.Management.Automation.Remoting.Fragmentor;
 
 namespace System.Management.Automation.Remoting
 {
@@ -26,12 +15,6 @@ namespace System.Management.Automation.Remoting
     internal class RemoteDataObject<T>
     {
         #region Private Members
-
-        private RemotingDestination destination;
-        private RemotingDataType dataType;
-        private Guid runspacePoolId;
-        private Guid powerShellId;
-        private T data;
 
         private const int destinationOffset = 0;
         private const int dataTypeOffset = 4;
@@ -67,30 +50,24 @@ namespace System.Management.Automation.Remoting
         /// <param name="data">
         /// Actual payload.
         /// </param>
-        protected RemoteDataObject(RemotingDestination destination, 
+        protected RemoteDataObject(RemotingDestination destination,
             RemotingDataType dataType,
-            Guid runspacePoolId, 
-            Guid powerShellId, 
+            Guid runspacePoolId,
+            Guid powerShellId,
             T data)
         {
-            this.destination = destination;
-            this.dataType = dataType;
-            this.runspacePoolId = runspacePoolId;
-            this.powerShellId = powerShellId;
-            this.data = data;
+            Destination = destination;
+            DataType = dataType;
+            RunspacePoolId = runspacePoolId;
+            PowerShellId = powerShellId;
+            Data = data;
         }
-        
+
         #endregion Constructors
 
         #region Properties
 
-        internal RemotingDestination Destination
-        {
-            get
-            {
-                return destination;
-            }
-        }
+        internal RemotingDestination Destination { get; }
 
         /// <summary>
         /// Gets the target (Runspace / Pipeline / Powershell / Host)
@@ -100,8 +77,8 @@ namespace System.Management.Automation.Remoting
         {
             get
             {
-                int dt = (int)dataType;
-                
+                int dt = (int)DataType;
+
                 // get the most used ones in the top.
                 if ((dt & PowerShellMask) == PowerShellMask)
                 {
@@ -122,37 +99,13 @@ namespace System.Management.Automation.Remoting
             }
         }
 
-        internal RemotingDataType DataType
-        {
-            get
-            {
-                return dataType;
-            }
-        }
+        internal RemotingDataType DataType { get; }
 
-        internal Guid RunspacePoolId
-        {
-            get
-            {
-                return runspacePoolId;
-            }
-        }
+        internal Guid RunspacePoolId { get; }
 
-        internal Guid PowerShellId
-        {
-            get
-            {
-                return powerShellId;
-            }
-        }
+        internal Guid PowerShellId { get; }
 
-        internal T Data
-        {
-            get
-            {
-                return data;
-            }
-        }
+        internal T Data { get; }
 
         #endregion Properties
 
@@ -167,7 +120,7 @@ namespace System.Management.Automation.Remoting
         /// <returns></returns>
         internal static RemoteDataObject<T> CreateFrom(RemotingDestination destination,
             RemotingDataType dataType,
-            Guid runspacePoolId, 
+            Guid runspacePoolId,
             Guid powerShellId,
             T data)
         {
@@ -191,7 +144,7 @@ namespace System.Management.Automation.Remoting
             if ((serializedDataStream.Length - serializedDataStream.Position) < headerLength)
             {
                 PSRemotingTransportException e =
-                    new PSRemotingTransportException(PSRemotingErrorId.NotEnoughHeaderForRemoteDataObject, 
+                    new PSRemotingTransportException(PSRemotingErrorId.NotEnoughHeaderForRemoteDataObject,
                         RemotingErrorIdStrings.NotEnoughHeaderForRemoteDataObject,
                     headerLength + FragmentedRemoteObject.HeaderLength);
                 throw e;
@@ -208,7 +161,7 @@ namespace System.Management.Automation.Remoting
                 actualData = defragmentor.DeserializeToPSObject(serializedDataStream);
             }
 
-            T deserializedObject = (T)LanguagePrimitives.ConvertTo(actualData, typeof(T), 
+            T deserializedObject = (T)LanguagePrimitives.ConvertTo(actualData, typeof(T),
                 System.Globalization.CultureInfo.CurrentCulture);
 
             return new RemoteDataObject<T>(destination, dataType, runspacePoolId, powerShellId, deserializedObject);
@@ -230,9 +183,9 @@ namespace System.Management.Automation.Remoting
             Dbg.Assert(null != fragmentor, "Fragmentor cannot be null.");
             SerializeHeader(streamToWriteTo);
 
-            if (null != data)
+            if (null != Data)
             {
-                fragmentor.SerializeToBytes(data, streamToWriteTo);
+                fragmentor.SerializeToBytes(Data, streamToWriteTo);
             }
 
             return;
@@ -255,9 +208,9 @@ namespace System.Management.Automation.Remoting
             // Serialize data type
             SerializeUInt((uint)DataType, streamToWriteTo);
             // Serialize runspace guid
-            SerializeGuid(runspacePoolId, streamToWriteTo);
+            SerializeGuid(RunspacePoolId, streamToWriteTo);
             // Serialize powershell guid
-            SerializeGuid(powerShellId, streamToWriteTo);
+            SerializeGuid(PowerShellId, streamToWriteTo);
 
             return;
         }
@@ -302,7 +255,7 @@ namespace System.Management.Automation.Remoting
         private static Guid DeserializeGuid(Stream serializedDataStream)
         {
             Dbg.Assert(serializedDataStream.Length >= 16, "Not enough data to get Guid.");
-            
+
             byte[] guidarray = new byte[16]; // Size of GUID.
 
             for (int idx = 0; idx < 16; idx++)
@@ -347,14 +300,14 @@ namespace System.Management.Automation.Remoting
         /// <returns></returns>
         internal new static RemoteDataObject CreateFrom(RemotingDestination destination,
             RemotingDataType dataType,
-            Guid runspacePoolId, 
+            Guid runspacePoolId,
             Guid powerShellId,
             object data)
         {
             return new RemoteDataObject(destination, dataType, runspacePoolId,
                 powerShellId, data);
-        }       
-        
+        }
+
         #endregion Constructors
     }
 }

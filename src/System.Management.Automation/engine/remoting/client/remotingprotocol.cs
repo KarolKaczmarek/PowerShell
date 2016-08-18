@@ -2,11 +2,6 @@
  * Copyright (c) Microsoft Corporation.  All rights reserved.
  * --********************************************************************/
 
-using System;
-using System.Management.Automation;
-using System.Management.Automation.Runspaces;
-
-using System.Management.Automation.Remoting;
 using System.Management.Automation.Remoting.Client;
 
 using Dbg = System.Management.Automation.Diagnostics;
@@ -23,9 +18,9 @@ namespace System.Management.Automation.Remoting
         #region Abstract_API
 
         internal abstract void CreateAsync();
-        
+
         internal abstract event EventHandler<RemoteSessionStateEventArgs> ConnectionStateChanged;
-      
+
         internal abstract void SendNegotiationAsync(RemoteSessionState sessionState);
 
         internal abstract event EventHandler<RemoteSessionNegotiationEventArgs> NegotiationReceived;
@@ -41,10 +36,10 @@ namespace System.Management.Automation.Remoting
             get;
         }
 
-        internal abstract BaseClientSessionTransportManager TransportManager { get;}
+        internal abstract BaseClientSessionTransportManager TransportManager { get; }
 
         internal abstract BaseClientCommandTransportManager CreateClientCommandTransportManager(
-            System.Management.Automation.Runspaces.Internal.ClientRemotePowerShell cmd, 
+            System.Management.Automation.Runspaces.Internal.ClientRemotePowerShell cmd,
             bool noInput);
 
         // TODO: If this is not used, remove this.

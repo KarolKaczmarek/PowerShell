@@ -2,7 +2,6 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
 using System.Collections.Generic;
 
 namespace Microsoft.PowerShell.Commands
@@ -46,7 +45,7 @@ namespace Microsoft.PowerShell.Commands
             Fields = new Dictionary<string, string>();
         }
 
-        internal void AddField( string key, string value )
+        internal void AddField(string key, string value)
         {
             string test;
             if (null != key && !Fields.TryGetValue(key, out test))

@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System.Collections.ObjectModel;
 
 namespace System.Management.Automation
@@ -23,7 +24,7 @@ namespace System.Management.Automation
     /// In general, there will be a specific helpInfo child class for each kind of help provider.
     /// 
     /// </summary>
-    abstract internal class HelpInfo
+    internal abstract class HelpInfo
     {
         /// <summary>
         /// Constructor for HelpInfo
@@ -36,7 +37,7 @@ namespace System.Management.Automation
         /// Name for help info
         /// </summary>
         /// <value>Name for help info</value>
-        abstract internal string Name
+        internal abstract string Name
         {
             get;
         }
@@ -45,7 +46,7 @@ namespace System.Management.Automation
         /// Synopsis for help info
         /// </summary>
         /// <value>Synopsis for help info</value>
-        abstract internal string Synopsis
+        internal abstract string Synopsis
         {
             get;
         }
@@ -54,7 +55,7 @@ namespace System.Management.Automation
         /// Component for help info.
         /// </summary>
         /// <value>Component for help info</value>
-        virtual internal string Component
+        internal virtual string Component
         {
             get { return string.Empty; }
         }
@@ -63,7 +64,7 @@ namespace System.Management.Automation
         /// Role for help info.
         /// </summary>
         /// <value>Role for help ino</value>
-        virtual internal string Role
+        internal virtual string Role
         {
             get { return string.Empty; }
         }
@@ -72,7 +73,7 @@ namespace System.Management.Automation
         /// Functionality for help info.
         /// </summary>
         /// <value>Functionality for help info</value>
-        virtual internal string Functionality
+        internal virtual string Functionality
         {
             get { return string.Empty; }
         }
@@ -81,12 +82,10 @@ namespace System.Management.Automation
         /// Help category for help info
         /// </summary>
         /// <value>Help category for help info</value>
-        abstract internal HelpCategory HelpCategory
+        internal abstract HelpCategory HelpCategory
         {
             get;
         }
-
-        private HelpCategory _forwardHelpCategory = HelpCategory.None;
 
         /// <summary>
         /// Forward help category for this help info
@@ -97,19 +96,7 @@ namespace System.Management.Automation
         /// to process this helpInfo before it can be returned to end user.
         /// </remarks>
         /// <value>Help category to forward this helpInfo to</value>
-        internal HelpCategory ForwardHelpCategory
-        {
-            get
-            {
-                return _forwardHelpCategory;
-            }
-            set
-            {
-                _forwardHelpCategory = value;
-            }
-        }
-
-        private string _forwardTarget = "";
+        internal HelpCategory ForwardHelpCategory { get; set; } = HelpCategory.None;
 
         /// <summary>
         /// Target object in forward-help-provider that should process this HelpInfo.
@@ -121,23 +108,13 @@ namespace System.Management.Automation
         /// alias.
         /// </summary>
         /// <value>forward target object name</value>
-        internal string ForwardTarget
-        {
-            get
-            {
-                return _forwardTarget;
-            }
-            set
-            {
-                _forwardTarget = value;
-            }
-        }
+        internal string ForwardTarget { get; set; } = "";
 
         /// <summary>
         /// Full help object for this help item. 
         /// </summary>
         /// <value>Full help object for this help item</value>
-        abstract internal PSObject FullHelp
+        internal abstract PSObject FullHelp
         {
             get;
         }
@@ -273,34 +250,22 @@ namespace System.Management.Automation
 
             this.FullHelp.Properties.Remove("Component");
             this.FullHelp.Properties.Add(new PSNoteProperty("Component", this.Component));
-            
+
             this.FullHelp.Properties.Remove("Role");
             this.FullHelp.Properties.Add(new PSNoteProperty("Role", this.Role));
-            
+
             this.FullHelp.Properties.Remove("Functionality");
             this.FullHelp.Properties.Add(new PSNoteProperty("Functionality", this.Functionality));
-        }        
+        }
 
         #region Error handling
-
-        private Collection<ErrorRecord> _errors;
 
         /// <summary>
         /// This is for tracking the set of errors happened during the parsing of 
         /// of this helpinfo.
         /// </summary>
         /// <value></value>
-        internal Collection<ErrorRecord> Errors
-        {
-            get
-            {
-                return _errors;
-            }
-            set
-            {
-                _errors = value;
-            }
-        }
+        internal Collection<ErrorRecord> Errors { get; set; }
 
         #endregion
     }

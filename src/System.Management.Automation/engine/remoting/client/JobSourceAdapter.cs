@@ -1,6 +1,7 @@
 ﻿/********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -39,20 +40,12 @@ namespace System.Management.Automation
             set { _name = value; }
         }
 
-        private readonly Type _jobSourceAdapterType;
-
         /// <summary>
         /// The type that derives from JobSourceAdapter
         /// that contains the logic for invocation and
         /// management of this type of job.
         /// </summary>
-        public Type JobSourceAdapterType
-        {
-            get
-            {
-                return _jobSourceAdapterType;
-            }
-        }
+        public Type JobSourceAdapterType { get; }
 
         private string _moduleName;
 
@@ -77,19 +70,11 @@ namespace System.Management.Automation
             set { _jobSourceAdapterTypeName = value; }
         }
 
-        private readonly string _command;
-
         /// <summary>
         /// Name of the job that needs to be loaded
         /// from the specified module
         /// </summary>
-        public String Command
-        {
-            get
-            {
-                return _command;
-            }
-        }
+        public String Command { get; }
 
         private Guid _instanceId;
 
@@ -148,12 +133,12 @@ namespace System.Management.Automation
         /// <param name="name">the job name.</param>
         public JobDefinition(Type jobSourceAdapterType, string command, string name)
         {
-            _jobSourceAdapterType = jobSourceAdapterType;
+            JobSourceAdapterType = jobSourceAdapterType;
             if (jobSourceAdapterType != null)
             {
                 _jobSourceAdapterTypeName = jobSourceAdapterType.Name;
             }
-            _command = command;
+            Command = command;
             _name = name;
             _instanceId = Guid.NewGuid();
         }
@@ -166,7 +151,7 @@ namespace System.Management.Automation
         protected JobDefinition(SerializationInfo info, StreamingContext context)
         {
             throw new NotImplementedException();
-        }        
+        }
 
         /// <summary>
         /// 
@@ -209,7 +194,7 @@ namespace System.Management.Automation
                 _name = value;
             }
         }
-        string _name = string.Empty;
+        private string _name = string.Empty;
 
         private string _command;
 
@@ -255,17 +240,10 @@ namespace System.Management.Automation
             get { return _parameters ?? (_parameters = new List<CommandParameterCollection>()); }
         }
 
-        private readonly Guid _instanceId = Guid.NewGuid();
         /// <summary>
         /// Unique identifies for this specification
         /// </summary>
-        public Guid InstanceId
-        {
-            get
-            {
-                return _instanceId;
-            }
-        }
+        public Guid InstanceId { get; } = Guid.NewGuid();
 
         /// <summary>
         /// Save this specification to a file
@@ -289,7 +267,7 @@ namespace System.Management.Automation
         /// Constructor.
         /// </summary>
         protected JobInvocationInfo()
-        { }        
+        { }
 
         /// <summary>
         /// Create a new job definition with a single set of parameters.
@@ -403,12 +381,7 @@ namespace System.Management.Automation
         /// <summary>
         /// Name for this store
         /// </summary>
-        public String Name
-        {
-            get { return _name; }
-            set { _name = value; }
-        }
-        private string _name = String.Empty;
+        public String Name { get; set; } = String.Empty;
 
         /// <summary>
         /// Get a token that allows for construction of a job with a previously assigned
@@ -456,7 +429,7 @@ namespace System.Management.Automation
             duplicateDetector.Add(job.InstanceId, job.InstanceId);
 
             JobManager.SaveJobId(job.InstanceId, job.Id, this.GetType().Name);
-            
+
             if (!recurse || job.ChildJobs == null) return;
             foreach (Job child in job.ChildJobs)
             {
@@ -473,7 +446,7 @@ namespace System.Management.Automation
         /// <returns>job object</returns>
         public Job2 NewJob(JobDefinition definition)
         {
-            return NewJob(new JobInvocationInfo(definition, new Dictionary<string,object>()));
+            return NewJob(new JobInvocationInfo(definition, new Dictionary<string, object>()));
         }
 
         /// <summary>

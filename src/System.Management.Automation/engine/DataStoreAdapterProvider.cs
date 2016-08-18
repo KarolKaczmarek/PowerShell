@@ -7,7 +7,7 @@ using System.Management.Automation.Provider;
 using System.Reflection;
 using System.Linq;
 using System.Threading;
-using Dbg=System.Management.Automation;
+using Dbg = System.Management.Automation;
 using System.Collections.Generic;
 
 namespace System.Management.Automation
@@ -20,49 +20,28 @@ namespace System.Management.Automation
     /// A cmdlet provider may want to derive from this class to provide their
     /// own public members to expose to the user or to cache information related to the provider.
     /// </remarks>
-    public class ProviderInfo 
+    public class ProviderInfo
     {
         /// <summary>
         /// Gets the System.Type of the class that implements the provider.
         /// </summary>
-        public Type ImplementingType
-        {
-            get
-            {
-                return implementingType;
-            }
-        }
-        private Type implementingType;
+        public Type ImplementingType { get; }
 
         /// <summary>
         /// Gets the help file path for the provider.
         /// </summary>
-        public string HelpFile
-        {
-            get
-            {
-                return helpFile;
-            }
-        }
-        private string helpFile = "";
+        public string HelpFile { get; } = "";
 
         /// <summary>
         /// The instance of session state the provider belongs to.
         /// </summary>
-        private SessionState sessionState;
+        private SessionState _sessionState;
 
 
         /// <summary>
         /// Gets the name of the provider. 
         /// </summary>
-        public string Name
-        {
-            get
-            {
-                return name;
-            }
-        }
-        private string name;
+        public string Name { get; }
 
         /// <summary>
         /// Gets the full name of the provider including the pssnapin name if available
@@ -82,7 +61,7 @@ namespace System.Management.Automation
                             this.PSSnapInName,
                             this.Name);
                 }
-                
+
                 // After converting core snapins to load as modules, the providers will have Module property populated
                 else if (!string.IsNullOrEmpty(this.ModuleName))
                 {
@@ -100,14 +79,7 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the Snap-in in which the provider is implemented.
         /// </summary>
-        public PSSnapInInfo PSSnapIn
-        {
-            get
-            {
-                return pssnapin;
-            }
-        }
-        private PSSnapInInfo pssnapin;
+        public PSSnapInInfo PSSnapIn { get; }
 
         /// <summary>
         /// Gets the pssnapin name that the provider is implemented in.
@@ -118,9 +90,9 @@ namespace System.Management.Automation
             get
             {
                 string result = null;
-                if (pssnapin != null)
+                if (PSSnapIn != null)
                 {
-                    result = pssnapin.Name;
+                    result = PSSnapIn.Name;
                 }
                 return result;
             }
@@ -150,10 +122,10 @@ namespace System.Management.Automation
         {
             get
             {
-                if (pssnapin != null)
-                    return pssnapin.Name;
-                if (_module != null)
-                    return _module.Name;
+                if (PSSnapIn != null)
+                    return PSSnapIn.Name;
+                if (Module != null)
+                    return Module.Name;
                 return String.Empty;
             }
         }
@@ -161,32 +133,17 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the module the defined this provider.
         /// </summary>
-        public PSModuleInfo Module
-        {
-            get { return _module; }
-        }
-        
+        public PSModuleInfo Module { get; private set; }
+
         internal void SetModule(PSModuleInfo module)
         {
-            _module = module;
+            Module = module;
         }
-        PSModuleInfo _module;
 
         /// <summary>
         /// Gets or sets the description for the provider
         /// </summary>
-        public String Description
-        {
-            get
-            {
-                return description;
-            }
-            set
-            {
-                description = value;
-            }
-        }
-        private string description;
+        public String Description { get; set; }
 
         /// <summary>
         /// Gets the capabilies that are implemented by the provider.
@@ -195,7 +152,7 @@ namespace System.Management.Automation
         {
             get
             {
-                if (!capabilitiesRead)
+                if (!_capabilitiesRead)
                 {
                     try
                     {
@@ -208,8 +165,8 @@ namespace System.Management.Automation
 
                         if (cmdletProviderAttributes.Length == 1)
                         {
-                            capabilities = cmdletProviderAttributes[0].ProviderCapabilities;
-                            capabilitiesRead = true;
+                            _capabilities = cmdletProviderAttributes[0].ProviderCapabilities;
+                            _capabilitiesRead = true;
                         }
                     }
                     catch (Exception e) // Catch-all OK, 3rd party callout
@@ -218,11 +175,11 @@ namespace System.Management.Automation
                         // Assume no capabilites for now
                     }
                 }
-                return capabilities;
+                return _capabilities;
             } // get
         } // Capabilities
-        private ProviderCapabilities capabilities = ProviderCapabilities.None;
-        private bool capabilitiesRead;
+        private ProviderCapabilities _capabilities = ProviderCapabilities.None;
+        private bool _capabilitiesRead;
 
         /// <summary>
         /// Gets or sets the home for the provider. 
@@ -232,19 +189,7 @@ namespace System.Management.Automation
         /// The location can be either a fully qualified provider path 
         /// or an Msh path. This is the location that is substituted for the ~.
         /// </remarks>
-        public string Home
-        {
-            get
-            {
-                return home;
-            }
-
-            set
-            {
-                home = value;
-            }
-        } // Home
-        private string home;
+        public string Home { get; set; } // Home
 
         /// <summary>
         /// Gets an enumeration of drives that are available for
@@ -254,7 +199,7 @@ namespace System.Management.Automation
         {
             get
             {
-                return sessionState.Drive.GetAllForProvider(FullName);
+                return _sessionState.Drive.GetAllForProvider(FullName);
             } // get
         } // Drives
 
@@ -262,7 +207,7 @@ namespace System.Management.Automation
         /// A hidden drive for the provider that is used for setting
         /// the location to a provider-qualified path.
         /// </summary>
-        private PSDriveInfo hiddenDrive;
+        private PSDriveInfo _hiddenDrive;
 
         /// <summary>
         /// Gets the hidden drive for the provider that is used
@@ -273,7 +218,7 @@ namespace System.Management.Automation
         {
             get
             {
-                return hiddenDrive;
+                return _hiddenDrive;
             } // get
         } // HiddenDrive
 
@@ -308,12 +253,7 @@ namespace System.Management.Automation
         /// This is true for all PSDrives on all platforms, except for filesystems on
         /// non-windows platforms
         /// </summary>
-        public bool VolumeSeparatedByColon
-        {
-            get { return volumeSeparatedByColon; }
-            internal set { volumeSeparatedByColon = value; }
-        }
-        private bool volumeSeparatedByColon = true;
+        public bool VolumeSeparatedByColon { get; internal set; } = true;
 
         /// <summary>
         /// Constructs an instance of the class using an existing reference
@@ -338,19 +278,19 @@ namespace System.Management.Automation
         {
             if (providerInfo == null)
             {
-                throw PSTraceSource.NewArgumentNullException ("providerInfo");
+                throw PSTraceSource.NewArgumentNullException("providerInfo");
             }
 
-            this.name = providerInfo.Name;
-            this.implementingType = providerInfo.ImplementingType;
-            this.capabilities = providerInfo.capabilities;
-            this.description = providerInfo.description;
-            this.hiddenDrive = providerInfo.hiddenDrive;
-            this.home = providerInfo.home;
-            this.helpFile = providerInfo.helpFile;
-            this.pssnapin = providerInfo.pssnapin;
-            this.sessionState = providerInfo.sessionState;
-            this.volumeSeparatedByColon = providerInfo.volumeSeparatedByColon;
+            Name = providerInfo.Name;
+            ImplementingType = providerInfo.ImplementingType;
+            _capabilities = providerInfo._capabilities;
+            Description = providerInfo.Description;
+            _hiddenDrive = providerInfo._hiddenDrive;
+            Home = providerInfo.Home;
+            HelpFile = providerInfo.HelpFile;
+            PSSnapIn = providerInfo.PSSnapIn;
+            _sessionState = providerInfo._sessionState;
+            VolumeSeparatedByColon = providerInfo.VolumeSeparatedByColon;
         }
 
         /// <summary>
@@ -391,7 +331,7 @@ namespace System.Management.Automation
         /// 
         internal ProviderInfo(
             SessionState sessionState,
-            Type implementingType, 
+            Type implementingType,
             string name,
             string helpFile,
             PSSnapInInfo psSnapIn)
@@ -472,14 +412,14 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentException("name");
             }
 
-            this.sessionState = sessionState;
+            _sessionState = sessionState;
 
-            this.name = name;
-            this.description = description;
-            this.home = home;
-            this.implementingType = implementingType;
-            this.helpFile = helpFile;
-            this.pssnapin = psSnapIn;
+            Name = name;
+            Description = description;
+            Home = home;
+            ImplementingType = implementingType;
+            HelpFile = helpFile;
+            PSSnapIn = psSnapIn;
 
 #if SUPPORTS_CMDLETPROVIDER_FILE
             LoadProviderFromPath(path);
@@ -487,7 +427,7 @@ namespace System.Management.Automation
             // Create the hidden drive. The name doesn't really
             // matter since we are not adding this drive to a scope.
 
-            hiddenDrive = 
+            _hiddenDrive =
                 new PSDriveInfo(
                     this.FullName,
                     this,
@@ -495,13 +435,13 @@ namespace System.Management.Automation
                     "",
                     null);
 
-            hiddenDrive.Hidden = true;
+            _hiddenDrive.Hidden = true;
 
             // TODO:PSL
             // this is probably not right here
             if (implementingType == typeof(Microsoft.PowerShell.Commands.FileSystemProvider) && !Platform.IsWindows)
             {
-                volumeSeparatedByColon = false;
+                VolumeSeparatedByColon = false;
             }
         }
 
@@ -583,7 +523,7 @@ namespace System.Management.Automation
                     if (!String.IsNullOrEmpty(qualifiedProviderName.PSSnapInName))
                     {
                         // After converting core snapins to load as modules, the providers will have Module property populated
-                        if (!String.Equals(qualifiedProviderName.PSSnapInName, this.PSSnapInName, StringComparison.OrdinalIgnoreCase) && 
+                        if (!String.Equals(qualifiedProviderName.PSSnapInName, this.PSSnapInName, StringComparison.OrdinalIgnoreCase) &&
                             !String.Equals(qualifiedProviderName.PSSnapInName, this.ModuleName, StringComparison.OrdinalIgnoreCase))
                         {
                             break;
@@ -653,7 +593,7 @@ namespace System.Management.Automation
 
             return result;
         }
-        
+
         /// <summary>
         /// Creates an instance of the provider
         /// </summary>
@@ -763,32 +703,32 @@ namespace System.Management.Automation
         /// </summary>
         internal void GetOutputTypes(string cmdletname, List<PSTypeName> listToAppend)
         {
-            if (providerOutputType == null)
+            if (_providerOutputType == null)
             {
-                providerOutputType = new Dictionary<string, List<PSTypeName>>();
-                foreach (OutputTypeAttribute outputType in implementingType.GetCustomAttributes<OutputTypeAttribute>(false))
+                _providerOutputType = new Dictionary<string, List<PSTypeName>>();
+                foreach (OutputTypeAttribute outputType in ImplementingType.GetCustomAttributes<OutputTypeAttribute>(false))
                 {
                     if (string.IsNullOrEmpty(outputType.ProviderCmdlet))
                     {
                         continue;
                     }
                     List<PSTypeName> l;
-                    if (!providerOutputType.TryGetValue(outputType.ProviderCmdlet, out l))
+                    if (!_providerOutputType.TryGetValue(outputType.ProviderCmdlet, out l))
                     {
                         l = new List<PSTypeName>();
-                        providerOutputType[outputType.ProviderCmdlet] = l;
+                        _providerOutputType[outputType.ProviderCmdlet] = l;
                     }
                     l.AddRange(outputType.Type);
                 }
             }
 
             List<PSTypeName> cmdletOutputType = null;
-            if (providerOutputType.TryGetValue(cmdletname, out cmdletOutputType))
+            if (_providerOutputType.TryGetValue(cmdletname, out cmdletOutputType))
             {
                 listToAppend.AddRange(cmdletOutputType);
             }
         }
-        private Dictionary<string, List<PSTypeName>> providerOutputType;
+        private Dictionary<string, List<PSTypeName>> _providerOutputType;
 
         private PSNoteProperty _noteProperty;
         internal PSNoteProperty GetNotePropertyForProviderCmdlets(string name)
@@ -801,7 +741,6 @@ namespace System.Management.Automation
             return _noteProperty;
         }
     } // class ProviderInfo
-
 } // namespace System.Management.Automation
 
 

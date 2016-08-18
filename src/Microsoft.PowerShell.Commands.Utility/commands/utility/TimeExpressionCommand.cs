@@ -25,43 +25,21 @@ namespace Microsoft.PowerShell.Commands
         /// <summary>
         /// This parameter specifies the current pipeline object 
         /// </summary>
-        [Parameter( ValueFromPipeline = true )]
-        public PSObject InputObject
-        {
-            set
-            {
-                inputObject = value;
-            }
-            get
-            {
-                return inputObject;
-            }
-        }
-        private PSObject inputObject = AutomationNull.Value;
+        [Parameter(ValueFromPipeline = true)]
+        public PSObject InputObject { set; get; } = AutomationNull.Value;
 
 
         /// <summary>
         /// The script block to apply
         /// </summary>
         [Parameter(Position = 0, Mandatory = true)]
-        public ScriptBlock Expression
-        {
-            set
-            {
-                script = value;
-            }
-            get
-            {
-                return script;
-            }
-        }
-        private ScriptBlock script;
+        public ScriptBlock Expression { set; get; }
 
         #endregion
 
         #region private members
 
-        private System.Diagnostics.Stopwatch stopWatch = new System.Diagnostics.Stopwatch();
+        private System.Diagnostics.Stopwatch _stopWatch = new System.Diagnostics.Stopwatch();
 
         #endregion
 
@@ -73,7 +51,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         protected override void EndProcessing()
         {
-            WriteObject( stopWatch.Elapsed );
+            WriteObject(_stopWatch.Elapsed);
         } // EndProcessing
 
 
@@ -85,17 +63,17 @@ namespace Microsoft.PowerShell.Commands
         {
             // Only accumulate the time used by this scriptblock...
             // As results are discarded, write directly to a null pipe instead of accumulating.
-            stopWatch.Start();
-            script.InvokeWithPipe(
-                useLocalScope:         false,
-                errorHandlingBehavior: ScriptBlock.ErrorHandlingBehavior.WriteToCurrentErrorPipe, 
-                dollarUnder:           InputObject,   // $_
-                input:                 new object[0], // $input
-                scriptThis:            AutomationNull.Value,
-                outputPipe:            new Pipe { NullPipe = true },
-                invocationInfo:           null);
+            _stopWatch.Start();
+            Expression.InvokeWithPipe(
+                useLocalScope: false,
+                errorHandlingBehavior: ScriptBlock.ErrorHandlingBehavior.WriteToCurrentErrorPipe,
+                dollarUnder: InputObject,   // $_
+                input: new object[0], // $input
+                scriptThis: AutomationNull.Value,
+                outputPipe: new Pipe { NullPipe = true },
+                invocationInfo: null);
 
-            stopWatch.Stop();
+            _stopWatch.Stop();
         }
 
         #endregion

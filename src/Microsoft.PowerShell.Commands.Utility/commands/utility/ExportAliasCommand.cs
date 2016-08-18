@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -50,23 +51,10 @@ namespace Microsoft.PowerShell.Commands
         [Parameter(Mandatory = true, Position = 0, ParameterSetName = "ByPath")]
         public string Path
         {
-            get
-            {
-                return path;
-            }
-            set
-            {
-                if (value == null)
-                {
-                    path = ".";
-                }
-                else
-                {
-                    path = value;
-                }
-            }
+            get { return _path; }
+            set { _path = value ?? "."; }
         }
-        private string path = ".";
+        private string _path = ".";
 
         /// <summary>
         /// The literal path of the file to export the aliases to.
@@ -76,49 +64,33 @@ namespace Microsoft.PowerShell.Commands
         [Alias("PSPath")]
         public string LiteralPath
         {
-            get
-            {
-                return path;
-            }
+            get { return _path; }
             set
             {
                 if (value == null)
                 {
-                    path = ".";
+                    _path = ".";
                 }
                 else
                 {
-                    path = value;
-                    isLiteralPath = true;
+                    _path = value;
+                    _isLiteralPath = true;
                 }
             }
         }
-        private bool isLiteralPath = false;
+        private bool _isLiteralPath = false;
 
         /// <summary>
         /// The Name parameter for the command
         /// </summary>
         /// 
-        [Parameter (Position = 1, ValueFromPipelineByPropertyName = true)]
+        [Parameter(Position = 1, ValueFromPipelineByPropertyName = true)]
         public string[] Name
         {
-            get
-            {
-                return names;
-            }
-            set
-            {
-                if (value == null)
-                {
-                    names = new string[] { "*" };
-                }
-                else
-                {
-                    names = value;
-                }
-            }
+            get { return _names; }
+            set { _names = value ?? new string[] { "*" }; }
         }
-        private string[] names = new string[] { "*" };
+        private string[] _names = new string[] { "*" };
 
         /// <summary>
         /// If set to true, the alias that is set is passed to the
@@ -130,33 +102,22 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return passThru;
+                return _passThru;
             }
 
             set
             {
-                passThru = value;
+                _passThru = value;
             }
         }
-        private bool passThru;
+        private bool _passThru;
 
         /// <summary>
         /// Parameter that determines the format of the file created.
         /// </summary>
         ///
         [Parameter]
-        public ExportAliasFormat As
-        {
-            get
-            {
-                return asFormat;
-            }
-            set
-            {
-                asFormat = value;
-            }
-        }
-        private ExportAliasFormat asFormat = ExportAliasFormat.Csv;
+        public ExportAliasFormat As { get; set; } = ExportAliasFormat.Csv;
 
         /// <summary>
         /// Property that sets append parameter.
@@ -166,14 +127,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return append;
+                return _append;
             }
             set
             {
-                append = value;
+                _append = value;
             }
         }
-        private bool append;
+        private bool _append;
 
         /// <summary>
         /// Property that sets force parameter.
@@ -183,14 +144,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return force;
+                return _force;
             }
             set
             {
-                force = value;
+                _force = value;
             }
         }
-        private bool force;
+        private bool _force;
 
         /// <summary>
         /// Property that prevents file overwrite.
@@ -201,32 +162,21 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return noclobber;
+                return _noclobber;
             }
             set
             {
-                noclobber = value;
+                _noclobber = value;
             }
         }
-        private bool noclobber;
+        private bool _noclobber;
 
         /// <summary>
         /// The description that gets added to the file as a comment
         /// </summary>
         /// <value></value>
         [Parameter]
-        public string Description
-        {
-            get
-            {
-                return description;
-            }
-            set
-            {
-                description = value;
-            }
-        }
-        private string description;
+        public string Description { get; set; }
 
         /// <summary>
         /// The scope parameter for the command determines
@@ -234,19 +184,8 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         /// 
         [Parameter]
-        public string Scope
-        {
-            get
-            {
-                return scope;
-            }
+        public string Scope { get; set; }
 
-            set
-            {
-                scope = value;
-            }
-        }
-        private string scope;
         #endregion Parameters
 
         #region Command code
@@ -260,20 +199,20 @@ namespace Microsoft.PowerShell.Commands
             // First get the alias table (from the proper scope if necessary)
             IDictionary<string, AliasInfo> aliasTable = null;
 
-            if (!String.IsNullOrEmpty(scope))
+            if (!String.IsNullOrEmpty(Scope))
             {
                 // This can throw PSArgumentException and PSArgumentOutOfRangeException
                 // but just let them go as this is terminal for the pipeline and the
                 // exceptions are already properly adorned with an ErrorRecord.
 
-                aliasTable = SessionState.Internal.GetAliasTableAtScope(scope);
+                aliasTable = SessionState.Internal.GetAliasTableAtScope(Scope);
             }
             else
             {
                 aliasTable = SessionState.Internal.GetAliasTable();
             }
 
-            foreach (string aliasName in names)
+            foreach (string aliasName in _names)
             {
                 bool resultFound = false;
 
@@ -298,7 +237,7 @@ namespace Microsoft.PowerShell.Commands
                     if (SessionState.IsVisible(origin, tableEntry.Value))
                     {
                         resultFound = true;
-                        matchingAliases.Add(tableEntry.Value);
+                        _matchingAliases.Add(tableEntry.Value);
                     }
                 }
 
@@ -342,7 +281,7 @@ namespace Microsoft.PowerShell.Commands
 
                 // Now write out the aliases
 
-                foreach (AliasInfo alias in matchingAliases)
+                foreach (AliasInfo alias in _matchingAliases)
                 {
                     string line = null;
                     if (this.As == ExportAliasFormat.Csv)
@@ -362,7 +301,6 @@ namespace Microsoft.PowerShell.Commands
                         WriteObject(alias);
                     }
                 }
-
             }
             finally
             {
@@ -377,7 +315,7 @@ namespace Microsoft.PowerShell.Commands
         /// <summary>
         /// Holds all the matching aliases for writing to the file
         /// </summary>
-        private Collection<AliasInfo> matchingAliases = new Collection<AliasInfo>();
+        private Collection<AliasInfo> _matchingAliases = new Collection<AliasInfo>();
 
         private static string GetAliasLine(AliasInfo alias, string formatString)
         {
@@ -412,17 +350,17 @@ namespace Microsoft.PowerShell.Commands
 
             // Now write the description if there is one
 
-            if (description != null)
+            if (Description != null)
             {
                 // First we need to break up the description on newlines and add a
                 // # for each line.
 
-                description = description.Replace("\n", "\n# ");
+                Description = Description.Replace("\n", "\n# ");
 
                 // Now write out the description
                 writer.WriteLine("#");
                 writer.Write("# ");
-                writer.WriteLine(description);
+                writer.WriteLine(Description);
             }
         }
 
@@ -464,7 +402,7 @@ namespace Microsoft.PowerShell.Commands
                 out file,
                 out result,
                 out readOnlyFileInfo,
-                isLiteralPath
+                _isLiteralPath
                 );
 
             return result;

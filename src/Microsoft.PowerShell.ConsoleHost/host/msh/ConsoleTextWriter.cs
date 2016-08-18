@@ -7,15 +7,6 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 using System;
 using System.Text;
 using System.IO;
-using System.Management.Automation;
-using System.Management.Automation.Host;
-using System.Management.Automation.Internal;
-using Microsoft.PowerShell;
-using System.Threading;
-using System.Runtime.InteropServices;
-using Microsoft.Win32.SafeHandles;
-
-
 using Dbg = System.Management.Automation.Diagnostics;
 using ConsoleHandle = Microsoft.Win32.SafeHandles.SafeFileHandle;
 using HRESULT = System.UInt32;
@@ -36,7 +27,7 @@ namespace Microsoft.PowerShell
         {
             Dbg.Assert(ui != null, "ui needs a value");
 
-            this.ui = ui;
+            _ui = ui;
         }
 
 
@@ -57,7 +48,7 @@ namespace Microsoft.PowerShell
         void
         Write(string value)
         {
-            ui.WriteToConsole(value, true);
+            _ui.WriteToConsole(value, true);
         }
 
 
@@ -98,9 +89,8 @@ namespace Microsoft.PowerShell
 
 
 
-        private ConsoleHostUserInterface ui;
+        private ConsoleHostUserInterface _ui;
     }
-
 }   // namespace 
 
 

@@ -8,21 +8,20 @@ using System.Linq.Expressions;
 #else
 using Microsoft.Scripting.Ast;
 #endif
-
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
-namespace System.Management.Automation.ComInterop {
-    internal sealed class DateTimeArgBuilder : SimpleArgBuilder {
+namespace System.Management.Automation.ComInterop
+{
+    internal sealed class DateTimeArgBuilder : SimpleArgBuilder
+    {
         internal DateTimeArgBuilder(Type parameterType)
-            : base(parameterType) {
+            : base(parameterType)
+        {
             Debug.Assert(parameterType == typeof(DateTime));
         }
 
-        internal override Expression MarshalToRef(Expression parameter) {
+        internal override Expression MarshalToRef(Expression parameter)
+        {
             // parameter.ToOADate()
             return Expression.Call(
                 Marshal(parameter),
@@ -30,7 +29,8 @@ namespace System.Management.Automation.ComInterop {
             );
         }
 
-        internal override Expression UnmarshalFromRef(Expression value) {
+        internal override Expression UnmarshalFromRef(Expression value)
+        {
             // DateTime.FromOADate(value)
             return base.UnmarshalFromRef(
                 Expression.Call(

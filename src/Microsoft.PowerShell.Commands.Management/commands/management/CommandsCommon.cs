@@ -4,7 +4,6 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 
 using System;
 using System.Management.Automation;
-using System.Management.Automation.Internal;
 
 namespace Microsoft.PowerShell.Commands
 {
@@ -14,7 +13,7 @@ namespace Microsoft.PowerShell.Commands
     /// </summary>
     internal static class CommandsCommon
     {
- #if CORECLR
+#if CORECLR
         // AccessViolationException/StackOverflowException Not In CoreCLR.
         // The CoreCLR team told us to not check for these exceptions because they
         // usually won't be caught.

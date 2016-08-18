@@ -1,11 +1,6 @@
-// ==++==
-// 
-//   Copyright (c) Microsoft Corporation.  All rights reserved.
-// 
-// ==--==
+
 //
 // NOTE: A vast majority of this code was copied from BCL in
-// ndp\clr\src\BCL\System\buffer.cs.
 // Namespace: System
 //
 
@@ -13,7 +8,6 @@ using BCLDebug = System.Diagnostics.Debug;
 
 namespace Microsoft.PowerShell.Commands.Internal
 {
-
     //Only contains static methods.  Does not require serialization
 
 #if CORECLR
@@ -26,13 +20,12 @@ namespace Microsoft.PowerShell.Commands.Internal
     [System.Runtime.InteropServices.ComVisible(true)]
     internal static class Buffer
     {
-
         // This is ported from the optimized CRT assembly in memchr.asm. The JIT generates 
         // pretty good code here and this ends up being within a couple % of the CRT asm.
         // It is however cross platform as the CRT hasn't ported their fast version to 64-bit
         // platforms.
         //
-        internal unsafe static int IndexOfByte(byte* src, byte value, int index, int count)
+        internal static unsafe int IndexOfByte(byte* src, byte value, int index, int count)
         {
             BCLDebug.Assert(src != null, "src should not be null");
 
@@ -87,7 +80,6 @@ namespace Microsoft.PowerShell.Commands.Internal
 
                 count -= 4;
                 pByte += 4;
-
             }
 
             // Catch any bytes that might be left at the tail of the buffer
@@ -104,14 +96,14 @@ namespace Microsoft.PowerShell.Commands.Internal
             return -1;
         }
 
-        internal unsafe static void ZeroMemory(byte* src, long len)
+        internal static unsafe void ZeroMemory(byte* src, long len)
         {
             while (len-- > 0)
                 *(src + len) = 0;
         }
 
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-        internal unsafe static void memcpy(byte* src, int srcIndex, byte[] dest, int destIndex, int len)
+        internal static unsafe void memcpy(byte* src, int srcIndex, byte[] dest, int destIndex, int len)
         {
             BCLDebug.Assert((srcIndex >= 0) && (destIndex >= 0) && (len >= 0), "Index and length must be non-negative!");
             BCLDebug.Assert(dest.Length - destIndex >= len, "not enough bytes in dest");
@@ -126,34 +118,35 @@ namespace Microsoft.PowerShell.Commands.Internal
         }
 
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-        internal unsafe static void memcpy(byte[] src, int srcIndex, byte* pDest, int destIndex, int len)
+        internal static unsafe void memcpy(byte[] src, int srcIndex, byte* pDest, int destIndex, int len)
         {
             BCLDebug.Assert((srcIndex >= 0) && (destIndex >= 0) && (len >= 0), "Index and length must be non-negative!");
             BCLDebug.Assert(src.Length - srcIndex >= len, "not enough bytes in src");
             // If dest has 0 elements, the fixed statement will throw an 
             // IndexOutOfRangeException.  Special-case 0-byte copies.
-            if (len==0)
+            if (len == 0)
                 return;
-            fixed(byte* pSrc = src) {
-                memcpyimpl(pSrc+srcIndex, pDest+destIndex, len);
+            fixed (byte* pSrc = src)
+            {
+                memcpyimpl(pSrc + srcIndex, pDest + destIndex, len);
             }
         }
 
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-        internal unsafe static void memcpy(char* pSrc, int srcIndex, char* pDest, int destIndex, int len)
+        internal static unsafe void memcpy(char* pSrc, int srcIndex, char* pDest, int destIndex, int len)
         {
             BCLDebug.Assert((srcIndex >= 0) && (destIndex >= 0) && (len >= 0), "Index and length must be non-negative!");
-                    
+
             // No boundary check for buffer overruns - dangerous
-            if (len==0)
+            if (len == 0)
                 return;
-            memcpyimpl((byte*)(char*)(pSrc+srcIndex), (byte*)(char*)(pDest+destIndex), len*2);
+            memcpyimpl((byte*)(char*)(pSrc + srcIndex), (byte*)(char*)(pDest + destIndex), len * 2);
         }
-        
+
         // Note - using a long instead of an int for the length parameter
         // slows this method down by ~18%.
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-        internal unsafe static void memcpyimpl(byte* src, byte* dest, int len)
+        internal static unsafe void memcpyimpl(byte* src, byte* dest, int len)
         {
             BCLDebug.Assert(len >= 0, "Negative length in memcopy!");
 
@@ -255,9 +248,9 @@ namespace Microsoft.PowerShell.Commands.Internal
             // (You read that correctly.)
             // This is 3x faster than a simple while loop copying byte by byte, 
             // for large copies.</STRIP>
-            if (len >= 16) 
+            if (len >= 16)
             {
-                do 
+                do
                 {
 #if AMD64
                     ((long*)dest)[0] = ((long*)src)[0];
@@ -272,9 +265,9 @@ namespace Microsoft.PowerShell.Commands.Internal
                     src += 16;
                 } while ((len -= 16) >= 16);
             }
-            if(len > 0)  // protection against negative len and optimization for len==16*N
+            if (len > 0)  // protection against negative len and optimization for len==16*N
             {
-                if ((len & 8) != 0) 
+                if ((len & 8) != 0)
                 {
 #if AMD64
                     ((long*)dest)[0] = ((long*)src)[0];
@@ -284,24 +277,24 @@ namespace Microsoft.PowerShell.Commands.Internal
 #endif
                     dest += 8;
                     src += 8;
-               }
-               if ((len & 4) != 0) 
-               {
+                }
+                if ((len & 4) != 0)
+                {
                     ((int*)dest)[0] = ((int*)src)[0];
                     dest += 4;
                     src += 4;
-               }
-               if ((len & 2) != 0) 
-               {
+                }
+                if ((len & 2) != 0)
+                {
                     ((short*)dest)[0] = ((short*)src)[0];
                     dest += 2;
                     src += 2;
-               }
-               if ((len & 1) != 0)
+                }
+                if ((len & 1) != 0)
                     *dest++ = *src++;
             }
 
 #endif // IA64
         }
-    }    
+    }
 }

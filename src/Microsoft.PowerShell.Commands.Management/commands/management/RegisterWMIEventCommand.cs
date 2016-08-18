@@ -1,6 +1,7 @@
 //
 //    Copyright (C) Microsoft.  All rights reserved.
 //
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -27,56 +28,36 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         [Parameter]
         [Alias("NS")]
-        public string Namespace
-        {
-            get { return this.nameSpace; }
-            set { this.nameSpace = value;}
-        }
-        
+        public string Namespace { get; set; } = "root\\cimv2";
+
         /// <summary>
         /// The credential to use
         /// </summary>
         [Parameter]
         [Credential()]
-        public PSCredential Credential
-        {
-            get { return this.credential; }
-            set { this.credential = value; }
-        }
-        
+        public PSCredential Credential { get; set; }
+
         /// <summary>
         /// The ComputerName in which to query
         /// </summary>
         [Parameter]
         [Alias("Cn")]
         [ValidateNotNullOrEmpty]
-        public string ComputerName
-        {
-            get { return this.computerName; }
-            set { this.computerName = value; }
-        }
+        public string ComputerName { get; set; } = "localhost";
 
-        
+
         /// <summary>
         /// The WMI class to use
         /// </summary>
         [Parameter(Position = 0, Mandatory = true, ParameterSetName = "class")]
-        public string Class
-        {
-            get { return this.className; }
-            set { this.className = value; }
-        }
+        public string Class { get; set; } = null;
 
         /// <summary>
         /// The query string to search for objects
         /// </summary>
         [Parameter(Position = 0, Mandatory = true, ParameterSetName = "query")]
-        public string Query
-        {
-            get { return this.objectQuery; }
-            set { this.objectQuery = value; }
-        }
-         
+        public string Query { get; set; } = null;
+
         /// <summary>
         /// Timeout in milliseconds
         /// </summary>
@@ -86,22 +67,17 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return timeOut;
+                return _timeOut;
             }
             set
             {
-                timeOut = value;
-                timeoutSpecified = true;
+                _timeOut = value;
+                _timeoutSpecified = true;
             }
         }
-       
-        private Int64 timeOut = 0;
-        private bool timeoutSpecified = false;
-        private string objectQuery = null;
-        private string className = null;
-        private string computerName = "localhost";
-        private string nameSpace = "root\\cimv2";
-        private PSCredential credential;
+
+        private Int64 _timeOut = 0;
+        private bool _timeoutSpecified = false;
 
         #endregion parameters
         #region helper functions
@@ -128,16 +104,16 @@ namespace Microsoft.PowerShell.Commands
         protected override Object GetSourceObject()
         {
             string wmiQuery = this.Query;
-            if(this.Class != null )
+            if (this.Class != null)
             {
                 //Validate class format
-                for (int i = 0; i < this.Class.Length; i ++)
+                for (int i = 0; i < this.Class.Length; i++)
                 {
-                    if( Char.IsLetterOrDigit(this.Class[i]) || this.Class[i].Equals('_') )
+                    if (Char.IsLetterOrDigit(this.Class[i]) || this.Class[i].Equals('_'))
                     {
                         continue;
                     }
-                    
+
                     ErrorRecord errorRecord = new ErrorRecord(
                         new ArgumentException(
                             String.Format(
@@ -170,12 +146,12 @@ namespace Microsoft.PowerShell.Commands
                 conOptions.Password = cred.Password;
             }
 
-            ManagementScope scope = new ManagementScope(GetScopeString(computerName, this.Namespace), conOptions);
+            ManagementScope scope = new ManagementScope(GetScopeString(ComputerName, this.Namespace), conOptions);
             EventWatcherOptions evtOptions = new EventWatcherOptions();
 
-            if(timeoutSpecified)
+            if (_timeoutSpecified)
             {
-                evtOptions.Timeout = new TimeSpan(timeOut * 10000);
+                evtOptions.Timeout = new TimeSpan(_timeOut * 10000);
             }
 
             ManagementEventWatcher watcher = new ManagementEventWatcher(scope, new EventQuery(wmiQuery), evtOptions);
@@ -200,13 +176,13 @@ namespace Microsoft.PowerShell.Commands
             // Register for the "Unsubscribed" event so that we can stop the
             // event watcher.
             PSEventSubscriber newSubscriber = NewSubscriber;
-            if(newSubscriber != null)
+            if (newSubscriber != null)
             {
                 newSubscriber.Unsubscribed += new PSEventUnsubscribedEventHandler(newSubscriber_Unsubscribed);
             }
         }
 
-        void newSubscriber_Unsubscribed(object sender, PSEventUnsubscribedEventArgs e)
+        private void newSubscriber_Unsubscribed(object sender, PSEventUnsubscribedEventArgs e)
         {
             ManagementEventWatcher watcher = sender as ManagementEventWatcher;
             if (watcher != null)

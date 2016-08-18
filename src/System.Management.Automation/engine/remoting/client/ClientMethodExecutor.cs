@@ -1,17 +1,8 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Management.Automation;
+
 using System.Management.Automation.Host;
-using System.Management.Automation.Remoting;
 using System.Management.Automation.Internal;
 using System.Management.Automation.Remoting.Client;
 using System.Management.Automation.Runspaces.Internal;
@@ -168,13 +159,13 @@ namespace System.Management.Automation.Remoting
             // If error-stream is null or we are in pushed-runspace - then write error directly to console.
             if (errorStream == null || IsRunspacePushed(_clientHost))
             {
-                writeErrorAction = delegate(ErrorRecord errorRecord)
+                writeErrorAction = delegate (ErrorRecord errorRecord)
                 {
                     try
                     {
-                        if (this._clientHost.UI != null)
+                        if (_clientHost.UI != null)
                         {
-                            this._clientHost.UI.WriteErrorLine(errorRecord.ToString());
+                            _clientHost.UI.WriteErrorLine(errorRecord.ToString());
                         }
                     }
                     catch (Exception e)
@@ -188,7 +179,7 @@ namespace System.Management.Automation.Remoting
             // Otherwise write it to error-stream.
             else
             {
-                writeErrorAction = delegate(ErrorRecord errorRecord)
+                writeErrorAction = delegate (ErrorRecord errorRecord)
                 {
                     errorStream.Write(errorRecord);
                 };

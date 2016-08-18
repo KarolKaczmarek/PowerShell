@@ -3,12 +3,8 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
 
-using System.Management.Automation;
 using System.Management.Automation.Host;
 using System.Management.Automation.Runspaces;
-using System.Collections.ObjectModel;
-using System.Security;
-
 using Dbg = System.Management.Automation.Diagnostics;
 
 namespace System.Management.Automation.Internal.Host
@@ -16,7 +12,6 @@ namespace System.Management.Automation.Internal.Host
     internal partial
     class InternalHostUserInterface : PSHostUserInterface
     {
-
         /// <summary>
         /// 
         /// See base class
@@ -27,16 +22,16 @@ namespace System.Management.Automation.Internal.Host
         PSCredential
         PromptForCredential
         (
-            string caption,   
+            string caption,
             string message,
             string userName,
             string targetName
         )
         {
-            return PromptForCredential( caption, message, userName,
+            return PromptForCredential(caption, message, userName,
                                          targetName,
                                          PSCredentialTypes.Default,
-                                         PSCredentialUIOptions.Default );
+                                         PSCredentialUIOptions.Default);
         }
 
         /// <summary>
@@ -49,7 +44,7 @@ namespace System.Management.Automation.Internal.Host
         PSCredential
         PromptForCredential
         (
-            string caption,   
+            string caption,
             string message,
             string userName,
             string targetName,
@@ -57,7 +52,7 @@ namespace System.Management.Automation.Internal.Host
             PSCredentialUIOptions options
         )
         {
-            if (externalUI == null)
+            if (_externalUI == null)
             {
                 ThrowPromptNotInteractive(message);
             }
@@ -65,13 +60,13 @@ namespace System.Management.Automation.Internal.Host
             PSCredential result = null;
             try
             {
-                result = externalUI.PromptForCredential(caption, message, userName, targetName, allowedCredentialTypes, options);
+                result = _externalUI.PromptForCredential(caption, message, userName, targetName, allowedCredentialTypes, options);
             }
             catch (PipelineStoppedException)
             {
                 //PipelineStoppedException is thrown by host when it wants 
                 //to stop the pipeline. 
-                LocalPipeline lpl = (LocalPipeline) ((RunspaceBase) this.parent.Context.CurrentRunspace).GetCurrentlyRunningPipeline();
+                LocalPipeline lpl = (LocalPipeline)((RunspaceBase)_parent.Context.CurrentRunspace).GetCurrentlyRunningPipeline();
                 if (lpl == null)
                 {
                     throw;
@@ -81,7 +76,6 @@ namespace System.Management.Automation.Internal.Host
 
             return result;
         }
-
     }
 }
 

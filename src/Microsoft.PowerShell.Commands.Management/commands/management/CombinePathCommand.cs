@@ -1,8 +1,8 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Management.Automation;
 using Dbg = System.Management.Automation;
@@ -18,24 +18,13 @@ namespace Microsoft.PowerShell.Commands
     public class JoinPathCommand : CoreCommandWithCredentialsBase
     {
         #region Parameters
-       
+
         /// <summary>
         /// Gets or sets the path parameter to the command
         /// </summary>
-        [Parameter (Position=0,Mandatory=true, ValueFromPipeline=true, ValueFromPipelineByPropertyName = true)]
+        [Parameter(Position = 0, Mandatory = true, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
         [Alias("PSPath")]
-        public string[] Path
-        {
-            get
-            {
-                return paths;
-            } // get
-
-            set
-            {
-                paths = value;
-            } // set
-        } // Path
+        public string[] Path { get; set; }
 
         /// <summary>
         /// Gets or sets the childPath parameter to the command
@@ -43,57 +32,16 @@ namespace Microsoft.PowerShell.Commands
         [Parameter(Position = 1, Mandatory = true, ValueFromPipelineByPropertyName = true)]
         [AllowNull]
         [AllowEmptyString]
-        public string ChildPath
-        {
-            get
-            {
-                return childPath;
-            } // get
-
-            set
-            {
-                childPath = value;
-            } // set
-        } // childPath
+        public string ChildPath { get; set; } = String.Empty;
 
         /// <summary>
         /// Determines if the path should be resolved after being joined
         /// </summary>
         /// <value></value>
         [Parameter]
-        public SwitchParameter Resolve
-        {
-            get
-            {
-                return resolve;
-            } // get
-
-            set
-            {
-                resolve = value;
-            } //set
-        } // Resolve
+        public SwitchParameter Resolve { get; set; }
 
         #endregion Parameters
-
-        #region parameter data
-        
-        /// <summary>
-        /// The path to resolve
-        /// </summary>
-        private string[] paths;
-
-        /// <summary>
-        /// The child part of the path to be joined with the Path paramter
-        /// </summary>
-        private string childPath = String.Empty;
-
-        /// <summary>
-        /// Determines if the path should be resolved after being joined.
-        /// </summary>
-        private bool resolve;
-
-        #endregion parameter data
 
         #region Command code
 
@@ -101,10 +49,10 @@ namespace Microsoft.PowerShell.Commands
         /// Parses the specified path and returns the portion determined by the 
         /// boolean parameters.
         /// </summary>
-        protected override void ProcessRecord ()
+        protected override void ProcessRecord()
         {
             Dbg.Diagnostics.Assert(
-                paths != null,
+                Path != null,
                 "Since Path is a mandatory parameter, paths should never be null");
 
             foreach (string path in Path)
@@ -115,7 +63,7 @@ namespace Microsoft.PowerShell.Commands
 
                 try
                 {
-                    joinedPath = 
+                    joinedPath =
                         SessionState.Path.Combine(path, ChildPath, CmdletProviderContext);
                 }
                 catch (PSNotSupportedException notSupported)
@@ -235,9 +183,7 @@ namespace Microsoft.PowerShell.Commands
                                     pathNotFound));
                             continue;
                         }
-
                     } // for each path
-
                 }
                 else
                 {
@@ -252,6 +198,5 @@ namespace Microsoft.PowerShell.Commands
 
 
     } // JoinPathCommand
-
 } // namespace Microsoft.PowerShell.Commands
 

@@ -3,7 +3,6 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
 using System;
-using System.Collections;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -11,7 +10,7 @@ using System.Management.Automation;
 using System.Management.Automation.Internal;
 using System.Management.Automation.Runspaces;
 using System.Threading;
-using Dbg=System.Management.Automation.Diagnostics;
+using Dbg = System.Management.Automation.Diagnostics;
 
 namespace Microsoft.PowerShell.Commands
 {
@@ -27,13 +26,8 @@ namespace Microsoft.PowerShell.Commands
         /// <summary>
         /// This parameter specifies the current pipeline object 
         /// </summary>
-        [Parameter (ValueFromPipeline = true)]
-        public PSObject InputObject
-        {
-            set { _inputObject = value; }
-            get { return _inputObject; }
-        }
-        private PSObject _inputObject = AutomationNull.Value;
+        [Parameter(ValueFromPipeline = true)]
+        public PSObject InputObject { set; get; } = AutomationNull.Value;
 
         /// <summary>
         /// The TraceSource parameter determines which TraceSource categories the
@@ -66,37 +60,22 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         /// <value></value>
         [Parameter(Position = 1, Mandatory = true, ParameterSetName = "expressionSet")]
-        public ScriptBlock Expression
-        {
-            get { return expression; }
-            set { expression = value; }
-        }
-        private ScriptBlock expression;
+        public ScriptBlock Expression { get; set; }
 
         /// <summary>
         /// The parameter for the expression that should be traced.
         /// </summary>
         /// <value></value>
-        [Parameter(Position = 1, Mandatory = true, ParameterSetName  = "commandSet")]
-        public string Command
-        {
-            get { return command; }
-            set { command = value; }
-        }
-        private string command;
+        [Parameter(Position = 1, Mandatory = true, ParameterSetName = "commandSet")]
+        public string Command { get; set; }
 
         /// <summary>
         /// When set, this parameter is the arguments to pass to the command specified by
         /// the -Command parameter
         /// </summary>
-        [Parameter(ParameterSetName  = "commandSet", ValueFromRemainingArguments = true)]
+        [Parameter(ParameterSetName = "commandSet", ValueFromRemainingArguments = true)]
         [Alias("Args")]
-        public object[] ArgumentList
-        {
-            get { return commandArgs; }
-            set { commandArgs = value; }
-        }
-        private object[] commandArgs;
+        public object[] ArgumentList { get; set; }
 
         /// <summary>
         /// The parameter which determines the options for output from the
@@ -164,7 +143,7 @@ namespace Microsoft.PowerShell.Commands
 
         #region Cmdlet code
 
-        private Collection<PSTraceSource> matchingSources;
+        private Collection<PSTraceSource> _matchingSources;
 
         /// <summary>
         /// Gets the PSTraceSource instances that match the names specified.
@@ -172,10 +151,10 @@ namespace Microsoft.PowerShell.Commands
         protected override void BeginProcessing()
         {
             Collection<PSTraceSource> preconfiguredSources = null;
-            matchingSources = ConfigureTraceSource(base.NameInternal, false, out preconfiguredSources);
+            _matchingSources = ConfigureTraceSource(base.NameInternal, false, out preconfiguredSources);
 
 
-            TurnOnTracing(matchingSources, false);
+            TurnOnTracing(_matchingSources, false);
             TurnOnTracing(preconfiguredSources, true);
 
             // Now that tracing has been configured, move all the sources into a 
@@ -183,32 +162,30 @@ namespace Microsoft.PowerShell.Commands
 
             foreach (PSTraceSource preconfiguredSource in preconfiguredSources)
             {
-                matchingSources.Add(preconfiguredSource);
+                _matchingSources.Add(preconfiguredSource);
             }
 
             if (ParameterSetName == "commandSet")
             {
-
                 // Create the CommmandProcessor and add it to a pipeline
 
                 CommandProcessorBase commandProcessor =
-                    this.Context.CommandDiscovery.LookupCommandProcessor(command, CommandOrigin.Runspace, false);
+                    this.Context.CommandDiscovery.LookupCommandProcessor(Command, CommandOrigin.Runspace, false);
 
                 // Add the parameters that were specified
 
                 ParameterBinderController.AddArgumentsToCommandProcessor(commandProcessor, ArgumentList);
-               
-                pipeline = new PipelineProcessor();
-                pipeline.Add(commandProcessor);
+
+                _pipeline = new PipelineProcessor();
+                _pipeline.Add(commandProcessor);
 
                 // Hook up the success and error pipelines to this cmdlet's WriteObject and
                 // WriteError methods
 
-                pipeline.ExternalErrorOutput = new TracePipelineWriter(this, true, matchingSources);
-                pipeline.ExternalSuccessOutput = new TracePipelineWriter(this, false, matchingSources);
-
+                _pipeline.ExternalErrorOutput = new TracePipelineWriter(this, true, _matchingSources);
+                _pipeline.ExternalSuccessOutput = new TracePipelineWriter(this, false, _matchingSources);
             }
-            ResetTracing(matchingSources);
+            ResetTracing(_matchingSources);
         }
 
         /// <summary>
@@ -216,9 +193,9 @@ namespace Microsoft.PowerShell.Commands
         /// 
         /// Note, this was taken from apply-expression
         /// </summary>
-        protected override void ProcessRecord ()
+        protected override void ProcessRecord()
         {
-            TurnOnTracing (matchingSources, false);
+            TurnOnTracing(_matchingSources, false);
 
             object result = null;
             switch (ParameterSetName)
@@ -231,7 +208,7 @@ namespace Microsoft.PowerShell.Commands
                     result = StepCommand();
                     break;
             }
-            ResetTracing (matchingSources);
+            ResetTracing(_matchingSources);
 
             if (result == null)
             {
@@ -243,28 +220,26 @@ namespace Microsoft.PowerShell.Commands
             {
                 WriteObject(result, true);
             }
-
         } // ProcessRecord
 
-        
+
         /// <summary>
         /// Finishes running the command if specified and then sets the
         /// tracing options and listeners back to their original values.
         /// </summary>
-        protected override void EndProcessing ()
+        protected override void EndProcessing()
         {
-            if (pipeline != null)
+            if (_pipeline != null)
             {
-                TurnOnTracing(matchingSources, false);
+                TurnOnTracing(_matchingSources, false);
 
-                Array results = pipeline.SynchronousExecuteEnumerate(AutomationNull.Value);
+                Array results = _pipeline.SynchronousExecuteEnumerate(AutomationNull.Value);
 
-                ResetTracing(matchingSources);
-                
+                ResetTracing(_matchingSources);
+
                 WriteObject(results, true);
-
             }
-            this.Dispose ();
+            this.Dispose();
         }
 
         /// <summary>
@@ -273,9 +248,9 @@ namespace Microsoft.PowerShell.Commands
         /// 
         protected override void StopProcessing()
         {
-            if (pipeline != null)
+            if (_pipeline != null)
             {
-                pipeline.Stop();
+                _pipeline.Stop();
             }
         }
 
@@ -283,25 +258,25 @@ namespace Microsoft.PowerShell.Commands
 
         private object RunExpression()
         {
-            return expression.DoInvokeReturnAsIs(
-                useLocalScope:         false,
-                errorHandlingBehavior: ScriptBlock.ErrorHandlingBehavior.WriteToCurrentErrorPipe, 
-                dollarUnder:           InputObject,
-                input:                 new object[] {InputObject},
-                scriptThis:            AutomationNull.Value,
-                args:                  Utils.EmptyArray<object>());
+            return Expression.DoInvokeReturnAsIs(
+                useLocalScope: false,
+                errorHandlingBehavior: ScriptBlock.ErrorHandlingBehavior.WriteToCurrentErrorPipe,
+                dollarUnder: InputObject,
+                input: new object[] { InputObject },
+                scriptThis: AutomationNull.Value,
+                args: Utils.EmptyArray<object>());
         }
 
         private object StepCommand()
         {
             if (InputObject != AutomationNull.Value)
             {
-                pipeline.Step(InputObject);
+                _pipeline.Step(InputObject);
             }
             return null;
         }
 
-        private PipelineProcessor pipeline;
+        private PipelineProcessor _pipeline;
 
         #region IDisposable
 
@@ -309,21 +284,21 @@ namespace Microsoft.PowerShell.Commands
         /// Resets the TraceSource flags back to their original value and restores
         /// the original TraceListeners.
         /// </summary>
-        public void Dispose ()
+        public void Dispose()
         {
-            if (!disposed)
+            if (!_disposed)
             {
-                disposed = true;
+                _disposed = true;
 
                 // Reset the flags for the trace switch back to the original value
-                ResetTracing (matchingSources);
+                ResetTracing(_matchingSources);
                 ClearStoredState();
-                matchingSources = null;
+                _matchingSources = null;
 
-                if (pipeline != null)
+                if (_pipeline != null)
                 {
-                    pipeline.Dispose();
-                    pipeline = null;
+                    _pipeline.Dispose();
+                    _pipeline = null;
                 }
 
                 // If there are any file streams, close those as well.
@@ -338,9 +313,8 @@ namespace Microsoft.PowerShell.Commands
                 }
                 GC.SuppressFinalize(this);
             }
-            
         } // Dispose
-        private bool disposed;
+        private bool _disposed;
         #endregion IDisposable
     }
 
@@ -353,8 +327,8 @@ namespace Microsoft.PowerShell.Commands
     internal class TracePipelineWriter : PipelineWriter
     {
         internal TracePipelineWriter(
-            TraceListenerCommandBase cmdlet, 
-            bool writeError, 
+            TraceListenerCommandBase cmdlet,
+            bool writeError,
             Collection<PSTraceSource> matchingSources)
         {
             if (cmdlet == null)
@@ -367,9 +341,9 @@ namespace Microsoft.PowerShell.Commands
                 throw new ArgumentNullException("matchingSources");
             }
 
-            this.cmdlet = cmdlet;
-            this.writeError = writeError;
-            this.matchingSources = matchingSources;
+            _cmdlet = cmdlet;
+            _writeError = writeError;
+            _matchingSources = matchingSources;
         }
 
         /// <summary>
@@ -393,7 +367,7 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return isOpen;
+                return _isOpen;
             }
         }
 
@@ -434,10 +408,10 @@ namespace Microsoft.PowerShell.Commands
         /// </exception>
         public override void Close()
         {
-            if (isOpen)
+            if (_isOpen)
             {
                 Flush();
-                isOpen = false;
+                _isOpen = false;
             }
         }
 
@@ -466,23 +440,23 @@ namespace Microsoft.PowerShell.Commands
         /// </exception>
         public override int Write(object obj)
         {
-            cmdlet.ResetTracing(matchingSources);
+            _cmdlet.ResetTracing(_matchingSources);
 
-            if (writeError)
+            if (_writeError)
             {
                 ErrorRecord errorRecord = ConvertToErrorRecord(obj);
 
                 if (errorRecord != null)
                 {
-                    cmdlet.WriteError(errorRecord);
+                    _cmdlet.WriteError(errorRecord);
                 }
             }
             else
             {
-                cmdlet.WriteObject(obj);
+                _cmdlet.WriteObject(obj);
             }
 
-            cmdlet.TurnOnTracing(matchingSources, false);
+            _cmdlet.TurnOnTracing(_matchingSources, false);
             return 1;
         }
 
@@ -506,10 +480,10 @@ namespace Microsoft.PowerShell.Commands
         /// </exception>
         public override int Write(object obj, bool enumerateCollection)
         {
-            cmdlet.ResetTracing(matchingSources);
+            _cmdlet.ResetTracing(_matchingSources);
 
             int numWritten = 0;
-            if (writeError)
+            if (_writeError)
             {
                 if (enumerateCollection)
                 {
@@ -519,7 +493,7 @@ namespace Microsoft.PowerShell.Commands
                         if (errorRecord != null)
                         {
                             numWritten++;
-                            cmdlet.WriteError(errorRecord);
+                            _cmdlet.WriteError(errorRecord);
                         }
                     }
                 }
@@ -529,17 +503,17 @@ namespace Microsoft.PowerShell.Commands
                     if (errorRecord != null)
                     {
                         numWritten++;
-                        cmdlet.WriteError(errorRecord);
+                        _cmdlet.WriteError(errorRecord);
                     }
                 }
             }
             else
             {
                 numWritten++;
-                cmdlet.WriteObject(obj, enumerateCollection);
+                _cmdlet.WriteObject(obj, enumerateCollection);
             }
 
-            cmdlet.TurnOnTracing(matchingSources, false);
+            _cmdlet.TurnOnTracing(_matchingSources, false);
 
             return numWritten;
         }
@@ -566,9 +540,9 @@ namespace Microsoft.PowerShell.Commands
             return result;
         }
 
-        private TraceListenerCommandBase cmdlet;
-        private bool writeError;
-        private bool isOpen = true;
-        private Collection<PSTraceSource> matchingSources = new Collection<PSTraceSource>();
+        private TraceListenerCommandBase _cmdlet;
+        private bool _writeError;
+        private bool _isOpen = true;
+        private Collection<PSTraceSource> _matchingSources = new Collection<PSTraceSource>();
     }
 }

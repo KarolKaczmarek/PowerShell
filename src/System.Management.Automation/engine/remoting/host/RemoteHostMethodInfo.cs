@@ -1,18 +1,10 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
-using System.Collections;
+
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Management.Automation;
 using System.Management.Automation.Host;
-using System.Management.Automation.Remoting;
-using System.Management.Automation.Internal;
 using Dbg = System.Management.Automation.Diagnostics;
 
 namespace System.Management.Automation.Remoting
@@ -23,75 +15,75 @@ namespace System.Management.Automation.Remoting
     internal enum RemoteHostMethodId
     {
         // Host read-only properties.
-        GetName                         = 1,
-        GetVersion                      = 2,
-        GetInstanceId                   = 3,
-        GetCurrentCulture               = 4,
-        GetCurrentUICulture             = 5,
+        GetName = 1,
+        GetVersion = 2,
+        GetInstanceId = 3,
+        GetCurrentCulture = 4,
+        GetCurrentUICulture = 5,
 
         // Host methods.
-        SetShouldExit                   = 6,
-        EnterNestedPrompt               = 7,
-        ExitNestedPrompt                = 8,
-        NotifyBeginApplication          = 9,
-        NotifyEndApplication            = 10,
+        SetShouldExit = 6,
+        EnterNestedPrompt = 7,
+        ExitNestedPrompt = 8,
+        NotifyBeginApplication = 9,
+        NotifyEndApplication = 10,
 
         // Host UI methods.
-        ReadLine                        = 11,
-        ReadLineAsSecureString          = 12,
-        Write1                          = 13,
-        Write2                          = 14,
-        WriteLine1                      = 15,
-        WriteLine2                      = 16,
-        WriteLine3                      = 17,
-        WriteErrorLine                  = 18,
-        WriteDebugLine                  = 19,
-        WriteProgress                   = 20,
-        WriteVerboseLine                = 21,
-        WriteWarningLine                = 22,
-        Prompt                          = 23,
-        PromptForCredential1            = 24,
-        PromptForCredential2            = 25,
-        PromptForChoice                 = 26,
+        ReadLine = 11,
+        ReadLineAsSecureString = 12,
+        Write1 = 13,
+        Write2 = 14,
+        WriteLine1 = 15,
+        WriteLine2 = 16,
+        WriteLine3 = 17,
+        WriteErrorLine = 18,
+        WriteDebugLine = 19,
+        WriteProgress = 20,
+        WriteVerboseLine = 21,
+        WriteWarningLine = 22,
+        Prompt = 23,
+        PromptForCredential1 = 24,
+        PromptForCredential2 = 25,
+        PromptForChoice = 26,
 
         // Host Raw UI read-write properties.
-        GetForegroundColor              = 27,
-        SetForegroundColor              = 28,
-        GetBackgroundColor              = 29,
-        SetBackgroundColor              = 30,
-        GetCursorPosition               = 31,
-        SetCursorPosition               = 32,
-        GetWindowPosition               = 33,
-        SetWindowPosition               = 34,
-        GetCursorSize                   = 35,
-        SetCursorSize                   = 36,
-        GetBufferSize                   = 37,
-        SetBufferSize                   = 38,
-        GetWindowSize                   = 39,
-        SetWindowSize                   = 40,
-        GetWindowTitle                  = 41,
-        SetWindowTitle                  = 42,
+        GetForegroundColor = 27,
+        SetForegroundColor = 28,
+        GetBackgroundColor = 29,
+        SetBackgroundColor = 30,
+        GetCursorPosition = 31,
+        SetCursorPosition = 32,
+        GetWindowPosition = 33,
+        SetWindowPosition = 34,
+        GetCursorSize = 35,
+        SetCursorSize = 36,
+        GetBufferSize = 37,
+        SetBufferSize = 38,
+        GetWindowSize = 39,
+        SetWindowSize = 40,
+        GetWindowTitle = 41,
+        SetWindowTitle = 42,
 
         // Host Raw UI read-only properties.
-        GetMaxWindowSize                = 43,
-        GetMaxPhysicalWindowSize        = 44,
-        GetKeyAvailable                 = 45,
+        GetMaxWindowSize = 43,
+        GetMaxPhysicalWindowSize = 44,
+        GetKeyAvailable = 45,
 
         // Host Raw UI methods.
-        ReadKey                         = 46,
-        FlushInputBuffer                = 47,
-        SetBufferContents1              = 48,
-        SetBufferContents2              = 49,
-        GetBufferContents               = 50,
-        ScrollBufferContents            = 51,
+        ReadKey = 46,
+        FlushInputBuffer = 47,
+        SetBufferContents1 = 48,
+        SetBufferContents2 = 49,
+        GetBufferContents = 50,
+        ScrollBufferContents = 51,
 
         // IHostSupportsInteractiveSession methods.
-        PushRunspace                    = 52,
-        PopRunspace                     = 53,
+        PushRunspace = 52,
+        PopRunspace = 53,
 
         // IHostSupportsInteractiveSession read-only properties.
-        GetIsRunspacePushed             = 54,
-        GetRunspace                     = 55,
+        GetIsRunspacePushed = 54,
+        GetRunspace = 55,
 
         // IHostSupportsMultipleChoiceSelection
         PromptForChoiceMultipleSelection = 56,
@@ -106,80 +98,36 @@ namespace System.Management.Automation.Remoting
         /// <summary>
         /// Interface type.
         /// </summary>
-        private Type _interfaceType;
-
-        /// <summary>
-        /// Interface type.
-        /// </summary>
-        internal Type InterfaceType
-        {
-            get
-            {
-                return _interfaceType;
-            }
-        }
+        internal Type InterfaceType { get; }
 
         /// <summary>
         /// Name.
         /// </summary>
-        private string _name;
-
-        /// <summary>
-        /// Name.
-        /// </summary>
-        internal string Name
-        {
-            get
-            {
-                return _name;
-            }
-        }
+        internal string Name { get; }
 
         /// <summary>
         /// Return type.
         /// </summary>
-        private Type _returnType;
-
-        /// <summary>
-        /// Return type.
-        /// </summary>
-        internal Type ReturnType
-        {
-            get
-            {
-                return _returnType;
-            }
-        }
+        internal Type ReturnType { get; }
 
         /// <summary>
         /// Parameter types.
         /// </summary>
-        private Type[] _parameterTypes;
-
-        /// <summary>
-        /// Parameter types.
-        /// </summary>
-        internal Type[] ParameterTypes
-        {
-            get
-            {
-                return _parameterTypes;
-            }
-        }
+        internal Type[] ParameterTypes { get; }
 
         /// <summary>
         /// Create a new instance of RemoteHostMethodInfo.
         /// </summary>
         internal RemoteHostMethodInfo(
-            Type            interfaceType,
-            string          name,
-            Type            returnType,
-            Type[]          parameterTypes)
+            Type interfaceType,
+            string name,
+            Type returnType,
+            Type[] parameterTypes)
         {
-            this._interfaceType = interfaceType;
-            this._name = name;
-            this._returnType = returnType;
-            this._parameterTypes = parameterTypes;
+            InterfaceType = interfaceType;
+            Name = name;
+            ReturnType = returnType;
+            ParameterTypes = parameterTypes;
         }
 
         /// <summary>

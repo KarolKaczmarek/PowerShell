@@ -2,7 +2,6 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
 using System.Management.Automation.Language;
 using System.Runtime.Serialization;
 
@@ -95,7 +94,7 @@ namespace System.Management.Automation
         /// <returns> constructed object </returns>
         public RuntimeException(string message,
                                 Exception innerException)
-                : base (message, innerException)
+                : base(message, innerException)
         {
         }
 
@@ -110,9 +109,9 @@ namespace System.Management.Automation
         public RuntimeException(string message,
             Exception innerException,
             ErrorRecord errorRecord)
-                : base (message, innerException)
+                : base(message, innerException)
         {
-            this._errorRecord = errorRecord;
+            _errorRecord = errorRecord;
         }
 
         internal RuntimeException(ErrorCategory errorCategory,
@@ -158,14 +157,14 @@ namespace System.Management.Automation
         /// Note that ErrorRecord.Exception is
         /// <see cref="System.Management.Automation.ParentContainsErrorRecordException"/>.
         /// </remarks>
-        virtual public ErrorRecord ErrorRecord
+        public virtual ErrorRecord ErrorRecord
         {
             get
             {
                 if (null == _errorRecord)
                 {
-                    _errorRecord = new ErrorRecord (
-                        new ParentContainsErrorRecordException (this),
+                    _errorRecord = new ErrorRecord(
+                        new ParentContainsErrorRecordException(this),
                         _errorId,
                         _errorCategory,
                         _targetObject);
@@ -273,10 +272,10 @@ namespace System.Management.Automation
         /// </summary>
         public bool WasThrownFromThrowStatement
         {
-            get { return thrownByThrowStatement; }
-            set 
-            { 
-                thrownByThrowStatement = value;
+            get { return _thrownByThrowStatement; }
+            set
+            {
+                _thrownByThrowStatement = value;
                 if (_errorRecord != null)
                 {
                     RuntimeException exception = _errorRecord.Exception as RuntimeException;
@@ -287,7 +286,7 @@ namespace System.Management.Automation
                 }
             }
         }
-        private bool thrownByThrowStatement;
+        private bool _thrownByThrowStatement;
 
         /// <summary>
         /// fix for BUG: Windows Out Of Band Releases: 906263 and 906264
@@ -298,10 +297,10 @@ namespace System.Management.Automation
         /// </summary>
         internal bool SuppressPromptInInterpreter
         {
-            get { return suppressPromptInInterpreter; }
-            set { suppressPromptInInterpreter = value; }
+            get { return _suppressPromptInInterpreter; }
+            set { _suppressPromptInInterpreter = value; }
         }
-        private bool suppressPromptInInterpreter;
+        private bool _suppressPromptInInterpreter;
 
         #endregion Internal
 

@@ -2,19 +2,13 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
-using System.Management.Automation;
-using System.Collections;
-using System.IO;
-
-
 namespace System.Management.Automation
 {
     /// <summary>
     /// Holds the #defines for any special strings used in session state. 
     /// </summary>
     ///
-    internal static class StringLiterals 
+    internal static class StringLiterals
     {
         // constants
 
@@ -68,7 +62,7 @@ namespace System.Management.Automation
         /// <summary>
         /// name of the global variable table in Variable scopes of session state. 
         /// </summary>
-        internal const string Global = "GLOBAL"; 
+        internal const string Global = "GLOBAL";
 
         /// <summary>
         /// Name of the current scope variable table of session state.
@@ -90,7 +84,7 @@ namespace System.Management.Automation
         /// <summary>
         /// session state string used as resource name in exceptions
         /// </summary>
-        internal const string SessionState = "SessionState"; 
+        internal const string SessionState = "SessionState";
 
 #if RELATIONSHIP_SUPPORTED
         // 2004/11/24-JeffJon - Relationships have been removed from the Exchange release

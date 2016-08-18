@@ -33,7 +33,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         protected override void BeginProcessing()
         {
-            if (!_skipWinRMCheck)
+            if (!SkipWinRMCheck)
             {
                 RemotingCommandUtil.CheckRemotingCmdletPrerequisites();
             }
@@ -96,7 +96,7 @@ namespace Microsoft.PowerShell.Commands
                 //tracer.WriteEvent(ref PSEventDescriptors.PS_EVENT_HOSTNAMERESOLVE);
                 //tracer.Dispose();
                 //tracer.OperationalChannel.WriteVerbose(PSEventId.HostNameResolve, PSOpcode.Method, PSTask.CreateRunspace);
-                return LOCALHOST;
+                return s_LOCALHOST;
             }
             else
             {
@@ -116,7 +116,6 @@ namespace Microsoft.PowerShell.Commands
             String message = GetMessage(resourceString, null);
 
             return message;
-
         }// GetMessage
 
         /// <summary>
@@ -144,7 +143,7 @@ namespace Microsoft.PowerShell.Commands
 
         #region Private Members
 
-        private static string LOCALHOST = "localhost";
+        private static string s_LOCALHOST = "localhost";
 
         //private PSETWTracer tracer = PSETWTracer.GetETWTracer(PSKeyword.Cmdlets);
 
@@ -178,6 +177,11 @@ namespace Microsoft.PowerShell.Commands
         protected const string VMNameParameterSet = "VMName";
 
         /// <summary>
+        /// SSH host parameter set
+        /// </summary>
+        protected const string SSHHostParameterSet = "SSHHost";
+
+        /// <summary>
         /// runspace parameter set
         /// </summary>
         protected const string SessionParameterSet = "Session";
@@ -196,22 +200,11 @@ namespace Microsoft.PowerShell.Commands
 
         #region Internal Members
 
-        private bool _skipWinRMCheck = false;
-
         /// <summary>
         /// Skip checking for WinRM
         /// </summary>
-        internal bool SkipWinRMCheck
-        {
-            get
-            {
-                return _skipWinRMCheck;
-            }
-            set
-            {
-                _skipWinRMCheck = value; 
-            }
-        }
+        internal bool SkipWinRMCheck { get; set; } = false;
+
         #endregion Internal Members
 
         #region Protected Methods
@@ -289,133 +282,133 @@ namespace Microsoft.PowerShell.Commands
             /// <summary>
             /// Other. Corresponds to CIM_EnabledLogicalElement.EnabledState = Other.
             /// </summary>
-            Other         = 1,
-        
+            Other = 1,
+
             /// <summary>
             /// Running. Corresponds to CIM_EnabledLogicalElement.EnabledState = Enabled.
             /// </summary>
-            Running       = 2,
-        
+            Running = 2,
+
             /// <summary>
             /// Off. Corresponds to CIM_EnabledLogicalElement.EnabledState = Disabled.
             /// </summary>
-            Off           = 3,
-        
+            Off = 3,
+
             /// <summary>
             /// Stopping. Corresponds to CIM_EnabledLogicalElement.EnabledState = ShuttingDown.
             /// </summary>
-            Stopping      = 4,
-        
+            Stopping = 4,
+
             /// <summary>
             /// Saved. Corresponds to CIM_EnabledLogicalElement.EnabledState = Enabled but offline.
             /// </summary>
-            Saved         = 6,
-        
+            Saved = 6,
+
             /// <summary>
             /// Paused. Corresponds to CIM_EnabledLogicalElement.EnabledState = Quiesce.
             /// </summary>
-            Paused        = 9,
-        
+            Paused = 9,
+
             /// <summary>
             /// Starting. EnabledStateStarting. State transition from PowerOff or Saved to Running.
             /// </summary>
-            Starting      = 10,
-        
+            Starting = 10,
+
             /// <summary>
             /// Reset. Corresponds to CIM_EnabledLogicalElement.EnabledState = Reset.
             /// </summary>
-            Reset         = 11,
-        
+            Reset = 11,
+
             /// <summary>
             /// Saving. Corresponds to EnabledStateSaving.
             /// </summary>
-            Saving        = 32773,
-        
+            Saving = 32773,
+
             /// <summary>
             /// Pausing. Corresponds to EnabledStatePausing.
             /// </summary>
-            Pausing       = 32776,
-        
+            Pausing = 32776,
+
             /// <summary>
             /// Resuming. Corresponds to EnabledStateResuming.
             /// </summary>
-            Resuming      = 32777,
-        
+            Resuming = 32777,
+
             /// <summary>
             /// FastSaved. EnabledStateFastSuspend.
             /// </summary>
-            FastSaved     = 32779,
-        
+            FastSaved = 32779,
+
             /// <summary>
             /// FastSaving. EnabledStateFastSuspending.
             /// </summary>
-            FastSaving    = 32780,
-        
+            FastSaving = 32780,
+
             /// <summary>
             /// ForceShutdown. Used to force a graceful shutdown of the virtual machine.
             /// </summary>
             ForceShutdown = 32781,
-        
+
             /// <summary>
             /// ForceReboot. Used to force a graceful reboot of the virtual machine.
             /// </summary>
-            ForceReboot   = 32782,
-        
+            ForceReboot = 32782,
+
             /// <summary>
             /// RunningCritical. Critical states.
             /// </summary>
             RunningCritical,
-        
+
             /// <summary>
             /// OffCritical. Critical states.
             /// </summary>
             OffCritical,
-        
+
             /// <summary>
             /// StoppingCritical. Critical states.
             /// </summary>
             StoppingCritical,
-        
+
             /// <summary>
             /// SavedCritical. Critical states.
             /// </summary>
             SavedCritical,
-        
+
             /// <summary>
             /// PausedCritical. Critical states.
             /// </summary>
             PausedCritical,
-        
+
             /// <summary>
             /// StartingCritical. Critical states.
             /// </summary>
             StartingCritical,
-        
+
             /// <summary>
             /// ResetCritical. Critical states.
             /// </summary>
             ResetCritical,
-        
+
             /// <summary>
             /// SavingCritical. Critical states.
             /// </summary>
             SavingCritical,
-        
+
             /// <summary>
             /// PausingCritical. Critical states.
             /// </summary>
             PausingCritical,
-        
+
             /// <summary>
             /// ResumingCritical. Critical states.
             /// </summary>
             ResumingCritical,
-        
+
             /// <summary>
             /// FastSavedCritical. Critical states.
             /// </summary>
             FastSavedCritical,
-        
+
             /// <summary>
             /// FastSavingCritical. Critical states.
             /// </summary>
@@ -439,19 +432,7 @@ namespace Microsoft.PowerShell.Commands
                    ParameterSetName = PSRemotingBaseCmdlet.SessionParameterSet)]
         [ValidateNotNullOrEmpty]
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
-        public virtual PSSession[] Session
-        {
-            get
-            {
-                return remoteRunspaceInfos;
-            }
-            set
-            {
-                remoteRunspaceInfos = value;
-            }
-        }
-
-        private PSSession[] remoteRunspaceInfos;
+        public virtual PSSession[] Session { get; set; }
 
         /// <summary>
         /// This parameter represents the address(es) of the remote
@@ -465,19 +446,7 @@ namespace Microsoft.PowerShell.Commands
                    ValueFromPipelineByPropertyName = true,
                    ParameterSetName = PSRemotingBaseCmdlet.ComputerNameParameterSet)]
         [Alias("Cn")]
-        public virtual String[] ComputerName
-        {
-            get
-            {
-                return computerNames;
-            }
-            set
-            {
-                computerNames = value;
-            }
-        }
-
-        private String[] computerNames;
+        public virtual String[] ComputerName { get; set; }
 
         /// <summary>
         /// Computer names after they have been resolved
@@ -486,18 +455,7 @@ namespace Microsoft.PowerShell.Commands
         /// <remarks>If Null or empty string is specified, then localhost is assumed.
         /// The ResolveComputerNames will include this.
         /// </remarks>
-        protected String[] ResolvedComputerNames
-        {
-            get
-            {
-                return resolvedComputerNames;
-            }
-            set
-            {
-                resolvedComputerNames = value;
-            }
-        }
-        private String[] resolvedComputerNames;
+        protected String[] ResolvedComputerNames { get; set; }
 
         /// <summary>
         /// Guid of target virtual machine.
@@ -510,18 +468,7 @@ namespace Microsoft.PowerShell.Commands
                    ParameterSetName = PSRemotingBaseCmdlet.VMIdParameterSet)]
         [ValidateNotNullOrEmpty]
         [Alias("VMGuid")]
-        public virtual Guid[] VMId
-        {
-            get 
-            {
-                return vmId;
-            }
-            set
-            {
-                vmId = value;
-            }
-        }
-        private Guid[] vmId;
+        public virtual Guid[] VMId { get; set; }
 
         /// <summary>
         /// Name of target virtual machine.
@@ -532,18 +479,7 @@ namespace Microsoft.PowerShell.Commands
                    ValueFromPipelineByPropertyName = true,
                    ParameterSetName = PSRemotingBaseCmdlet.VMNameParameterSet)]
         [ValidateNotNullOrEmpty]
-        public virtual string[] VMName
-        {
-            get 
-            {
-                return vmName;
-            }
-            set
-            {
-                vmName = value;
-            }
-        }
-        private string[] vmName;
+        public virtual string[] VMName { get; set; }
 
         /// <summary>
         /// Specifies the credentials of the user to impersonate in the 
@@ -563,16 +499,16 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return pscredential;
+                return _pscredential;
             }
             set
             {
-                pscredential = value;
+                _pscredential = value;
                 ValidateSpecifiedAuthentication(Credential, CertificateThumbprint, Authentication);
             }
         }
 
-        private PSCredential pscredential;
+        private PSCredential _pscredential;
 
         /// <summary>
         /// ID of target container.
@@ -583,18 +519,7 @@ namespace Microsoft.PowerShell.Commands
                    ValueFromPipelineByPropertyName = true,
                    ParameterSetName = PSRemotingBaseCmdlet.ContainerIdParameterSet)]
         [ValidateNotNullOrEmpty]
-        public virtual string[] ContainerId
-        {
-            get
-            {
-                return containerId;
-            }
-            set
-            {
-                containerId = value;
-            }
-        }
-        private string[] containerId;
+        public virtual string[] ContainerId { get; set; }
 
         /// <summary>
         /// When set, PowerShell process inside container will be launched with
@@ -603,18 +528,7 @@ namespace Microsoft.PowerShell.Commands
         /// with low privileged account.
         /// </summary>
         [Parameter(ParameterSetName = PSRemotingBaseCmdlet.ContainerIdParameterSet)]
-        public virtual SwitchParameter RunAsAdministrator
-        {
-            get 
-            {
-                return runAsAdministrator; 
-            }
-            set
-            {
-                runAsAdministrator = value; 
-            }
-        }
-        private SwitchParameter runAsAdministrator;
+        public virtual SwitchParameter RunAsAdministrator { get; set; }
 
         /// <summary>
         /// Port specifies the alternate port to be used in case the 
@@ -629,18 +543,7 @@ namespace Microsoft.PowerShell.Commands
         /// </remarks>
         [Parameter(ParameterSetName = PSRemotingBaseCmdlet.ComputerNameParameterSet)]
         [ValidateRange((Int32)1, (Int32)UInt16.MaxValue)]
-        public virtual Int32 Port
-        {
-            get
-            {
-                return port;
-            }
-            set
-            {
-                port = value;
-            }
-        }
-        private Int32 port;
+        public virtual Int32 Port { get; set; }
 
         /// <summary>
         /// This parameter suggests that the transport scheme to be used for
@@ -651,19 +554,8 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         [Parameter(ParameterSetName = PSRemotingBaseCmdlet.ComputerNameParameterSet)]
         [SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "SSL")]
-        public virtual SwitchParameter UseSSL
-        {
-            get
-            {
-                return useSSL;
-            }
-            set
-            {
-                useSSL = value;                
-            }
-        }
-        private SwitchParameter useSSL;
-        
+        public virtual SwitchParameter UseSSL { get; set; }
+
         /// <summary>
         /// This parameters specifies the appname which identifies the connection
         /// end point on the remote machine. If this parameter is not specified
@@ -676,15 +568,15 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return appName;
+                return _appName;
             }
             set
             {
-                appName = ResolveAppName(value);
+                _appName = ResolveAppName(value);
             }
         }
 
-        private String appName;
+        private String _appName;
 
         /// <summary>
         /// Allows the user of the cmdlet to specify a throttling value
@@ -697,19 +589,7 @@ namespace Microsoft.PowerShell.Commands
         [Parameter(ParameterSetName = PSRemotingBaseCmdlet.ContainerIdParameterSet)]
         [Parameter(ParameterSetName = PSRemotingBaseCmdlet.VMIdParameterSet)]
         [Parameter(ParameterSetName = PSRemotingBaseCmdlet.VMNameParameterSet)]
-        public virtual Int32 ThrottleLimit
-        {
-            set
-            {
-                throttleLimit = value;
-            }
-            get
-            {
-                return throttleLimit;
-            }
-        }
-
-        private int throttleLimit = 0;
+        public virtual Int32 ThrottleLimit { set; get; } = 0;
 
         /// <summary>
         /// A complete URI(s) specified for the remote computer and shell to 
@@ -720,18 +600,7 @@ namespace Microsoft.PowerShell.Commands
                    ParameterSetName = PSRemotingBaseCmdlet.UriParameterSet)]
         [ValidateNotNullOrEmpty]
         [Alias("URI", "CU")]
-        public virtual Uri[] ConnectionUri
-        {
-            get
-            {
-                return uris;
-            }
-            set
-            {
-                uris = value;
-            }
-        }
-        private Uri[] uris;
+        public virtual Uri[] ConnectionUri { get; set; }
 
         /// <summary>
         /// The AllowRediraction parameter enables the implicit redirection functionality
@@ -739,10 +608,10 @@ namespace Microsoft.PowerShell.Commands
         [Parameter(ParameterSetName = PSRemotingBaseCmdlet.UriParameterSet)]
         public virtual SwitchParameter AllowRedirection
         {
-            get { return this.allowRedirection; }
-            set { this.allowRedirection = value; }
+            get { return _allowRedirection; }
+            set { _allowRedirection = value; }
         }
-        private bool allowRedirection = false;
+        private bool _allowRedirection = false;
 
         /// <summary>
         /// Extended Session Options for controlling the session creation. Use 
@@ -755,20 +624,20 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                if (this.sessionOption == null)
+                if (_sessionOption == null)
                 {
                     object tmp = this.SessionState.PSVariable.GetValue(DEFAULT_SESSION_OPTION);
-                    if (tmp == null || !LanguagePrimitives.TryConvertTo<PSSessionOption>(tmp, out this.sessionOption))
+                    if (tmp == null || !LanguagePrimitives.TryConvertTo<PSSessionOption>(tmp, out _sessionOption))
                     {
-                        this.sessionOption = new PSSessionOption();
+                        _sessionOption = new PSSessionOption();
                     }
                 }
-                return this.sessionOption;
+                return _sessionOption;
             }
 
-            set { this.sessionOption = value; }
+            set { _sessionOption = value; }
         }
-        private PSSessionOption sessionOption;
+        private PSSessionOption _sessionOption;
         internal const string DEFAULT_SESSION_OPTION = "PSSessionOption";
 
         // Quota related variables.
@@ -781,16 +650,16 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return authMechanism;
+                return _authMechanism;
             }
             set
             {
-                authMechanism = value;
+                _authMechanism = value;
                 // Validate if a user can specify this authentication.
                 ValidateSpecifiedAuthentication(Credential, CertificateThumbprint, Authentication);
             }
         }
-        private AuthenticationMechanism authMechanism = AuthenticationMechanism.Default;
+        private AuthenticationMechanism _authMechanism = AuthenticationMechanism.Default;
 
         /// <summary>
         /// Specifies the certificate thumbprint to be used to impersonate the user on the 
@@ -800,14 +669,51 @@ namespace Microsoft.PowerShell.Commands
         [Parameter(ParameterSetName = NewPSSessionCommand.UriParameterSet)]
         public virtual string CertificateThumbprint
         {
-            get { return thumbPrint; }
+            get { return _thumbPrint; }
             set
             {
-                thumbPrint = value;
+                _thumbPrint = value;
                 ValidateSpecifiedAuthentication(Credential, CertificateThumbprint, Authentication);
             }
         }
-        private string thumbPrint = null;
+        private string _thumbPrint = null;
+
+        #region SSHHostParameters
+
+        /// <summary>
+        /// SSH Target Host Name
+        /// </summary>
+        [Parameter(ParameterSetName = PSRemotingBaseCmdlet.SSHHostParameterSet)]
+        [ValidateNotNullOrEmpty()]
+        public virtual string HostName
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// SSH User Name
+        /// </summary>
+        [Parameter(ParameterSetName = PSRemotingBaseCmdlet.SSHHostParameterSet)]
+        [ValidateNotNullOrEmpty()]
+        public virtual string UserName
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// SSH Key Path
+        /// </summary>
+        [Parameter(ParameterSetName = PSRemotingBaseCmdlet.SSHHostParameterSet)]
+        [ValidateNotNullOrEmpty()]
+        public virtual string KeyPath
+        {
+            get;
+            set;
+        }
+
+        #endregion
 
         #endregion Properties
 
@@ -888,7 +794,6 @@ namespace Microsoft.PowerShell.Commands
                         PSRemotingErrorId.RemoteRunspaceInfoLimitExceeded.ToString(),
                             ErrorCategory.InvalidArgument, Session));
             }
-
         } // ValidateRemoteRunspacesSpecified
 
         /// <summary>
@@ -913,7 +818,7 @@ namespace Microsoft.PowerShell.Commands
                 connectionInfo.MaximumConnectionRedirectionCount = 0;
             }
 
-            if (!this.allowRedirection)
+            if (!_allowRedirection)
             {
                 // uri redirection required explicit user consent
                 connectionInfo.MaximumConnectionRedirectionCount = 0;
@@ -941,7 +846,7 @@ namespace Microsoft.PowerShell.Commands
                 {
                     ThrowTerminatingError(new ErrorRecord(
                         new ArgumentException(PSRemotingErrorInvariants.FormatResourceString(
-                            RemotingErrorIdStrings.InvalidComputerName)), "PSSessionInvalidComputerName", 
+                            RemotingErrorIdStrings.InvalidComputerName)), "PSSessionInvalidComputerName",
                                 ErrorCategory.InvalidArgument, computerNames));
                 }
             }
@@ -968,9 +873,9 @@ namespace Microsoft.PowerShell.Commands
                     idleTimeout / 1000, BaseTransportManager.MinimumIdleTimeout / 1000));
             }
 
-            if (String.IsNullOrEmpty(appName))
+            if (String.IsNullOrEmpty(_appName))
             {
-                appName = ResolveAppName(null);
+                _appName = ResolveAppName(null);
             }
         }
 
@@ -1002,6 +907,11 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         protected const string FilePathContainerIdParameterSet = "FilePathContainerId";
 
+        /// <summary>
+        /// SSH Host file path parameter set.
+        /// </summary>
+        protected const string FilePathSSHHostParameterSet = "FilePathSSHHost";
+
         #endregion
 
         #region Parameters
@@ -1012,19 +922,7 @@ namespace Microsoft.PowerShell.Commands
         /// this cmdlet which will bind with a ValueFromPipeline=true
         /// </summary>
         [Parameter(ValueFromPipeline = true)]
-        public virtual PSObject InputObject
-        {
-            get
-            {
-                return inputObject;
-            }
-            set
-            {
-                inputObject = value;
-            }
-        }
-
-        private PSObject inputObject = AutomationNull.Value;
+        public virtual PSObject InputObject { get; set; } = AutomationNull.Value;
 
         /// <summary>
         /// Command to execute specified as a string. This can be a single
@@ -1035,14 +933,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return scriptBlock;
+                return _scriptBlock;
             }
             set
             {
-                scriptBlock = value;
+                _scriptBlock = value;
             }
         }
-        private ScriptBlock scriptBlock;
+        private ScriptBlock _scriptBlock;
 
         /// <summary>
         /// The file containing the script that the user has specified in the 
@@ -1063,15 +961,15 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return filePath;
+                return _filePath;
             }
             set
             {
-                filePath = value;
+                _filePath = value;
             }
         }
-        private string filePath;
-        
+        private string _filePath;
+
         /// <summary>
         /// True if FilePath should be processed as a literal path
         /// </summary>
@@ -1087,14 +985,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return args;
+                return _args;
             }
             set
             {
-                args = value;
+                _args = value;
             }
         }
-        private Object[] args;
+        private Object[] _args;
 
 
         /// <summary>
@@ -1102,23 +1000,13 @@ namespace Microsoft.PowerShell.Commands
         /// right have invocation of job/command.
         /// </summary>
         ///
-        protected bool InvokeAndDisconnect
-        {
-            get { return this.invokeAndDisconnect; }
-            set { this.invokeAndDisconnect = value; }
-        }
-        private bool invokeAndDisconnect = false;
+        protected bool InvokeAndDisconnect { get; set; } = false;
 
         /// <summary>
         /// Session names optionally provided for Disconnected parameter.
         /// </summary>
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
-        protected string[] DisconnectedSessionName
-        {
-            get { return sessionName; }
-            set { sessionName = value; }
-        }
-        private string[] sessionName;
+        protected string[] DisconnectedSessionName { get; set; }
 
         /// <summary>
         /// When set and in loopback scenario (localhost) this enables creation of WSMan
@@ -1126,12 +1014,7 @@ namespace Microsoft.PowerShell.Commands
         /// i.e., allows going off box.  When this property is true and a PSSession is disconnected, 
         /// reconnection is allowed only if reconnecting from a PowerShell session on the same box.
         /// </summary>
-        public virtual SwitchParameter EnableNetworkAccess
-        {
-            get { return enableNetworkAccess; }
-            set { enableNetworkAccess = value; }
-        }
-        private SwitchParameter enableNetworkAccess;
+        public virtual SwitchParameter EnableNetworkAccess { get; set; }
 
         /// <summary>
         /// Guid of target virtual machine.
@@ -1146,12 +1029,7 @@ namespace Microsoft.PowerShell.Commands
                    ParameterSetName = InvokeCommandCommand.FilePathVMIdParameterSet)]
         [ValidateNotNullOrEmpty]
         [Alias("VMGuid")]
-        public override Guid[] VMId
-        {
-            get { return vmId; }
-            set { vmId = value; }
-        }
-        private Guid[] vmId;
+        public override Guid[] VMId { get; set; }
 
         /// <summary>
         /// Name of target virtual machine.
@@ -1165,12 +1043,7 @@ namespace Microsoft.PowerShell.Commands
                    ValueFromPipelineByPropertyName = true,
                    ParameterSetName = InvokeCommandCommand.FilePathVMNameParameterSet)]
         [ValidateNotNullOrEmpty]
-        public override string[] VMName
-        {
-            get { return vmName; }
-            set { vmName = value; }
-        }
-        private string[] vmName;
+        public override string[] VMName { get; set; }
 
         /// <summary>
         /// ID of target container.
@@ -1184,12 +1057,7 @@ namespace Microsoft.PowerShell.Commands
                    ValueFromPipelineByPropertyName = true,
                    ParameterSetName = InvokeCommandCommand.FilePathContainerIdParameterSet)]
         [ValidateNotNullOrEmpty]
-        public override string[] ContainerId
-        {
-            get { return containerId; }
-            set { containerId = value; }
-        }
-        private string[] containerId;
+        public override string[] ContainerId { get; set; }
 
         /// <summary>
         /// For WSMan session:
@@ -1220,20 +1088,7 @@ namespace Microsoft.PowerShell.Commands
                    ParameterSetName = InvokeCommandCommand.FilePathVMIdParameterSet)]
         [Parameter(ValueFromPipelineByPropertyName = true,
                    ParameterSetName = InvokeCommandCommand.FilePathVMNameParameterSet)]
-        public virtual String ConfigurationName
-        {
-            get
-            {
-                return shell;
-            }
-            set
-            {
-                // Only InvokeCommandCommand may enter here,
-                // which will call ResolveShell() if needed.
-                shell = value;
-            }
-        }
-        private String shell;
+        public virtual String ConfigurationName { get; set; }
 
         #endregion Parameters
 
@@ -1268,7 +1123,7 @@ namespace Microsoft.PowerShell.Commands
                     else
                     {
                         connectionInfo.Credential = Credential;
-                    } 
+                    }
                     connectionInfo.AuthenticationMechanism = Authentication;
 
                     UpdateConnectionInfo(connectionInfo);
@@ -1299,12 +1154,26 @@ namespace Microsoft.PowerShell.Commands
                 Pipeline pipeline = CreatePipeline(remoteRunspace);
 
                 IThrottleOperation operation =
-                    new ExecutionCmdletHelperComputerName(remoteRunspace, pipeline, this.invokeAndDisconnect);
+                    new ExecutionCmdletHelperComputerName(remoteRunspace, pipeline, InvokeAndDisconnect);
 
                 Operations.Add(operation);
             }
-
         }// CreateHelpersForSpecifiedComputerNames
+
+        /// <summary>
+        /// Creates helper objects for host names for PSRP over SSH
+        /// remoting.
+        /// </summary>
+        protected void CreateHelpersForSpecifiedHostNames()
+        {
+            var sshConnectionInfo = new SSHConnectionInfo(this.UserName, this.HostName, this.KeyPath);
+            var typeTable = TypeTable.LoadDefaultTypeFiles();
+            var remoteRunspace = RunspaceFactory.CreateRunspace(sshConnectionInfo, this.Host, typeTable) as RemoteRunspace;
+            var pipeline = CreatePipeline(remoteRunspace);
+
+            var operation = new ExecutionCmdletHelperComputerName(remoteRunspace, pipeline);
+            Operations.Add(operation);
+        }
 
         /// <summary>
         /// Creates helper objects with the specified command for 
@@ -1337,7 +1206,6 @@ namespace Microsoft.PowerShell.Commands
                 IThrottleOperation operation = new ExecutionCmdletHelperRunspace(pipelines[i]);
                 Operations.Add(operation);
             }
-
         } // CreateHelpersForSpecifiedRunspaces
 
         /// <summary>
@@ -1372,7 +1240,7 @@ namespace Microsoft.PowerShell.Commands
 
                     connectionInfo.EnableNetworkAccess = EnableNetworkAccess;
 
-                    remoteRunspace = (RemoteRunspace)RunspaceFactory.CreateRunspace(connectionInfo, this.Host, 
+                    remoteRunspace = (RemoteRunspace)RunspaceFactory.CreateRunspace(connectionInfo, this.Host,
                         Utils.GetTypeTableFromExecutionContextTLS(),
                         this.SessionOption.ApplicationArguments);
 
@@ -1400,11 +1268,10 @@ namespace Microsoft.PowerShell.Commands
                 Pipeline pipeline = CreatePipeline(remoteRunspace);
 
                 IThrottleOperation operation =
-                    new ExecutionCmdletHelperComputerName(remoteRunspace, pipeline, this.invokeAndDisconnect);
+                    new ExecutionCmdletHelperComputerName(remoteRunspace, pipeline, InvokeAndDisconnect);
 
                 Operations.Add(operation);
             }
-
         } // CreateHelpersForSpecifiedUris
 
         /// <summary>
@@ -1429,7 +1296,7 @@ namespace Microsoft.PowerShell.Commands
                 for (index = 0; index < inputArraySize; index++)
                 {
                     vmIsRunning[index] = false;
-                    
+
                     command = "Get-VM -Id $args[0]";
 
                     try
@@ -1448,7 +1315,7 @@ namespace Microsoft.PowerShell.Commands
 
                         return;
                     }
-                    
+
                     if (results.Count != 1)
                     {
                         this.VMName[index] = string.Empty;
@@ -1469,7 +1336,7 @@ namespace Microsoft.PowerShell.Commands
                 Dbg.Assert((ParameterSetName == PSExecutionCmdlet.VMNameParameterSet) ||
                            (ParameterSetName == PSExecutionCmdlet.FilePathVMNameParameterSet),
                            "Expected ParameterSetName == VMName or FilePathVMName");
-                
+
                 inputArraySize = this.VMName.Length;
                 this.VMId = new Guid[inputArraySize];
                 vmIsRunning = new bool[inputArraySize];
@@ -1477,7 +1344,7 @@ namespace Microsoft.PowerShell.Commands
                 for (index = 0; index < inputArraySize; index++)
                 {
                     vmIsRunning[index] = false;
-                
+
                     command = "Get-VM -Name $args";
 
                     try
@@ -1496,7 +1363,7 @@ namespace Microsoft.PowerShell.Commands
 
                         return;
                     }
-                    
+
                     if (results.Count != 1)
                     {
                         this.VMId[index] = Guid.Empty;
@@ -1515,7 +1382,7 @@ namespace Microsoft.PowerShell.Commands
             }
 
             ResolvedComputerNames = this.VMName;
-                
+
             for (index = 0; index < ResolvedComputerNames.Length; index++)
             {
                 if ((this.VMId[index] == Guid.Empty) &&
@@ -1524,7 +1391,7 @@ namespace Microsoft.PowerShell.Commands
                 {
                     WriteError(
                         new ErrorRecord(
-                            new ArgumentException(GetMessage(RemotingErrorIdStrings.InvalidVMNameNotSingle, 
+                            new ArgumentException(GetMessage(RemotingErrorIdStrings.InvalidVMNameNotSingle,
                                                              this.VMName[index])),
                             PSRemotingErrorId.InvalidVMNameNotSingle.ToString(),
                             ErrorCategory.InvalidArgument,
@@ -1538,7 +1405,7 @@ namespace Microsoft.PowerShell.Commands
                 {
                     WriteError(
                         new ErrorRecord(
-                            new ArgumentException(GetMessage(RemotingErrorIdStrings.InvalidVMIdNotSingle, 
+                            new ArgumentException(GetMessage(RemotingErrorIdStrings.InvalidVMIdNotSingle,
                                                              this.VMId[index].ToString(null))),
                             PSRemotingErrorId.InvalidVMIdNotSingle.ToString(),
                             ErrorCategory.InvalidArgument,
@@ -1550,15 +1417,15 @@ namespace Microsoft.PowerShell.Commands
                 {
                     WriteError(
                         new ErrorRecord(
-                            new ArgumentException(GetMessage(RemotingErrorIdStrings.InvalidVMState, 
+                            new ArgumentException(GetMessage(RemotingErrorIdStrings.InvalidVMState,
                                                              this.VMName[index])),
                             PSRemotingErrorId.InvalidVMState.ToString(),
                             ErrorCategory.InvalidArgument,
                             null));
-                    
+
                     continue;
                 }
-            
+
                 // create helper objects for VM GUIDs or names
                 RemoteRunspace remoteRunspace = null;
                 VMConnectionInfo connectionInfo;
@@ -1566,37 +1433,36 @@ namespace Microsoft.PowerShell.Commands
                 try
                 {
                     connectionInfo = new VMConnectionInfo(this.Credential, this.VMId[index], this.VMName[index], this.ConfigurationName);
-                
+
                     remoteRunspace = new RemoteRunspace(Utils.GetTypeTableFromExecutionContextTLS(),
                         connectionInfo, this.Host, null, null, -1);
-                    
+
                     remoteRunspace.Events.ReceivedEvents.PSEventReceived += OnRunspacePSEventReceived;
-                    
                 }
                 catch (InvalidOperationException e)
                 {
                     ErrorRecord errorRecord = new ErrorRecord(e,
-                        "CreateRemoteRunspaceForVMFailed", 
+                        "CreateRemoteRunspaceForVMFailed",
                         ErrorCategory.InvalidOperation,
                         null);
-                    
+
                     WriteError(errorRecord);
                 }
                 catch (ArgumentException e)
                 {
                     ErrorRecord errorRecord = new ErrorRecord(e,
-                        "CreateRemoteRunspaceForVMFailed", 
+                        "CreateRemoteRunspaceForVMFailed",
                         ErrorCategory.InvalidArgument,
                         null);
-                    
+
                     WriteError(errorRecord);
                 }
-                
+
                 Pipeline pipeline = CreatePipeline(remoteRunspace);
-                
+
                 IThrottleOperation operation =
                     new ExecutionCmdletHelperComputerName(remoteRunspace, pipeline, false);
-                
+
                 Operations.Add(operation);
             }
         }// CreateHelpersForSpecifiedVMSession
@@ -1612,7 +1478,7 @@ namespace Microsoft.PowerShell.Commands
             Dbg.Assert((ParameterSetName == PSExecutionCmdlet.ContainerIdParameterSet) ||
                        (ParameterSetName == PSExecutionCmdlet.FilePathContainerIdParameterSet),
                        "Expected ParameterSetName == ContainerId or FilePathContainerId");
-            
+
             foreach (var input in ContainerId)
             {
                 //
@@ -1628,52 +1494,52 @@ namespace Microsoft.PowerShell.Commands
                     // Windows Server container uses named pipe as transport.
                     //
                     connectionInfo = ContainerConnectionInfo.CreateContainerConnectionInfo(input, RunAsAdministrator.IsPresent, this.ConfigurationName);
-                  
+
                     resolvedNameList.Add(connectionInfo.ComputerName);
-                    
+
                     connectionInfo.CreateContainerProcess();
-                    
+
                     remoteRunspace = new RemoteRunspace(Utils.GetTypeTableFromExecutionContextTLS(),
                         connectionInfo, this.Host, null, null, -1);
-                    
+
                     remoteRunspace.Events.ReceivedEvents.PSEventReceived += OnRunspacePSEventReceived;
                 }
                 catch (InvalidOperationException e)
                 {
                     ErrorRecord errorRecord = new ErrorRecord(e,
-                        "CreateRemoteRunspaceForContainerFailed", 
+                        "CreateRemoteRunspaceForContainerFailed",
                         ErrorCategory.InvalidOperation,
                         null);
-                    
+
                     WriteError(errorRecord);
                     continue;
                 }
                 catch (ArgumentException e)
                 {
                     ErrorRecord errorRecord = new ErrorRecord(e,
-                        "CreateRemoteRunspaceForContainerFailed", 
+                        "CreateRemoteRunspaceForContainerFailed",
                         ErrorCategory.InvalidArgument,
                         null);
-                    
+
                     WriteError(errorRecord);
                     continue;
                 }
                 catch (Exception e)
                 {
                     ErrorRecord errorRecord = new ErrorRecord(e,
-                        "CreateRemoteRunspaceForContainerFailed", 
+                        "CreateRemoteRunspaceForContainerFailed",
                         ErrorCategory.InvalidOperation,
                         null);
-                    
+
                     WriteError(errorRecord);
                     continue;
-                }                
-                
+                }
+
                 Pipeline pipeline = CreatePipeline(remoteRunspace);
-                
+
                 IThrottleOperation operation =
                     new ExecutionCmdletHelperComputerName(remoteRunspace, pipeline, false);
-                
+
                 Operations.Add(operation);
             }
 
@@ -1762,7 +1628,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         internal void OnRunspacePSEventReceived(object sender, PSEventArgs e)
         {
-            if(this.Events != null)
+            if (this.Events != null)
                 this.Events.AddForwardedEvent(e);
         }
 
@@ -1773,16 +1639,7 @@ namespace Microsoft.PowerShell.Commands
         /// <summary>
         /// List of operations
         /// </summary>
-        internal List<IThrottleOperation> Operations
-        {
-            get
-            {
-                return operations;
-            }
-        }
-
-        private List<IThrottleOperation> operations =
-                new List<IThrottleOperation>();
+        internal List<IThrottleOperation> Operations { get; } = new List<IThrottleOperation>();
 
 
         /// <summary>
@@ -1814,7 +1671,6 @@ namespace Microsoft.PowerShell.Commands
                 ErrorCategory.InvalidArgument, uri);
 
             WriteError(errorRecord);
-
         } // WriteErrorCreateRemoteRunspaceFailed
 
         /// <summary>
@@ -1857,7 +1713,7 @@ namespace Microsoft.PowerShell.Commands
         protected ScriptBlock GetScriptBlockFromFile(string filePath, bool isLiteralPath)
         {
             //Make sure filepath doesn't contain wildcards
-            if ((! isLiteralPath) && WildcardPattern.ContainsWildcardCharacters(filePath))
+            if ((!isLiteralPath) && WildcardPattern.ContainsWildcardCharacters(filePath))
             {
                 throw new ArgumentException(PSRemotingErrorInvariants.FormatResourceString(RemotingErrorIdStrings.WildCardErrorFilePathParameter), "filePath");
             }
@@ -1906,10 +1762,10 @@ namespace Microsoft.PowerShell.Commands
             }
 
             base.BeginProcessing();
-            
-            if (filePath != null)
+
+            if (_filePath != null)
             {
-                scriptBlock = GetScriptBlockFromFile(filePath, IsLiteralPath);
+                _scriptBlock = GetScriptBlockFromFile(_filePath, IsLiteralPath);
             }
 
             switch (ParameterSetName)
@@ -1924,6 +1780,11 @@ namespace Microsoft.PowerShell.Commands
 
                         CreateHelpersForSpecifiedComputerNames();
                     }
+                    break;
+
+                case PSExecutionCmdlet.SSHHostParameterSet:
+                case PSExecutionCmdlet.FilePathSSHHostParameterSet:
+                    CreateHelpersForSpecifiedHostNames();
                     break;
 
                 case PSExecutionCmdlet.FilePathSessionParameterSet:
@@ -1959,7 +1820,7 @@ namespace Microsoft.PowerShell.Commands
                     break;
             }
         }
-        
+
 
         #endregion Overrides
 
@@ -2007,10 +1868,10 @@ namespace Microsoft.PowerShell.Commands
 
             string scriptTextAdaptedForPSv2 = GetConvertedScript(out newParameterNames, out newParameterValues);
             _powershellV2 = System.Management.Automation.PowerShell.Create().AddScript(scriptTextAdaptedForPSv2);
-            
-            if (args != null)
+
+            if (_args != null)
             {
-                foreach (object arg in args)
+                foreach (object arg in _args)
                 {
                     _powershellV2.AddArgument(arg);
                 }
@@ -2076,7 +1937,7 @@ namespace Microsoft.PowerShell.Commands
             // Value of 'serverPsVersion' should be either 'PSv3Orv4' or 'PSv5OrLater'
             if (serverPsVersion == PSv3Orv4)
             {
-                usingValuesInArray = ScriptBlockToPowerShellConverter.GetUsingValuesAsArray(scriptBlock, allowUsingExpressions, Context, null);
+                usingValuesInArray = ScriptBlockToPowerShellConverter.GetUsingValuesAsArray(_scriptBlock, allowUsingExpressions, Context, null);
                 if (usingValuesInArray == null)
                 {
                     // 'usingValuesInArray' will be null only if there are UsingExpressions used in different scopes. 
@@ -2087,18 +1948,18 @@ namespace Microsoft.PowerShell.Commands
             else
             {
                 // Remote server is PSv5 or later version
-                usingValuesInDict = ScriptBlockToPowerShellConverter.GetUsingValuesAsDictionary(scriptBlock, allowUsingExpressions, Context, null);
+                usingValuesInDict = ScriptBlockToPowerShellConverter.GetUsingValuesAsDictionary(_scriptBlock, allowUsingExpressions, Context, null);
             }
 
             string textOfScriptBlock = this.MyInvocation.ExpectingInput
-                ? scriptBlock.GetWithInputHandlingForInvokeCommand()
-                : scriptBlock.ToString();
+                ? _scriptBlock.GetWithInputHandlingForInvokeCommand()
+                : _scriptBlock.ToString();
 
             _powershellV3 = System.Management.Automation.PowerShell.Create().AddScript(textOfScriptBlock);
 
-            if (args != null)
+            if (_args != null)
             {
-                foreach (object arg in args)
+                foreach (object arg in _args)
                 {
                     _powershellV3.AddArgument(arg);
                 }
@@ -2124,7 +1985,7 @@ namespace Microsoft.PowerShell.Commands
             {
                 // This is trusted input as long as we're in FullLanguage mode
                 bool isTrustedInput = (Context.LanguageMode == PSLanguageMode.FullLanguage);
-                powershell = scriptBlock.GetPowerShell(isTrustedInput, args);
+                powershell = _scriptBlock.GetPowerShell(isTrustedInput, _args);
             }
             catch (ScriptBlockToPowerShellNotSupportedException)
             {
@@ -2136,35 +1997,35 @@ namespace Microsoft.PowerShell.Commands
             return powershell;
         }
 
-#endregion "Get PowerShell instance"
+        #endregion "Get PowerShell instance"
 
-#region "UsingExpression Utilities"
+        #region "UsingExpression Utilities"
 
 
-/// <summary>
-/// Get the converted script for a remote PSv2 end
-/// </summary>
-/// <param name="newParameterNames">
-/// The new parameter names that we added to the param block
-/// </param>
-/// <param name="newParameterValues">
-/// The new parameter values that need to be added to the powershell instance
-/// </param>
-/// <returns></returns>
-private string GetConvertedScript(out List<string> newParameterNames, out List<object> newParameterValues)
+        /// <summary>
+        /// Get the converted script for a remote PSv2 end
+        /// </summary>
+        /// <param name="newParameterNames">
+        /// The new parameter names that we added to the param block
+        /// </param>
+        /// <param name="newParameterValues">
+        /// The new parameter values that need to be added to the powershell instance
+        /// </param>
+        /// <returns></returns>
+        private string GetConvertedScript(out List<string> newParameterNames, out List<object> newParameterValues)
         {
             newParameterNames = null; newParameterValues = null;
             string textOfScriptBlock = null;
 
             // Scan for the using variables
-            List<VariableExpressionAst> usingVariables = GetUsingVariables(scriptBlock);
+            List<VariableExpressionAst> usingVariables = GetUsingVariables(_scriptBlock);
 
             if (usingVariables == null || usingVariables.Count == 0)
             {
                 // No using variable is used, then we don't change the script
                 textOfScriptBlock = this.MyInvocation.ExpectingInput
-                    ? scriptBlock.GetWithInputHandlingForInvokeCommand()
-                    : scriptBlock.ToString();
+                    ? _scriptBlock.GetWithInputHandlingForInvokeCommand()
+                    : _scriptBlock.ToString();
             }
             else
             {
@@ -2194,8 +2055,8 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
                 // Generate the wrapped script
                 string additionalNewParams = string.Join(", ", paramNamesWithDollarSign);
                 textOfScriptBlock = this.MyInvocation.ExpectingInput
-                    ? scriptBlock.GetWithInputHandlingForInvokeCommandWithUsingExpression(Tuple.Create(usingVariables, additionalNewParams))
-                    : scriptBlock.ToStringWithDollarUsingHandling(Tuple.Create(usingVariables, additionalNewParams));
+                    ? _scriptBlock.GetWithInputHandlingForInvokeCommandWithUsingExpression(Tuple.Create(usingVariables, additionalNewParams))
+                    : _scriptBlock.ToStringWithDollarUsingHandling(Tuple.Create(usingVariables, additionalNewParams));
             }
 
             return textOfScriptBlock;
@@ -2211,7 +2072,7 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
             var values = new List<object>(paramUsingVars.Count);
             VariableExpressionAst currentVarAst = null;
             Version oldStrictVersion = Context.EngineSessionState.CurrentScope.StrictModeVersion;
-            
+
             try
             {
                 Context.EngineSessionState.CurrentScope.StrictModeVersion = PSVersionInfo.PSVersion;
@@ -2256,7 +2117,7 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
                 throw new ArgumentNullException("localScriptBlock", "Caller needs to make sure the parameter value is not null");
             }
             var allUsingExprs = UsingExpressionAstSearcher.FindAllUsingExpressionExceptForWorkflow(localScriptBlock.Ast);
-            return allUsingExprs.Select(usingExpr => UsingExpressionAst.ExtractUsingVariable((UsingExpressionAst) usingExpr)).ToList();
+            return allUsingExprs.Select(usingExpr => UsingExpressionAst.ExtractUsingVariable((UsingExpressionAst)usingExpr)).ToList();
         }
 
         #endregion "UsingExpression Utilities"
@@ -2301,38 +2162,26 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
         {
             get
             {
-                return remoteRunspaceIds;
+                return _remoteRunspaceIds;
             }
             set
             {
-                remoteRunspaceIds = value;
+                _remoteRunspaceIds = value;
             }
         }
 
-        private Guid[] remoteRunspaceIds;
+        private Guid[] _remoteRunspaceIds;
 
         /// <summary>
         /// Session Id of the remoterunspace info object
         /// </summary>
         [Parameter(Position = 0,
                    ValueFromPipelineByPropertyName = true,
-                   Mandatory=true,
+                   Mandatory = true,
                    ParameterSetName = PSRunspaceCmdlet.IdParameterSet)]
         [ValidateNotNull]
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
-        public int[] Id
-        {
-            get
-            {
-                return sessionIds;
-            }
-            set
-            {
-                sessionIds = value;
-            }
-        }
-
-        private int[] sessionIds;
+        public int[] Id { get; set; }
 
         /// <summary>
         /// Name of the remote runspaceinfo object
@@ -2344,15 +2193,15 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
         {
             get
             {
-                return names;
+                return _names;
             }
             set
             {
-                names = value;
+                _names = value;
             }
         }
 
-        private String[] names;
+        private String[] _names;
 
         /// <summary>
         /// Name of the computer for which the runspace needs to be
@@ -2368,15 +2217,15 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
         {
             get
             {
-                return computerNames;
+                return _computerNames;
             }
             set
             {
-                computerNames = value;
+                _computerNames = value;
             }
         }
 
-        private String[] computerNames;
+        private String[] _computerNames;
 
         /// <summary>
         /// ID of target container.
@@ -2390,12 +2239,7 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
                    ValueFromPipelineByPropertyName = true,
                    ParameterSetName = PSRunspaceCmdlet.ContainerIdInstanceIdParameterSet)]
         [ValidateNotNullOrEmpty]
-        public virtual string[] ContainerId
-        {
-            get { return containerId; }
-            set { containerId = value; }
-        }
-        private string[] containerId;
+        public virtual string[] ContainerId { get; set; }
 
         /// <summary>
         /// Guid of target virtual machine.
@@ -2410,12 +2254,7 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
                    ParameterSetName = PSRunspaceCmdlet.VMIdInstanceIdParameterSet)]
         [ValidateNotNullOrEmpty]
         [Alias("VMGuid")]
-        public virtual Guid[] VMId
-        {
-            get { return vmId; }
-            set { vmId = value; }
-        }
-        private Guid[] vmId;
+        public virtual Guid[] VMId { get; set; }
 
         /// <summary>
         /// Name of target virtual machine.
@@ -2429,12 +2268,7 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
                    ValueFromPipelineByPropertyName = true,
                    ParameterSetName = PSRunspaceCmdlet.VMNameInstanceIdParameterSet)]
         [ValidateNotNullOrEmpty]
-        public virtual string[] VMName
-        {
-            get { return vmName; }
-            set { vmName = value; }
-        }
-        private string[] vmName;
+        public virtual string[] VMName { get; set; }
 
         #endregion Parameters
 
@@ -2570,7 +2404,7 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
         private Dictionary<Guid, PSSession> GetMatchingRunspacesByComputerName(bool writeobject,
             bool writeErrorOnNoMatch)
         {
-            if (computerNames == null || computerNames.Length == 0)
+            if (_computerNames == null || _computerNames.Length == 0)
             {
                 return GetAllRunspaces(writeobject, writeErrorOnNoMatch);
             }
@@ -2580,7 +2414,7 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
             List<PSSession> remoteRunspaceInfos = this.RunspaceRepository.Runspaces;
 
             // Loop through all computer-name patterns and runspaces to find matches.
-            foreach (string computerName in computerNames)
+            foreach (string computerName in _computerNames)
             {
                 WildcardPattern computerNamePattern = WildcardPattern.Get(computerName, WildcardOptions.IgnoreCase);
 
@@ -2639,7 +2473,7 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
             List<PSSession> remoteRunspaceInfos = this.RunspaceRepository.Runspaces;
 
             // Loop through all computer-name patterns and runspaces to find matches.
-            foreach (string name in names)
+            foreach (string name in _names)
             {
                 WildcardPattern namePattern = WildcardPattern.Get(name, WildcardOptions.IgnoreCase);
 
@@ -2698,7 +2532,7 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
             List<PSSession> remoteRunspaceInfos = this.RunspaceRepository.Runspaces;
 
             // Loop through all computer-name patterns and runspaces to find matches.
-            foreach (Guid remoteRunspaceId in remoteRunspaceIds)
+            foreach (Guid remoteRunspaceId in _remoteRunspaceIds)
             {
                 // Match the computer-name patterns against all the runspaces and remember the matches.
                 bool found = false;
@@ -2754,7 +2588,7 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
             List<PSSession> remoteRunspaceInfos = this.RunspaceRepository.Runspaces;
 
             // Loop through all computer-name patterns and runspaces to find matches.
-            foreach (int sessionId in sessionIds)
+            foreach (int sessionId in Id)
             {
                 // Match the computer-name patterns against all the runspaces and remember the matches.
                 bool found = false;
@@ -2810,8 +2644,8 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
             TargetMachineType computerType;
             bool supportWildChar;
             String[] sessionNames = { "*" };
-            WildcardPattern configurationNamePattern = 
-                String.IsNullOrEmpty(configurationName) ? null : WildcardPattern.Get(configurationName, WildcardOptions.IgnoreCase);            
+            WildcardPattern configurationNamePattern =
+                String.IsNullOrEmpty(configurationName) ? null : WildcardPattern.Get(configurationName, WildcardOptions.IgnoreCase);
             Dictionary<Guid, PSSession> matches = new Dictionary<Guid, PSSession>();
             List<PSSession> remoteRunspaceInfos = this.RunspaceRepository.Runspaces;
 
@@ -2842,7 +2676,7 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
 
                 foreach (string sessionName in sessionNames)
                 {
-                    WildcardPattern sessionNamePattern = 
+                    WildcardPattern sessionNamePattern =
                         String.IsNullOrEmpty(sessionName) ? null : WildcardPattern.Get(sessionName, WildcardOptions.IgnoreCase);
 
                     var matchingRunspaceInfos = remoteRunspaceInfos
@@ -2877,8 +2711,8 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
             String[] inputNames;
             TargetMachineType computerType;
             bool supportWildChar;
-            WildcardPattern configurationNamePattern = 
-                String.IsNullOrEmpty(configurationName) ? null : WildcardPattern.Get(configurationName, WildcardOptions.IgnoreCase);            
+            WildcardPattern configurationNamePattern =
+                String.IsNullOrEmpty(configurationName) ? null : WildcardPattern.Get(configurationName, WildcardOptions.IgnoreCase);
             Dictionary<Guid, PSSession> matches = new Dictionary<Guid, PSSession>();
             List<PSSession> remoteRunspaceInfos = this.RunspaceRepository.Runspaces;
 
@@ -2888,13 +2722,13 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
             {
                 inputNames = ContainerId;
                 computerType = TargetMachineType.Container;
-                supportWildChar = false;                
+                supportWildChar = false;
             }
             else
             {
                 inputNames = VMName;
                 computerType = TargetMachineType.VirtualMachine;
-                supportWildChar =  true;
+                supportWildChar = true;
             }
 
             foreach (string inputName in inputNames)
@@ -2930,9 +2764,9 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
             SessionFilterState filterState,
             String configurationName)
         {
-            String[] sessionNames = { "*" };        
-            WildcardPattern configurationNamePattern = 
-                String.IsNullOrEmpty(configurationName) ? null : WildcardPattern.Get(configurationName, WildcardOptions.IgnoreCase);            
+            String[] sessionNames = { "*" };
+            WildcardPattern configurationNamePattern =
+                String.IsNullOrEmpty(configurationName) ? null : WildcardPattern.Get(configurationName, WildcardOptions.IgnoreCase);
             Dictionary<Guid, PSSession> matches = new Dictionary<Guid, PSSession>();
             List<PSSession> remoteRunspaceInfos = this.RunspaceRepository.Runspaces;
 
@@ -2975,8 +2809,8 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
             SessionFilterState filterState,
             String configurationName)
         {
-            WildcardPattern configurationNamePattern = 
-                String.IsNullOrEmpty(configurationName) ? null : WildcardPattern.Get(configurationName, WildcardOptions.IgnoreCase);            
+            WildcardPattern configurationNamePattern =
+                String.IsNullOrEmpty(configurationName) ? null : WildcardPattern.Get(configurationName, WildcardOptions.IgnoreCase);
             Dictionary<Guid, PSSession> matches = new Dictionary<Guid, PSSession>();
             List<PSSession> remoteRunspaceInfos = this.RunspaceRepository.Runspaces;
 
@@ -3103,7 +2937,6 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
             set;
             get;
         }
-
     } // ExecutionCmdletHelper
 
     /// <summary>
@@ -3163,7 +2996,6 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
                 internalException = e;
                 RaiseOperationCompleteEvent();
             }
-
         } // StartOperation
 
         /// <summary>
@@ -3213,7 +3045,6 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
             }
 
             RaiseOperationCompleteEvent(stateEventArgs);
-
         } // HandlePipelineStateChanged
 
         /// <summary>
@@ -3223,7 +3054,6 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
         private void RaiseOperationCompleteEvent()
         {
             RaiseOperationCompleteEvent(null);
-
         } // RaiseOperationCompleteEvent
 
         /// <summary>
@@ -3251,9 +3081,7 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
             {
                 OperationComplete.SafeInvoke(this, operationStateEventArgs);
             }
-
         } // RaiseOperationCompleteEvent
-
     } // ExecutionCmdletHelperRunspace
 
     /// <summary>
@@ -3275,20 +3103,13 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
         /// Determines if the command should be invoked and then disconnect the
         /// remote runspace from the client.
         /// </summary>
-        private bool invokeAndDisconnect;
+        private bool _invokeAndDisconnect;
 
         /// <summary>
         /// The remote runspace created using the computer name
         /// parameter set details
         /// </summary>
-        internal RemoteRunspace RemoteRunspace
-        {
-            get
-            {
-                return remoteRunspace;
-            }
-        }
-        private RemoteRunspace remoteRunspace;
+        internal RemoteRunspace RemoteRunspace { get; private set; }
 
         /// <summary>
         /// Constructor
@@ -3303,9 +3124,9 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
                     "RemoteRunspace reference cannot be null");
             PipelineRunspace = remoteRunspace;
 
-            this.invokeAndDisconnect = invokeAndDisconnect;
+            _invokeAndDisconnect = invokeAndDisconnect;
 
-            this.remoteRunspace = remoteRunspace;
+            RemoteRunspace = remoteRunspace;
             remoteRunspace.StateChanged +=
                 new EventHandler<RunspaceStateEventArgs>(HandleRunspaceStateChanged);
 
@@ -3315,7 +3136,6 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
             this.pipeline = pipeline;
             pipeline.StateChanged +=
                 new EventHandler<PipelineStateEventArgs>(HandlePipelineStateChanged);
-
         } // IREHelperComputerName
 
         /// <summary>
@@ -3325,14 +3145,13 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
         {
             try
             {
-                remoteRunspace.OpenAsync();
+                RemoteRunspace.OpenAsync();
             }
             catch (PSRemotingTransportException e)
             {
                 internalException = e;
                 RaiseOperationCompleteEvent();
             }
-
         } // StartOperation
 
         /// <summary>
@@ -3363,7 +3182,6 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
                 // this StopOperation to complete
                 RaiseOperationCompleteEvent();
             }
-
         } // StopOperation
 
         internal override event EventHandler<OperationStateEventArgs> OperationComplete;
@@ -3391,7 +3209,7 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
                         // Call InvokeAsync() on the pipeline
                         try
                         {
-                            if (this.invokeAndDisconnect)
+                            if (_invokeAndDisconnect)
                             {
                                 pipeline.InvokeAsyncAndDisconnect();
                             }
@@ -3402,12 +3220,12 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
                         }
                         catch (InvalidPipelineStateException)
                         {
-                            remoteRunspace.CloseAsync();
+                            RemoteRunspace.CloseAsync();
                         }
                         catch (InvalidRunspaceStateException e)
                         {
                             internalException = e;
-                            remoteRunspace.CloseAsync();
+                            RemoteRunspace.CloseAsync();
                         }
                     }
                     break;
@@ -3431,9 +3249,7 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
                         }
                     }
                     break;
-
             } // switch (state...
-
         } // HandleRunspaceStateChanged
 
         /// <summary>
@@ -3456,13 +3272,12 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
                 case PipelineState.Completed:
                 case PipelineState.Stopped:
                 case PipelineState.Failed:
-                    if (remoteRunspace != null)
+                    if (RemoteRunspace != null)
                     {
-                        remoteRunspace.CloseAsync();
+                        RemoteRunspace.CloseAsync();
                     }
                     break;
             } // switch(state...
-
         } // HandlePipelineStateChanged
 
         /// <summary>
@@ -3472,7 +3287,6 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
         private void RaiseOperationCompleteEvent()
         {
             RaiseOperationCompleteEvent(null);
-
         } // RaiseOperationCompleteEvent
 
         /// <summary>
@@ -3490,11 +3304,11 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
                 pipeline.Dispose();
             }
 
-            if (remoteRunspace != null)
+            if (RemoteRunspace != null)
             {
                 // Dispose of the runspace object.
-                remoteRunspace.Dispose();
-                remoteRunspace = null;
+                RemoteRunspace.Dispose();
+                RemoteRunspace = null;
             }
 
             OperationStateEventArgs operationStateEventArgs =
@@ -3503,9 +3317,7 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
                     OperationState.StopComplete;
             operationStateEventArgs.BaseEvent = baseEventArgs;
             OperationComplete.SafeInvoke(this, operationStateEventArgs);
-
         } // RaiseOperationCompleteEvent
-
     } // ExecutionCmdletHelperComputerName
 
     /// <summary>
@@ -3654,7 +3466,5 @@ private string GetConvertedScript(out List<string> newParameterNames, out List<o
         } // ResolvePath
     }
 
-
     #endregion Helper Classes
-
 }

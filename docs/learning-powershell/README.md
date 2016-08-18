@@ -1,7 +1,7 @@
 Learning PowerShell
 ====
 
-Whether you're a Developer, a DevOps Professional or an IT Professional, this doc will help you getting started with PowerShell.
+Whether you're a Developer, a DevOps or an IT Professional, this doc will help you getting started with PowerShell.
 In this document we'll cover the following:
 installing PowerShell, samples walkthrough, PowerShell editor, debugger, testing tools and a map book for experienced bash users to get started with PowerShell faster.
 
@@ -21,7 +21,7 @@ At the end of this exercise, you should be able to launch the PowerShell session
 - Get PowerShell by installing package
  * [PowerShell on Linux][inst-linux]
  * [PowerShell on OS X][inst-linux]
- * PowerShell on Windows
+ * [PowerShell on Windows][inst-win]
 
   For this tutorial, you do not need to install PowerShell if you are running on Windows.
   You can launch PowerShell console by pressing Windows key, typing PowerShell, and clicking on Windows PowerShell.
@@ -52,11 +52,6 @@ Click on the following link to create your first PowerShell script.
 
 - [Using Visual Studio Code (VS Code)][use-vscode-editor]
 
-On Windows, you can also use [PowerShell Integrated Scripting Environment (ISE)][use-ise-editor] to edit PowerShell scripts.
-
-[use-vscode-editor]:./using-vscode.md#editing-with-vs-code
-[use-ise-editor]:./using-ise.md#editing-with-ise
-
 PowerShell Debugger
 ----
 
@@ -66,11 +61,16 @@ Click on the link below to learn more about debugging:
 - [Using Visual Studio Code (VS Code)][use-vscode-debugger]
 - [PowerShell Command-line Debugging][cli-debugging]
 
-On Windows, you can also use  [ISE][use-ise-debugger] to debug PowerShell scripts.
+On Windows, you can also use [PowerShell Integrated Scripting Environment (ISE)][use-ise-editor] to edit or debug PowerShell scripts.
+However it is not supported if you are using PowerShell installed from the [PowerShell package][get-powershell] or directly [built][build-powershell] from GitHub.
 
+[use-vscode-editor]:./using-vscode.md#editing-with-vs-code
+[use-ise-editor]:./using-ise.md#editing-with-ise
 [use-vscode-debugger]:./using-vscode.md#debugging-with-vs-code
 [use-ise-debugger]:./using-ise.md#debugging-with-ise
 [cli-debugging]:./debugging-from-commandline.md
+[get-powershell]:../../README.md#get-powershell
+[build-powershell]:../../README.md#building-the-repository
 
 
 PowerShell Testing
@@ -83,14 +83,27 @@ To use the tool please read [ Pester Guides](https://github.com/pester/Pester) a
 Map Book for Experienced Bash users
 ----
 
-TODO: Don & JP to fill in
+The table below lists the usage of some basic commands to help you get started on PowerShell faster.
+Note that all bash commands should continue working on PowerShell session.
 
-| Bash           | PowerShell    | Description     |
-|:---------------|:--------------|:----------------|
-| ls             |dir            |List files and folders
-| cd             |cd             |Change directory
-| mkdir          |mkdir          |Create a new folder
-| Clear, Ctrl+L, Reset | cls | Clear screen
+
+| Bash                | PowerShell                  | Description
+|:--------------------|:----------------------------|:---------------------
+| ls                  |dir, Get-ChildItem           |List files and folders
+| tree                |dir -Recurse                 |List all files and folders
+| cd                  |cd, Set-Location             |Change directory
+| pwd                 |pwd, $pwd, Get-Location      |Show working directory
+| clear, Ctrl+L, reset| cls, clear                  |Clear screen
+| mkdir               |New-Item -ItemType Directory |Create a new folder
+| touch test.txt      |New-Item -Path test.txt      |Create a new empty file
+| cat test1.txt test2.txt         |Get-Content test1.txt, test2.txt       |Display files contents
+| cp ./source.txt ./dest/dest.txt |Copy-Item source.txt dest/dest.txt     |Copy a file
+| cp -r ./source ./dest           |Copy-Item ./source ./dest -Recurse     |Recursively copy from one folder to another
+| mv ./source.txt ./dest/dest.txt |Move-Item ./source.txt ./dest/dest.txt |Move a file to other folder
+| rm test.txt                     |Remove-Item test.txt                   |Delete a file
+| rm -r &lt;folderName>           |Remove-Item &lt;folderName> -Recurse   |Delete a folder
+| find -name build*               |Get-ChildItem build* -Recurse          |Find a file or folder starting with 'build'
+| grep -Rin "sometext" --include="*.cs" |Get-ChildItem -Recurse -Filter *.cs <br> &#124; Select-String -Pattern "sometext" | Recursively case-insensitive search for text in files
 
 
 Recommended Training and Reading
@@ -103,6 +116,7 @@ Recommended Training and Reading
 - [Learn PowerShell Video Library][powershell.com-learn-powershell] from PowerShell.com
 - [PowerShell Quick Reference Guides][quick-reference] by PowerShellMagazine.com
 - [PowerShell 5 How-To Videos][script-guy-how-to] by Ed Wilson
+- [PowerShell TechNet Resources](https://technet.microsoft.com/en-us/scriptcenter/dd742419.aspx) from ScriptCenter
 
 
 Commercial Resources

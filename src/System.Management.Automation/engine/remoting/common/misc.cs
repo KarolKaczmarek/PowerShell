@@ -2,10 +2,6 @@
  * Copyright (c) Microsoft Corporation.  All rights reserved.
  * --********************************************************************/
 
-using System;
-using System.Security;
-using System.Threading;
-using System.Management.Automation;
 using System.Management.Automation.Remoting;
 using Dbg = System.Management.Automation.Diagnostics;
 
@@ -13,9 +9,6 @@ namespace System.Management.Automation
 {
     internal sealed class RemoteSessionNegotiationEventArgs : EventArgs
     {
-        private RemoteSessionCapability _remoteSessionCapability;
-        private RemoteDataObject<PSObject> _remoteObject;
-
         #region Constructors
 
         internal RemoteSessionNegotiationEventArgs(RemoteSessionCapability remoteSessionCapability)
@@ -27,7 +20,7 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentNullException("remoteSessionCapability");
             }
 
-            _remoteSessionCapability = remoteSessionCapability;
+            RemoteSessionCapability = remoteSessionCapability;
         }
 
         #endregion Constructors
@@ -35,22 +28,12 @@ namespace System.Management.Automation
         /// <summary>
         /// Data from network converted to type RemoteSessionCapability.
         /// </summary>
-        internal RemoteSessionCapability RemoteSessionCapability
-        {
-            get
-            {
-                return _remoteSessionCapability;
-            }
-        }
+        internal RemoteSessionCapability RemoteSessionCapability { get; }
 
         /// <summary>
         /// Actual data received from the network.
         /// </summary>
-        internal RemoteDataObject<PSObject> RemoteData
-        {
-            get { return _remoteObject; }
-            set { _remoteObject = value; }
-        }
+        internal RemoteDataObject<PSObject> RemoteData { get; set; }
     }
 
 
@@ -60,8 +43,6 @@ namespace System.Management.Automation
     /// </summary>
     internal sealed class RemoteDataEventArgs : EventArgs
     {
-        private RemoteDataObject<PSObject> _rcvdData;
-
         #region Constructors
 
         internal RemoteDataEventArgs(RemoteDataObject<PSObject> receivedData)
@@ -73,7 +54,7 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentNullException("receivedData");
             }
 
-            _rcvdData = receivedData;
+            ReceivedData = receivedData;
         }
 
         #endregion Constructors
@@ -81,13 +62,7 @@ namespace System.Management.Automation
         /// <summary>
         /// Received data.
         /// </summary>
-        public RemoteDataObject<PSObject> ReceivedData
-        {
-            get
-            {
-                return _rcvdData;
-            }
-        }
+        public RemoteDataObject<PSObject> ReceivedData { get; }
     }
 
     /// <summary>
@@ -99,8 +74,6 @@ namespace System.Management.Automation
     {
         #region Private Members
 
-        private T data;
-
         #endregion Private Members
 
         #region Properties
@@ -108,13 +81,7 @@ namespace System.Management.Automation
         /// <summary>
         /// The data contained within this event
         /// </summary>
-        internal T Data
-        {
-            get
-            {
-                return data;
-            }
-        }
+        internal T Data { get; }
 
         #endregion Properties
 
@@ -124,7 +91,7 @@ namespace System.Management.Automation
         {
             //Dbg.Assert(data != null, "data passed should not be null");
 
-            this.data = (T)data;
+            Data = (T)data;
         }
 
         #endregion Constructor
@@ -138,29 +105,29 @@ namespace System.Management.Automation
         /// <summary>
         /// Undefined state
         /// </summary>
-        UndefinedState             = 0,
+        UndefinedState = 0,
 
         /// <summary>
         /// This is the state a connect start with. When a connection is closed,
         /// the connection will eventually come back to this Idle state.
         /// 
         /// </summary>
-        Idle                       = 1,
+        Idle = 1,
 
         /// <summary>
         /// A connection operation has been initiated.
         /// </summary>
-        Connecting                 = 2,
+        Connecting = 2,
 
         /// <summary>
         /// A connection operation has completed successfully.
         /// </summary>
-        Connected                  = 3,
+        Connected = 3,
 
         /// <summary>
         /// The capability negotiation message is in the process being sent on a create operation
         /// </summary>
-        NegotiationSending         = 4,
+        NegotiationSending = 4,
 
         /// <summary>
         /// The capability negotiation message is in the process being sent on a connect operation
@@ -170,46 +137,46 @@ namespace System.Management.Automation
         /// <summary>
         /// The capability negotiation message is sent successfully from a sender point of view.
         /// </summary>
-        NegotiationSent            = 6,
+        NegotiationSent = 6,
 
         /// <summary>
         /// A capability negotiation message is received.
         /// </summary>
-        NegotiationReceived        = 7,
+        NegotiationReceived = 7,
 
         /// <summary>
         /// Used by server to wait for negotation from client.
         /// </summary>
-        NegotiationPending         = 8,
+        NegotiationPending = 8,
 
         /// <summary>
         /// The connection is in the progress of getting closed.
         /// </summary>
-        ClosingConnection          = 9,
+        ClosingConnection = 9,
 
         /// <summary>
         /// The connection is closed completely.
         /// </summary>
-        Closed                     = 10,
+        Closed = 10,
 
         /// <summary>
         /// The capability negotiation has been successfully completed.
         /// </summary>
-        Established                = 11,
+        Established = 11,
 
         /// <summary>
         /// Have sent a public key to the remote end,
         /// awaiting a response
         /// </summary>
         /// <remarks>Applicable only to client</remarks>
-        EstablishedAndKeySent      = 12,
+        EstablishedAndKeySent = 12,
 
         /// <summary>
         /// Have received a public key from the remote
         /// end, need to send a response
         /// </summary>
         /// <remarks>Applicable only to server</remarks>
-        EstablishedAndKeyReceived  = 13,
+        EstablishedAndKeyReceived = 13,
 
         /// <summary>
         /// for Server - Have sent a request to the remote end to 
@@ -254,7 +221,7 @@ namespace System.Management.Automation
         /// <summary>
         /// Number of states
         /// </summary>
-        MaxState                   = 20
+        MaxState = 20
     }
 
     /// <summary>
@@ -263,39 +230,39 @@ namespace System.Management.Automation
     /// </summary>
     internal enum RemoteSessionEvent
     {
-        InvalidEvent               = 0,
-        CreateSession              = 1,
-        ConnectSession             = 2,
-        NegotiationSending         = 3,
-        NegotiationSendingOnConnect= 4,
-        NegotiationSendCompleted   = 5,
-        NegotiationReceived        = 6,
-        NegotiationCompleted       = 7,
-        NegotiationPending         = 8,
-        Close                      = 9,
-        CloseCompleted             = 10,
-        CloseFailed                = 11,
-        ConnectFailed              = 12,
-        NegotiationFailed          = 13,
-        NegotiationTimeout         = 14,
-        SendFailed                 = 15,
-        ReceiveFailed              = 16,
-        FatalError                 = 17,
-        MessageReceived            = 18,
-        KeySent                    = 19,
-        KeySendFailed              = 20,
-        KeyReceived                = 21,
-        KeyReceiveFailed           = 22,
-        KeyRequested               = 23,
-        KeyRequestFailed           = 24,
-        DisconnectStart            = 25,
-        DisconnectCompleted        = 26,
-        DisconnectFailed           = 27,
-        ReconnectStart             = 28,
-        ReconnectCompleted         = 29,
-        ReconnectFailed            = 30,
-        RCDisconnectStarted        = 31,
-        MaxEvent                   = 32        
+        InvalidEvent = 0,
+        CreateSession = 1,
+        ConnectSession = 2,
+        NegotiationSending = 3,
+        NegotiationSendingOnConnect = 4,
+        NegotiationSendCompleted = 5,
+        NegotiationReceived = 6,
+        NegotiationCompleted = 7,
+        NegotiationPending = 8,
+        Close = 9,
+        CloseCompleted = 10,
+        CloseFailed = 11,
+        ConnectFailed = 12,
+        NegotiationFailed = 13,
+        NegotiationTimeout = 14,
+        SendFailed = 15,
+        ReceiveFailed = 16,
+        FatalError = 17,
+        MessageReceived = 18,
+        KeySent = 19,
+        KeySendFailed = 20,
+        KeyReceived = 21,
+        KeyReceiveFailed = 22,
+        KeyRequested = 23,
+        KeyRequestFailed = 24,
+        DisconnectStart = 25,
+        DisconnectCompleted = 26,
+        DisconnectFailed = 27,
+        ReconnectStart = 28,
+        ReconnectCompleted = 29,
+        ReconnectFailed = 30,
+        RCDisconnectStarted = 31,
+        MaxEvent = 32
     }
 
     /// <summary>
@@ -303,9 +270,6 @@ namespace System.Management.Automation
     /// </summary>
     internal class RemoteSessionStateInfo
     {
-        private RemoteSessionState _state;
-        private Exception _reason;
-
         #region Constructors
 
         internal RemoteSessionStateInfo(RemoteSessionState state)
@@ -315,14 +279,14 @@ namespace System.Management.Automation
 
         internal RemoteSessionStateInfo(RemoteSessionState state, Exception reason)
         {
-            _state = state;
-            _reason = reason;
+            State = state;
+            Reason = reason;
         }
 
         internal RemoteSessionStateInfo(RemoteSessionStateInfo sessionStateInfo)
         {
-            _state = sessionStateInfo.State;
-            _reason = sessionStateInfo.Reason;
+            State = sessionStateInfo.State;
+            Reason = sessionStateInfo.Reason;
         }
 
 
@@ -333,24 +297,12 @@ namespace System.Management.Automation
         /// <summary>
         /// State of the connection
         /// </summary>
-        internal RemoteSessionState State
-        {
-            get
-            {
-                return _state;
-            }
-        }
+        internal RemoteSessionState State { get; }
 
         /// <summary>
         /// If the connection is closed, this provides reason why it had happened.
         /// </summary>
-        internal Exception Reason
-        {
-            get
-            {
-                return _reason;
-            }
-        }
+        internal Exception Reason { get; }
 
         #endregion Public_Properties
     }
@@ -361,8 +313,6 @@ namespace System.Management.Automation
     /// </summary>
     internal class RemoteSessionStateEventArgs : EventArgs
     {
-        private RemoteSessionStateInfo _remoteSessionStateInfo;
-
         #region Constructors
 
         internal RemoteSessionStateEventArgs(RemoteSessionStateInfo remoteSessionStateInfo)
@@ -374,7 +324,7 @@ namespace System.Management.Automation
                 PSTraceSource.NewArgumentNullException("remoteSessionStateInfo");
             }
 
-            _remoteSessionStateInfo = remoteSessionStateInfo;
+            SessionStateInfo = remoteSessionStateInfo;
         }
 
         #endregion Constructors
@@ -384,78 +334,35 @@ namespace System.Management.Automation
         /// <summary>
         /// State information about the connection.
         /// </summary>
-        public RemoteSessionStateInfo SessionStateInfo
-        {
-            get
-            {
-                return _remoteSessionStateInfo;
-            }
-        }
+        public RemoteSessionStateInfo SessionStateInfo { get; }
 
         #endregion Public_Properties
     }
 
     internal class RemoteSessionStateMachineEventArgs : EventArgs
     {
-        private RemoteSessionEvent _stateEvent;
-        private RemoteSessionCapability _capability;
-        private RemoteDataObject<PSObject> _remoteObject;
-        private Exception _reason;
-
         #region Constructors
 
         internal RemoteSessionStateMachineEventArgs(RemoteSessionEvent stateEvent)
-            : this (stateEvent, null)
+            : this(stateEvent, null)
         {
         }
 
         internal RemoteSessionStateMachineEventArgs(RemoteSessionEvent stateEvent, Exception reason)
         {
-            _stateEvent = stateEvent;
-            _reason = reason;
+            StateEvent = stateEvent;
+            Reason = reason;
         }
 
         #endregion Constructors
 
-        internal RemoteSessionEvent StateEvent
-        {
-            get
-            {
-                return _stateEvent;
-            }
-        }
+        internal RemoteSessionEvent StateEvent { get; }
 
-        internal Exception Reason
-        {
-            get
-            {
-                return _reason;
-            }
-        }
+        internal Exception Reason { get; }
 
-        internal RemoteSessionCapability RemoteSessionCapability
-        {
-            get
-            {
-                return _capability;
-            }
-            set
-            {
-                _capability = value;
-            }
-        }
+        internal RemoteSessionCapability RemoteSessionCapability { get; set; }
 
-        internal RemoteDataObject<PSObject> RemoteData
-        {
-            get
-            {
-                return _remoteObject;
-            }
-            set
-            {
-                _remoteObject = value;
-            }
-        }
+        internal RemoteDataObject<PSObject> RemoteData { get; set; }
     }
 
     /// <summary>

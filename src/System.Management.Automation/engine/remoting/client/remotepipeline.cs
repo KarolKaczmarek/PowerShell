@@ -3,24 +3,18 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
 
-using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Management.Automation.Internal;
 using System.Collections.ObjectModel;
-using System.Collections;
 using System.Collections.Generic;
-using System.Net;
 using System.Management.Automation.Remoting;
 using Dbg = System.Management.Automation.Diagnostics;
-using System.Reflection;
-using System.Net.Sockets;
 using System.Threading;
-using System.Diagnostics.CodeAnalysis;
 using System.Management.Automation.Runspaces.Internal;
 
 #pragma warning disable 1634, 1691 // Stops compiler from warning about unknown warnings
 
-namespace System.Management.Automation 
+namespace System.Management.Automation
 {
     internal class RemotePipeline : Pipeline
     {
@@ -63,16 +57,6 @@ namespace System.Management.Automation
             public RunspaceAvailability NewRunspaceAvailability;
         }
 
-        private ManualResetEvent _pipelineFinishedEvent;
-        /// <summary>
-        /// Is method executor stream enabled.
-        /// </summary>
-        private bool _isMethodExecutorStreamEnabled;
-
-        /// <summary>
-        /// Method executor stream.
-        /// </summary>
-        private ObjectStream _methodExecutorStream;
         private bool _performNestedCheck = true;
 
         #endregion Private Members
@@ -106,8 +90,8 @@ namespace System.Management.Automation
             _errorStream = new PSDataCollectionStream<ErrorRecord>(Guid.Empty, _errorCollection);
 
             // Create object stream for method executor objects.
-            _methodExecutorStream = new ObjectStream();
-            _isMethodExecutorStreamEnabled = false;
+            MethodExecutorStream = new ObjectStream();
+            IsMethodExecutorStreamEnabled = false;
 
             SetCommandCollection(_commands);
 
@@ -118,7 +102,7 @@ namespace System.Management.Automation
             //added to list of running pipelines. This avoids the race condition
             //where Close is called after pipeline is added to list of 
             //running pipeline but before event is created.
-            _pipelineFinishedEvent = new ManualResetEvent(false);
+            PipelineFinishedEvent = new ManualResetEvent(false);
         }
 
         /// <summary>
@@ -180,10 +164,10 @@ namespace System.Management.Automation
         /// <param name="pipeline">pipeline to clone from</param>
         /// <remarks>This constructor is private because this will
         /// only be called from the copy method</remarks>
-        private RemotePipeline(RemotePipeline pipeline):
+        private RemotePipeline(RemotePipeline pipeline) :
             this((RemoteRunspace)pipeline.Runspace, null, false, pipeline.IsNested)
         {
-            this._isSteppable = pipeline._isSteppable;
+            _isSteppable = pipeline._isSteppable;
 
             // NTRAID#Windows Out Of Band Releases-915851-2005/09/13
             // the above comment copied from RemotePipelineBase which
@@ -194,7 +178,7 @@ namespace System.Management.Automation
             }
             if (pipeline._disposed)
             {
-               throw PSTraceSource.NewObjectDisposedException("pipeline");
+                throw PSTraceSource.NewObjectDisposedException("pipeline");
             }
 
             _addToHistory = pipeline._addToHistory;
@@ -235,7 +219,6 @@ namespace System.Management.Automation
         {
             get
             {
-
 #pragma warning disable 56503
                 // NTRAID#Windows Out Of Band Releases-915851-2005/09/13
                 if (_disposed)
@@ -319,7 +302,7 @@ namespace System.Management.Automation
         /// <summary>
         /// Access the output reader for this pipeline.
         /// </summary>
-        override public PipelineReader<PSObject> Output
+        public override PipelineReader<PSObject> Output
         {
             get
             {
@@ -335,7 +318,7 @@ namespace System.Management.Automation
         /// In this release, the objects read from this PipelineReader
         /// are PSObjects wrapping ErrorRecords.
         /// </remarks>
-        override public PipelineReader<object> Error
+        public override PipelineReader<object> Error
         {
             get
             {
@@ -397,7 +380,7 @@ namespace System.Management.Automation
                 return _inputStream;
             }
         }
-        
+
         #endregion streams
 
         #region Invoke
@@ -408,7 +391,7 @@ namespace System.Management.Automation
         /// <remarks>
         /// Results are returned through the <see cref="Pipeline.Output"/> reader.
         /// </remarks>
-        override public void InvokeAsync()
+        public override void InvokeAsync()
         {
             InitPowerShell(false);
             CoreInvokeAsync();
@@ -458,7 +441,7 @@ namespace System.Management.Automation
                 InvalidRunspaceStateException e =
                     new InvalidRunspaceStateException
                     (
-                        StringUtil.Format(RunspaceStrings.RunspaceNotOpenForPipeline,_runspace.RunspaceStateInfo.State.ToString()),
+                        StringUtil.Format(RunspaceStrings.RunspaceNotOpenForPipeline, _runspace.RunspaceStateInfo.State.ToString()),
                         _runspace.RunspaceStateInfo.State,
                         RunspaceState.Opened
                     );
@@ -504,9 +487,9 @@ namespace System.Management.Automation
             // collect output in.  Check to see if the output was collected in a member variable.
             if (results.Count == 0)
             {
-                if (this._outputCollection != null && this._outputCollection.Count > 0)
+                if (_outputCollection != null && _outputCollection.Count > 0)
                 {
-                    results = new Collection<PSObject>(this._outputCollection);
+                    results = new Collection<PSObject>(_outputCollection);
                 }
             }
 
@@ -561,7 +544,7 @@ namespace System.Management.Automation
                     {
                         throw PSTraceSource.NewObjectDisposedException("Pipeline");
                     };
-                     
+
                     asyncresult.AsyncWaitHandle.WaitOne();
                 }
             }
@@ -691,8 +674,8 @@ namespace System.Management.Automation
                     _outputStream.Dispose();
                     _errorCollection.Dispose();
                     _errorStream.Dispose();
-                    _methodExecutorStream.Dispose();
-                    _pipelineFinishedEvent.Dispose();
+                    MethodExecutorStream.Dispose();
+                    PipelineFinishedEvent.Dispose();
                 }
             }
             finally
@@ -747,7 +730,7 @@ namespace System.Management.Automation
         private void SetPipelineState(PipelineState state, Exception reason)
         {
             PipelineState copyState = state;
-            PipelineStateInfo copyStateInfo = null; 
+            PipelineStateInfo copyStateInfo = null;
 
             lock (_syncRoot)
             {
@@ -798,7 +781,6 @@ namespace System.Management.Automation
                         _pipelineStateInfo.Clone(),
                         previousAvailability,
                         _runspace.RunspaceAvailability));
-
             } // lock...
 
             // using the copyStateInfo here as this piece of code is 
@@ -813,7 +795,7 @@ namespace System.Management.Automation
                 Cleanup();
             }
         }
-        
+
         /// <summary>
         /// Raises events for changes in execution state.
         /// </summary>
@@ -909,7 +891,6 @@ namespace System.Management.Automation
 
             _powershell.RemotePowerShell.HostCallReceived +=
                 new EventHandler<RemoteDataEventArgs<RemoteHostCall>>(HandleHostCallReceived);
-
         }
 
         /// <summary>
@@ -962,10 +943,10 @@ namespace System.Management.Automation
                 _powershell.RemotePowerShell.DataStructureHandler.TransportManager,
                 ((RemoteRunspace)_runspace).RunspacePool.RemoteRunspacePoolInternal.Host,
                 _errorStream,
-                _methodExecutorStream,
-                IsMethodExecutorStreamEnabled, 
+                MethodExecutorStream,
+                IsMethodExecutorStreamEnabled,
                 ((RemoteRunspace)_runspace).RunspacePool.RemoteRunspacePoolInternal,
-                _powershell.InstanceId, 
+                _powershell.InstanceId,
                 eventArgs.Data);
         }
 
@@ -1021,7 +1002,7 @@ namespace System.Management.Automation
                 //pipeline finished event.
                 ((RemoteRunspace)_runspace).RemoveFromRunningPipelineList(this);
 
-                _pipelineFinishedEvent.Set();
+                PipelineFinishedEvent.Set();
             }
             catch (ObjectDisposedException)
             {
@@ -1036,39 +1017,17 @@ namespace System.Management.Automation
         /// ManualResetEvent which is signaled when pipeline execution is 
         /// completed/failed/stoped.
         /// </summary>
-        internal ManualResetEvent PipelineFinishedEvent
-        {
-            get
-            {
-                return _pipelineFinishedEvent;
-            }
-        }
+        internal ManualResetEvent PipelineFinishedEvent { get; }
 
         /// <summary>
         /// Is method executor stream enabled.
         /// </summary>
-        internal bool IsMethodExecutorStreamEnabled
-        {
-            get
-            {
-                return _isMethodExecutorStreamEnabled;
-            }
-            set
-            {
-                _isMethodExecutorStreamEnabled = value;
-            }
-        }
+        internal bool IsMethodExecutorStreamEnabled { get; set; }
 
         /// <summary>
         /// Method executor stream.
         /// </summary>
-        internal ObjectStream MethodExecutorStream
-        {
-            get
-            {
-                return _methodExecutorStream;
-            }
-        }
+        internal ObjectStream MethodExecutorStream { get; }
 
         /// <summary>
         /// Check if anyother pipeline is executing.
@@ -1103,15 +1062,15 @@ namespace System.Management.Automation
 
                 if (currentPipeline == null &&
                     ((RemoteRunspace)_runspace).RemoteCommand != null &&
-                    this._connectCmdInfo != null &&
-                    Guid.Equals(((RemoteRunspace)_runspace).RemoteCommand.CommandId, this._connectCmdInfo.CommandId))
+                    _connectCmdInfo != null &&
+                    Guid.Equals(((RemoteRunspace)_runspace).RemoteCommand.CommandId, _connectCmdInfo.CommandId))
                 {
                     // Connect case.  We can add a pipeline to a busy runspace when
                     // that pipeline represents the same command as is currently
                     // running.
                     return;
                 }
-                
+
                 if (currentPipeline != null &&
                          ReferenceEquals(currentPipeline, this))
                 {

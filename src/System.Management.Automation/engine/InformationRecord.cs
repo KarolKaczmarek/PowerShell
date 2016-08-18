@@ -6,6 +6,10 @@ using Dbg = System.Management.Automation.Diagnostics;
 using System.Runtime.Serialization;
 using System.Collections.Generic;
 
+#if CORECLR
+using Environment = System.Management.Automation.Environment;
+#endif
+
 namespace System.Management.Automation
 {
     /// <summary>
@@ -38,19 +42,16 @@ namespace System.Management.Automation
 
             this.TimeGenerated = DateTime.Now;
             this.Tags = new List<string>();
-            if (Platform.IsWindows)
-            {
-                this.User = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
-            }
-            else
-            {
-                this.User = Platform.NonWindowsGetUserName();
-            }
-            // Porting note: PsUtils.GetHostName() already handles platform specifics
+            // domain\user on Windows, just user on Unix
+#if UNIX
+            this.User = Platform.Unix.UserName;
+#else
+            this.User = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+#endif
             this.Computer = PsUtils.GetHostName();
-            this.ProcessId = (uint) System.Diagnostics.Process.GetCurrentProcess().Id;
+            this.ProcessId = (uint)System.Diagnostics.Process.GetCurrentProcess().Id;
             this.NativeThreadId = PsUtils.GetNativeThreadId();
-            this.ManagedThreadId = (uint) System.Threading.Thread.CurrentThread.ManagedThreadId;
+            this.ManagedThreadId = (uint)System.Threading.Thread.CurrentThread.ManagedThreadId;
         }
 
         /// <summary>
@@ -160,11 +161,11 @@ namespace System.Management.Automation
 
             informationRecord.Tags = new List<string>();
             System.Collections.ArrayList tagsArrayList = RemotingDecoder.GetPropertyValue<System.Collections.ArrayList>(inputObject, "Tags");
-            foreach(string tag in tagsArrayList)
+            foreach (string tag in tagsArrayList)
             {
                 informationRecord.Tags.Add(tag);
             }
-            
+
             informationRecord.User = RemotingDecoder.GetPropertyValue<string>(inputObject, "User");
             informationRecord.Computer = RemotingDecoder.GetPropertyValue<string>(inputObject, "Computer");
             informationRecord.ProcessId = RemotingDecoder.GetPropertyValue<uint>(inputObject, "ProcessId");

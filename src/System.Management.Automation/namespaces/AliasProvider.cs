@@ -4,17 +4,14 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 using System;
-using Dbg=System.Management.Automation;
+using Dbg = System.Management.Automation;
 using System.Collections;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Management.Automation;
 using System.Management.Automation.Provider;
-using System.Management.Automation.Internal;
 
 namespace Microsoft.PowerShell.Commands
 {
-
     /// <summary>
     /// This provider is the data accessor for shell aliases. It uses
     /// the SessionStateProviderBase as the base class to produce a view on
@@ -32,15 +29,15 @@ namespace Microsoft.PowerShell.Commands
         /// Gets the name of the provider
         /// </summary>
         public const string ProviderName = "Alias";
-        
+
         #region Constructor
 
         /// <summary>
         /// The constructor for the provider that exposes variables to the user
         /// as drives.
         /// </summary>
-        public AliasProvider  () 
-        { 
+        public AliasProvider()
+        {
         } // constructor
 
         #endregion Constructor
@@ -55,11 +52,11 @@ namespace Microsoft.PowerShell.Commands
         /// An array of a single PSDriveInfo object representing the alias drive.
         /// </returns>
         ///
-        protected override Collection<PSDriveInfo> InitializeDefaultDrives ()
+        protected override Collection<PSDriveInfo> InitializeDefaultDrives()
         {
             string description = SessionStateStrings.AliasDriveDescription;
 
-            PSDriveInfo aliasDrive = 
+            PSDriveInfo aliasDrive =
                 new PSDriveInfo(
                     DriveNames.AliasDrive,
                     ProviderInfo,
@@ -148,7 +145,7 @@ namespace Microsoft.PowerShell.Commands
                 "The caller should verify this parameter");
 
             AliasInfo value = SessionState.Internal.GetAlias(name, Context.Origin);
-            
+
             return value;
         } // GetSessionStateItem
 
@@ -287,7 +284,7 @@ namespace Microsoft.PowerShell.Commands
         /// The name of the alias to remove from session state.
         /// </param>
         /// 
-        internal override void RemoveSessionStateItem (string name)
+        internal override void RemoveSessionStateItem(string name)
         {
             Dbg.Diagnostics.Assert(
                 !String.IsNullOrEmpty(name),
@@ -305,7 +302,7 @@ namespace Microsoft.PowerShell.Commands
         /// session state.
         /// </returns>
         /// 
-        internal override IDictionary GetSessionStateTable ()
+        internal override IDictionary GetSessionStateTable()
         {
             return (IDictionary)SessionState.Internal.GetAliasTable();
         } // GetSessionStateTable
@@ -364,14 +361,14 @@ namespace Microsoft.PowerShell.Commands
         [Parameter]
         public ScopedItemOptions Options
         {
-            get { return options; }
+            get { return _options; }
             set
             {
-                optionsSet = true;
-                options = value;
+                _optionsSet = true;
+                _options = value;
             }
         }
-        private ScopedItemOptions options;
+        private ScopedItemOptions _options;
 
 
         /// <summary>
@@ -380,9 +377,9 @@ namespace Microsoft.PowerShell.Commands
         /// <value></value>
         internal bool OptionsSet
         {
-            get { return optionsSet; }
+            get { return _optionsSet; }
         }
-        private bool optionsSet = false;
+        private bool _optionsSet = false;
     }
 }
 

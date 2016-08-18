@@ -1,14 +1,14 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
+
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Management.Automation.Provider;
 using System.Management.Automation.Internal;
 using System.Management.Automation.Runspaces;
-using Dbg=System.Management.Automation;
+using Dbg = System.Management.Automation;
 
 #pragma warning disable 1634, 1691 // Stops compiler from warning about unknown warnings
 #pragma warning disable 56500
@@ -131,7 +131,6 @@ namespace System.Management.Automation
         {
             if (name == null)
             {
-
                 throw PSTraceSource.NewArgumentNullException("name");
             }
 
@@ -143,7 +142,7 @@ namespace System.Management.Automation
 
             return resultItem;
         } // GetVariableValue
-        
+
 
         /// <summary>
         /// Get a variable out of session state. This interface supports
@@ -186,13 +185,9 @@ namespace System.Management.Automation
         /// 
         internal object GetVariableValue(string name, object defaultValue)
         {
-            object returnObject = GetVariableValue(name);
-            if (returnObject == null)
-            {
-                returnObject = defaultValue;
-            }
+            object returnObject = GetVariableValue(name) ?? defaultValue;
             return returnObject;
-        } // GetVariableValue
+        }
 
         /// <summary>
         /// Looks up the specified variable and returns the context under which 
@@ -267,7 +262,7 @@ namespace System.Management.Automation
             }
             else
             {
-                result = GetVariableValueFromProvider(variablePath, out context, out scope, currentScope.ScopeOrigin);
+                result = GetVariableValueFromProvider(variablePath, out context, out scope, _currentScope.ScopeOrigin);
             }
 
             return result;
@@ -1222,7 +1217,7 @@ namespace System.Management.Automation
         /// </exception>
         /// 
         internal object SetVariable(
-            VariablePath variablePath, 
+            VariablePath variablePath,
             object newValue,
             bool asValue,
             CommandOrigin origin)
@@ -1310,19 +1305,19 @@ namespace System.Management.Automation
 
                 if (variablePath.IsLocal || variablePath.IsUnscopedVariable)
                 {
-                    scope = currentScope;
+                    scope = _currentScope;
                 }
                 else if (variablePath.IsScript)
                 {
-                    scope = currentScope.ScriptScope;
+                    scope = _currentScope.ScriptScope;
                 }
                 else if (variablePath.IsGlobal)
                 {
-                    scope = _globalScope;
+                    scope = GlobalScope;
                 }
                 else if (variablePath.IsPrivate)
                 {
-                    scope = currentScope;
+                    scope = _currentScope;
                 }
 
                 PSVariable varResult =
@@ -1474,11 +1469,7 @@ namespace System.Management.Automation
 
                 IContentWriter writer = writers[0];
 
-                IList content = newValue as IList;
-                if (content == null)
-                {
-                    content = new object[] { newValue };
-                }
+                IList content = newValue as IList ?? new object[] { newValue };
 
                 try
                 {
@@ -1638,7 +1629,7 @@ namespace System.Management.Automation
                     force,
                     this);
         } // NewVariable
-        
+
         /// <summary>
         /// Creates a new variable in the specified scope
         /// </summary>
@@ -1740,7 +1731,7 @@ namespace System.Management.Automation
             RemoveVariable(name, false);
         }
 
-         /// <summary>
+        /// <summary>
         /// Removes a variable from the variable table.
         /// </summary>
         /// 
@@ -2060,14 +2051,14 @@ namespace System.Management.Automation
         internal IDictionary<string, PSVariable> GetVariableTable()
         {
             SessionStateScopeEnumerator scopeEnumerator =
-                new SessionStateScopeEnumerator(currentScope);
+                new SessionStateScopeEnumerator(_currentScope);
 
             Dictionary<string, PSVariable> result =
                 new Dictionary<string, PSVariable>(StringComparer.OrdinalIgnoreCase);
 
             foreach (SessionStateScope scope in scopeEnumerator)
             {
-                GetScopeVariableTable(scope, result, includePrivate: scope == currentScope);
+                GetScopeVariableTable(scope, result, includePrivate: scope == _currentScope);
             }
 
             return result;
@@ -2132,18 +2123,10 @@ namespace System.Management.Automation
         /// <summary>
         /// List of variables to export from this session state object...
         /// </summary>
-        internal List<PSVariable> ExportedVariables
-        {
-            get
-            {
-                return _exportedVariables;
-            }
-        }
-        private List<PSVariable> _exportedVariables = new List<PSVariable>();
+        internal List<PSVariable> ExportedVariables { get; } = new List<PSVariable>();
 
         #endregion variables
     }           // SessionStateInternal class
-
 }
 
 #pragma warning restore 56500

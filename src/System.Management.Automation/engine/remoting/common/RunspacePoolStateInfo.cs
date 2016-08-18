@@ -2,13 +2,6 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
-using System.Threading;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Security;
-using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 
 using Dbg = System.Management.Automation.Diagnostics;
@@ -27,25 +20,12 @@ namespace System.Management.Automation
         /// <summary>
         /// State of the runspace pool when this event occured
         /// </summary>
-        public RunspacePoolState State 
-        {
-            get
-            {
-                return state;
-            }
-                
-        }
+        public RunspacePoolState State { get; }
 
         /// <summary>
         /// Exception associated with that state
         /// </summary>
-        public Exception Reason 
-        {
-            get
-            {
-                return reason;
-            }
-        }
+        public Exception Reason { get; }
 
         /// <summary>
         /// Constructor for creating the state info
@@ -55,12 +35,8 @@ namespace System.Management.Automation
         /// state change. Can be null</param>
         public RunspacePoolStateInfo(RunspacePoolState state, Exception reason)
         {
-            this.state = state;
-            this.reason = reason;
+            State = state;
+            Reason = reason;
         }
-
-        private RunspacePoolState state;
-        private Exception reason;
     }
-
 }

@@ -1,11 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
-using System.Collections;
-using System.Collections.ObjectModel;
-using System.Collections.Generic;
-using System.Management.Automation;
+
 using System.Management.Automation.Internal;
 
 namespace System.Management.Automation
@@ -35,8 +31,8 @@ namespace System.Management.Automation
         /// The Command line parameter collection to update...
         /// </param>
         /// 
-        internal RuntimeDefinedParameterBinder (
-            RuntimeDefinedParameterDictionary target, 
+        internal RuntimeDefinedParameterBinder(
+            RuntimeDefinedParameterDictionary target,
             InternalCommand command,
             CommandLineParameters commandLineParameters)
             : base(target, command.MyInvocation, command.Context, command)
@@ -144,6 +140,5 @@ namespace System.Management.Automation
         } // BindParameter
 
         #endregion Parameter binding
-
     } // RuntimeDefinedParameterBinder
 } // namespace System.Management.Automation

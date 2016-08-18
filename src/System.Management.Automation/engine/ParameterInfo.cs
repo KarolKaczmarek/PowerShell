@@ -1,10 +1,9 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
+
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Management.Automation;
 
 namespace System.Management.Automation
 {
@@ -32,19 +31,19 @@ namespace System.Management.Automation
         /// If <paramref name="parameter"/> is null.
         /// </exception>
         /// 
-        internal CommandParameterInfo (
+        internal CommandParameterInfo(
             CompiledCommandParameter parameter,
             uint parameterSetFlag)
         {
             if (parameter == null)
             {
-                throw PSTraceSource.NewArgumentNullException ("parameter");
+                throw PSTraceSource.NewArgumentNullException("parameter");
             }
 
-            this.name = parameter.Name;
-            this.parameterType = parameter.Type;
-            this.isDynamic = parameter.IsDynamic;
-            this.aliases = new ReadOnlyCollection<string> (parameter.Aliases);
+            Name = parameter.Name;
+            ParameterType = parameter.Type;
+            IsDynamic = parameter.IsDynamic;
+            Aliases = new ReadOnlyCollection<string>(parameter.Aliases);
 
             SetAttributes(parameter.CompiledAttributes);
             SetParameterSetData(parameter.GetParameterSetData(parameterSetFlag));
@@ -57,26 +56,12 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the name of the parameter.
         /// </summary>
-        public string Name
-        {
-            get
-            {
-                return name;
-            }
-        }
-        private string name = String.Empty;
+        public string Name { get; } = String.Empty;
 
         /// <summary>
         /// Gets the type of the parameter.
         /// </summary>
-        public Type ParameterType
-        {
-            get
-            {
-                return parameterType;
-            }
-        }
-        private Type parameterType;
+        public Type ParameterType { get; }
 
         /// <summary>
         /// Gets whether or not the parameter is a dynamic parameter.
@@ -85,14 +70,7 @@ namespace System.Management.Automation
         /// <remarks>
         /// True if the parameter is dynamic, or false otherwise.
         /// </remarks>
-        public bool IsMandatory
-        {
-            get
-            {
-                return isMandatory;
-            }
-        }
-        private bool isMandatory;
+        public bool IsMandatory { get; private set; }
 
         /// <summary>
         /// Gets whether or not the parameter is mandatory.
@@ -101,108 +79,52 @@ namespace System.Management.Automation
         /// <remarks>
         /// True if the parameter is mandatory, or false otherwise.
         /// </remarks>
-        public bool IsDynamic
-        {
-            get
-            {
-                return isDynamic;
-            }
-        }
-        private bool isDynamic;
-        
+        public bool IsDynamic { get; }
+
         /// <summary>
         /// Gets the position in which the parameter can be specified on the command line
         /// if not named. If the returned value is int.MinValue then the parameter must be named.
         /// </summary>
-        public int Position
-        {
-            get
-            {
-                return position;
-            }
-        }
-        private int position = int.MinValue;
+        public int Position { get; private set; } = int.MinValue;
 
-        private bool valueFromPipeline;
         /// <summary>
         /// Gets whether the parameter can take values from the incoming pipeline object.
         /// </summary>
-        public bool ValueFromPipeline
-        {
-            get
-            {
-                return valueFromPipeline;
-            }
-        }
+        public bool ValueFromPipeline { get; private set; }
 
-        private bool valueFromPipelineByPropertyName;
         /// <summary>
         /// Gets whether the parameter can take values from a property inn the incoming
         /// pipeline object with the same name as the parameter.
         /// </summary>
-        public bool ValueFromPipelineByPropertyName
-        {
-            get
-            {
-                return valueFromPipelineByPropertyName;
-            }
-        }
+        public bool ValueFromPipelineByPropertyName { get; private set; }
 
         /// <summary>
         /// Gets whether the parameter will take any argument that isn't bound to another parameter.
         /// </summary>
-        public bool ValueFromRemainingArguments
-        {
-            get
-            {
-                return valueFromRemainingArguments;
-            }
-        }
-        private bool valueFromRemainingArguments;
+        public bool ValueFromRemainingArguments { get; private set; }
 
         /// <summary>
         /// Gets the help message for this parameter.
         /// </summary>
-        public string HelpMessage
-        {
-            get
-            {
-                return helpMessage;
-            }
-        }
-        private string helpMessage = String.Empty;
+        public string HelpMessage { get; private set; } = String.Empty;
 
         /// <summary>
         /// Gets the aliases by which this parameter can be referenced.
         /// </summary>
-        public ReadOnlyCollection<string> Aliases
-        {
-            get
-            {
-                return aliases;
-            }
-        }
-        private ReadOnlyCollection<string> aliases;
+        public ReadOnlyCollection<string> Aliases { get; }
 
         /// <summary>
         /// Gets the attributes that are specified on the parameter.
         /// </summary>
-        public ReadOnlyCollection<Attribute> Attributes
-        {
-            get
-            {
-                return attributes;
-            }
-        }
-        private ReadOnlyCollection<Attribute> attributes;
+        public ReadOnlyCollection<Attribute> Attributes { get; private set; }
 
         #endregion public members
 
         #region private members
 
-        private void SetAttributes (IList<Attribute> attributeMetadata)
+        private void SetAttributes(IList<Attribute> attributeMetadata)
         {
-            Diagnostics.Assert (
+            Diagnostics.Assert(
                 attributeMetadata != null,
                 "The compiled attribute collection should never be null");
 
@@ -213,22 +135,21 @@ namespace System.Management.Automation
                 processedAttributes.Add(attribute);
             }
 
-            this.attributes = new ReadOnlyCollection<Attribute> (processedAttributes);
+            Attributes = new ReadOnlyCollection<Attribute>(processedAttributes);
         }
 
 
-        private void SetParameterSetData (ParameterSetSpecificMetadata parameterMetadata)
+        private void SetParameterSetData(ParameterSetSpecificMetadata parameterMetadata)
         {
-            this.isMandatory = parameterMetadata.IsMandatory;
-            this.position = parameterMetadata.Position;
-            this.valueFromPipeline = parameterMetadata.valueFromPipeline;
-            this.valueFromPipelineByPropertyName = parameterMetadata.valueFromPipelineByPropertyName;
-            this.valueFromRemainingArguments = parameterMetadata.ValueFromRemainingArguments;
-            this.helpMessage = parameterMetadata.HelpMessage;
+            IsMandatory = parameterMetadata.IsMandatory;
+            Position = parameterMetadata.Position;
+            ValueFromPipeline = parameterMetadata.valueFromPipeline;
+            ValueFromPipelineByPropertyName = parameterMetadata.valueFromPipelineByPropertyName;
+            ValueFromRemainingArguments = parameterMetadata.ValueFromRemainingArguments;
+            HelpMessage = parameterMetadata.HelpMessage;
         }
 
         #endregion private members
     } // class CommandParameterInfo
-
 } // namespace System.Management.Automation
 

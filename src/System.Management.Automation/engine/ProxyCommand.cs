@@ -244,7 +244,7 @@ namespace System.Management.Automation
             return commandMetadata.GetEndBlock();
         }
 
-        private static T GetProperty<T>(PSObject obj, string property) where T: class
+        private static T GetProperty<T>(PSObject obj, string property) where T : class
         {
             T result = null;
             if (obj != null && obj.Properties[property] != null)
@@ -263,12 +263,7 @@ namespace System.Management.Automation
             {
                 text = GetProperty<string>(psobj, "Text");
             }
-            if (text == null)
-            {
-                text = obj.ToString();
-            }
-
-            return text;
+            return text ?? obj.ToString();
         }
 
         private static void AppendContent(StringBuilder sb, string section, object obj)
@@ -364,7 +359,7 @@ namespace System.Management.Automation
                     break;
                 }
             }
-            
+
             if (!isHelpObject)
             {
                 string error = ProxyCommandStrings.HelpInfoObjectRequired;
@@ -389,11 +384,7 @@ namespace System.Management.Automation
                     sb.Append("\n\n");
                     foreach (PSObject obj in description)
                     {
-                        string text = GetProperty<string>(obj, "Text");
-                        if (text == null)
-                        {
-                            text = obj.ToString();
-                        }
+                        string text = GetProperty<string>(obj, "Text") ?? obj.ToString();
                         if (!string.IsNullOrEmpty(text))
                         {
                             sb.Append(text);

@@ -1,10 +1,10 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
+
 using System.Collections.Generic;
 using System.Management.Automation.Runspaces;
-using Dbg=System.Management.Automation;
+using Dbg = System.Management.Automation;
 
 
 namespace System.Management.Automation
@@ -48,7 +48,7 @@ namespace System.Management.Automation
                 new Dictionary<string, AliasInfo>(StringComparer.OrdinalIgnoreCase);
 
             SessionStateScopeEnumerator scopeEnumerator =
-                new SessionStateScopeEnumerator(currentScope);
+                new SessionStateScopeEnumerator(_currentScope);
 
             foreach (SessionStateScope scope in scopeEnumerator)
             {
@@ -60,7 +60,7 @@ namespace System.Management.Automation
                         // scope is the same scope the alias was retrieved from.
 
                         if ((entry.Options & ScopedItemOptions.Private) == 0 ||
-                            scope == currentScope)
+                            scope == _currentScope)
                         {
                             result.Add(entry.Name, entry);
                         }
@@ -104,7 +104,7 @@ namespace System.Management.Automation
                 // scope is the same scope the alias was retrieved from.
 
                 if ((entry.Options & ScopedItemOptions.Private) == 0 ||
-                    scope == currentScope)
+                    scope == _currentScope)
                 {
                     result.Add(entry.Name, entry);
                 }
@@ -116,16 +116,9 @@ namespace System.Management.Automation
         /// <summary>
         /// List of aliases to export from this session state object...
         /// </summary>
-        internal List<AliasInfo> ExportedAliases
-        {
-            get
-            {
-                return _exportedAliases;
-            }
-        }
-        private List<AliasInfo> _exportedAliases = new List<AliasInfo>();
+        internal List<AliasInfo> ExportedAliases { get; } = new List<AliasInfo>();
 
-        
+
         /// <summary>
         /// Gets the value of the specified alias from the alias table.
         /// </summary>
@@ -146,7 +139,7 @@ namespace System.Management.Automation
             AliasInfo result = null;
             if (String.IsNullOrEmpty(aliasName))
             {
-                return result;
+                return null;
             }
 
 
@@ -154,7 +147,7 @@ namespace System.Management.Automation
             // appropriate scoping rules
 
             SessionStateScopeEnumerator scopeEnumerator =
-                new SessionStateScopeEnumerator(currentScope);
+                new SessionStateScopeEnumerator(_currentScope);
 
             foreach (SessionStateScope scope in scopeEnumerator)
             {
@@ -169,7 +162,7 @@ namespace System.Management.Automation
                     // scope is the same scope the alias was retrieved from.
 
                     if ((result.Options & ScopedItemOptions.Private) != 0 &&
-                        scope != currentScope)
+                        scope != _currentScope)
                     {
                         result = null;
                     }
@@ -233,7 +226,7 @@ namespace System.Management.Automation
             AliasInfo result = null;
             if (String.IsNullOrEmpty(aliasName))
             {
-                return result;
+                return null;
             }
 
             SessionStateScope scope = GetScopeByID(scopeID);
@@ -244,7 +237,7 @@ namespace System.Management.Automation
 
             if (result != null &&
                 (result.Options & ScopedItemOptions.Private) != 0 &&
-                 scope != currentScope)
+                 scope != _currentScope)
             {
                 result = null;
             }
@@ -300,7 +293,7 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentException("value");
             }
 
-            AliasInfo info = currentScope.SetAliasValue(aliasName, value, this.ExecutionContext, force, origin);
+            AliasInfo info = _currentScope.SetAliasValue(aliasName, value, this.ExecutionContext, force, origin);
 
             return info;
         } // SetAliasValue
@@ -385,7 +378,7 @@ namespace System.Management.Automation
         /// </exception>
         /// 
         internal AliasInfo SetAliasValue(
-            string aliasName, 
+            string aliasName,
             string value,
             ScopedItemOptions options,
             bool force,
@@ -401,10 +394,9 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentException("value");
             }
 
-            AliasInfo info = currentScope.SetAliasValue(aliasName, value, options, this.ExecutionContext, force, origin);
+            AliasInfo info = _currentScope.SetAliasValue(aliasName, value, options, this.ExecutionContext, force, origin);
 
             return info;
-           
         } // SetAliasValue
 
         /// <summary>
@@ -493,7 +485,7 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentNullException("alias");
             }
 
-            AliasInfo info = currentScope.SetAliasItem(alias, force, origin);
+            AliasInfo info = _currentScope.SetAliasItem(alias, force, origin);
 
             return info;
         } // SetAliasItem
@@ -563,13 +555,13 @@ namespace System.Management.Automation
             }
 
             SessionStateScope scope = GetScopeByID(scopeID);
-            
+
             AliasInfo info = scope.SetAliasItem(alias, force, origin);
 
             return info;
         } // SetAliasItemAtScope
 
-                /// <summary>
+        /// <summary>
         /// Sets the alias with specified name to the specified value in the current scope.
         /// </summary>
         /// 
@@ -618,7 +610,7 @@ namespace System.Management.Automation
         {
             return SetAliasItemAtScope(alias, scopeID, force, CommandOrigin.Internal);
         }
-        
+
         /// <summary>
         /// Removes the specified alias.
         /// </summary>
@@ -649,7 +641,7 @@ namespace System.Management.Automation
             // Use the scope enumerator to find an existing function
 
             SessionStateScopeEnumerator scopeEnumerator =
-                new SessionStateScopeEnumerator(currentScope);
+                new SessionStateScopeEnumerator(_currentScope);
 
             foreach (SessionStateScope scope in scopeEnumerator)
             {
@@ -663,7 +655,7 @@ namespace System.Management.Automation
                     // scope is the same scope the alias was retrieved from.
 
                     if ((alias.Options & ScopedItemOptions.Private) != 0 &&
-                        scope != currentScope)
+                        scope != _currentScope)
                     {
                         alias = null;
                     }
@@ -685,7 +677,7 @@ namespace System.Management.Automation
         internal IEnumerable<string> GetAliasesByCommandName(string command)
         {
             SessionStateScopeEnumerator scopeEnumerator =
-                new SessionStateScopeEnumerator(currentScope);
+                new SessionStateScopeEnumerator(_currentScope);
 
             foreach (SessionStateScope scope in scopeEnumerator)
             {

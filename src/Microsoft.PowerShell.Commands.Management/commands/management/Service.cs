@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System;
 using System.Collections.Generic;
 using System.ServiceProcess;
@@ -275,15 +276,15 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return inputObject;
+                return _inputObject;
             }
             set
             {
-                inputObject = value;
+                _inputObject = value;
                 selectionMode = SelectionMode.InputObject;
             }
         }
-        private ServiceController[] inputObject = null;
+        private ServiceController[] _inputObject = null;
         #endregion Parameters
 
         #region Internal
@@ -301,7 +302,7 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                if (null == allServices)
+                if (null == _allServices)
                 {
                     List<ServiceController> services = new List<ServiceController>();
 
@@ -317,12 +318,12 @@ namespace Microsoft.PowerShell.Commands
                         services.AddRange(ServiceController.GetServices());
                     }
 
-                    allServices = services.ToArray();
+                    _allServices = services.ToArray();
                 }
-                return allServices;
+                return _allServices;
             }
         }
-        private ServiceController[] allServices = null;
+        private ServiceController[] _allServices = null;
 
         private void AddIfValidService(IList<ServiceController> listOfValidServices, string nameOfService, string computerName)
         {
@@ -366,12 +367,7 @@ namespace Microsoft.PowerShell.Commands
         /// The computer from which to retrieve processes.
         /// </summary>
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
-        protected string[] SuppliedComputerName
-        {
-            get { return computerName; }
-            set { computerName = value; }
-        }
-        private string[] computerName = new string[0];
+        protected string[] SuppliedComputerName { get; set; } = Utils.EmptyArray<string>();
 
         /// <summary>
         /// Retrieve the list of all services matching the ServiceName,
@@ -392,7 +388,6 @@ namespace Microsoft.PowerShell.Commands
                 default:
                     matchingServices = MatchingServicesByServiceName();
                     break;
-
             }
             // 2004/12/16 Note that the services will be sorted
             //  before being stopped.  JimTru confirms that this is OK.
@@ -653,18 +648,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         [Parameter]
         [Alias("DS")]
-        public SwitchParameter DependentServices
-        {
-            get
-            {
-                return dependentservices;
-            }
-            set
-            {
-                dependentservices = value;
-            }
-        }
-        private SwitchParameter dependentservices;
+        public SwitchParameter DependentServices { get; set; }
 
 
         /// <summary>
@@ -672,18 +656,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         [Parameter]
         [Alias("SDO", "ServicesDependedOn")]
-        public SwitchParameter RequiredServices
-        {
-            get
-            {
-                return requiredservices;
-            }
-            set
-            {
-                requiredservices = value;
-            }
-        }
-        private SwitchParameter requiredservices;
+        public SwitchParameter RequiredServices { get; set; }
 
         #endregion Parameters
 
@@ -695,20 +668,20 @@ namespace Microsoft.PowerShell.Commands
         {
             foreach (ServiceController service in MatchingServices())
             {
-                if (!dependentservices.IsPresent && !requiredservices.IsPresent)
+                if (!DependentServices.IsPresent && !RequiredServices.IsPresent)
                 {
                     WriteObject(service);
                 }
                 else
                 {
-                    if (dependentservices.IsPresent)
+                    if (DependentServices.IsPresent)
                     {
                         foreach (ServiceController dependantserv in service.DependentServices)
                         {
                             WriteObject(dependantserv);
                         }
                     }
-                    if (requiredservices.IsPresent)
+                    if (RequiredServices.IsPresent)
                     {
                         foreach (ServiceController servdependedon in service.ServicesDependedOn)
                         {
@@ -776,18 +749,8 @@ namespace Microsoft.PowerShell.Commands
         /// to the success stream.
         /// </summary>
         [Parameter]
-        public SwitchParameter PassThru
-        {
-            get
-            {
-                return passThru;
-            }
-            set
-            {
-                passThru = value;
-            }
-        }
-        private SwitchParameter passThru;
+        public SwitchParameter PassThru { get; set; }
+
         #endregion Parameters
 
         #region Internal
@@ -1035,11 +998,11 @@ namespace Microsoft.PowerShell.Commands
             }
 
             RemoveNotStoppedServices(stoppedServices);
-           if((serviceController.Status.Equals(ServiceControllerStatus.Stopped)) || (serviceController.Status.Equals(ServiceControllerStatus.StopPending)))
-           {
+            if ((serviceController.Status.Equals(ServiceControllerStatus.Stopped)) || (serviceController.Status.Equals(ServiceControllerStatus.StopPending)))
+            {
                 stoppedServices.Add(serviceController);
-           }
-            
+            }
+
 
             return stoppedServices;
         }
@@ -1087,7 +1050,6 @@ namespace Microsoft.PowerShell.Commands
         /// <returns>true iff the service was paused</returns>
         internal bool DoPauseService(ServiceController serviceController)
         {
-
             Exception exception = null;
             bool serviceNotRunning = false;
             try
@@ -1166,7 +1128,6 @@ namespace Microsoft.PowerShell.Commands
         /// <returns>true iff the service was resumed</returns>
         internal bool DoResumeService(ServiceController serviceController)
         {
-
             Exception exception = null;
             bool serviceNotRunning = false;
             try
@@ -1202,7 +1163,6 @@ namespace Microsoft.PowerShell.Commands
                         "CouldNotResumeServiceNotRunning",
                         ServiceResources.CouldNotResumeServiceNotRunning,
                         ErrorCategory.CloseError);
-
                 }
                 else if (!serviceController.CanPauseAndContinue)
                 {
@@ -1259,35 +1219,13 @@ namespace Microsoft.PowerShell.Commands
         /// even if it has dependent services.
         /// </summary>
         [Parameter]
-        public SwitchParameter Force
-        {
-            get
-            {
-                return force;
-            }
-            set
-            {
-                force = value;
-            }
-        }
-        private SwitchParameter force;
+        public SwitchParameter Force { get; set; }
 
         /// <summary>
         /// Specifies whether to wait for a service to reach the stopped state before returning
         /// </summary>
         [Parameter]
-        public SwitchParameter NoWait
-        {
-            get
-            {
-                return nowait;
-            }
-            set
-            {
-                nowait = value;
-            }
-        }
-        private SwitchParameter nowait;
+        public SwitchParameter NoWait { get; set; }
 
         /// <summary>
         /// Stop the services.
@@ -1432,18 +1370,7 @@ namespace Microsoft.PowerShell.Commands
         /// even if it has dependent services.
         /// </summary>
         [Parameter]
-        public SwitchParameter Force
-        {
-            get
-            {
-                return force;
-            }
-            set
-            {
-                force = value;
-            }
-        }
-        private SwitchParameter force;
+        public SwitchParameter Force { get; set; }
 
         /// <summary>
         /// Stop and restart the services.
@@ -1507,15 +1434,7 @@ namespace Microsoft.PowerShell.Commands
         [ValidateNotNullOrEmpty]
         [Alias("cn")]
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
-        public String[] ComputerName
-        {
-            get { return computername; }
-            set
-            {
-                computername = value;
-            }
-        }
-        private String[] computername = new string[] { "." };
+        public String[] ComputerName { get; set; } = new string[] { "." };
 
         /// <summary>
         /// service name
@@ -1626,15 +1545,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         [Parameter(ValueFromPipeline = true,
                    ParameterSetName = "InputObject")]
-        public new ServiceController InputObject
-        {
-            get { return inputobject; }
-            set
-            {
-                inputobject = value;
-            }
-        }
-        private ServiceController inputobject;
+        public new ServiceController InputObject { get; set; }
 
         /// <summary>
         /// This is not a parameter for this cmdlet.
@@ -1680,22 +1591,20 @@ namespace Microsoft.PowerShell.Commands
         [ArchitectureSensitive]
         protected override void ProcessRecord()
         {
-
             ServiceController service = null;
             string ServiceComputerName = null;
-            foreach (string computer in computername)
+            foreach (string computer in ComputerName)
             {
                 bool objServiceShouldBeDisposed = false;
                 try
                 {
-                    if (_ParameterSetName.Equals("InputObject", StringComparison.OrdinalIgnoreCase) && inputobject != null)
+                    if (_ParameterSetName.Equals("InputObject", StringComparison.OrdinalIgnoreCase) && InputObject != null)
                     {
-                        service = inputobject;
+                        service = InputObject;
                         Name = service.ServiceName;
                         ServiceComputerName = service.MachineName;
                         //computer = service.MachineName;
                         objServiceShouldBeDisposed = false;
-
                     }
                     else
                     {
@@ -1727,7 +1636,6 @@ namespace Microsoft.PowerShell.Commands
 
                 try // In finally we ensure dispose, if object not pipelined.
                 {
-
                     // confirm the operation first
                     // this is always false if WhatIf is set
                     if (!ShouldProcessServiceOperation(service))
@@ -1739,7 +1647,6 @@ namespace Microsoft.PowerShell.Commands
                     NakedWin32Handle hService = IntPtr.Zero;
                     try
                     {
-
                         hScManager = NativeMethods.OpenSCManagerW(
                             ServiceComputerName,
                             null,
@@ -1867,7 +1774,6 @@ namespace Microsoft.PowerShell.Commands
                                         //start service
                                         DoStartService(service);
                                 }
-
                             }
                             else if (Status.Equals("Stopped", StringComparison.CurrentCultureIgnoreCase))
                             {
@@ -1893,16 +1799,13 @@ namespace Microsoft.PowerShell.Commands
                                     //Specify NoWait parameter as always false since we are not adding this switch to this cmdlet
                                     DoStopService(service, true, true);
                                 }
-
                             }
                             else if (Status.Equals("Paused", StringComparison.CurrentCultureIgnoreCase))
                             {
                                 if (!service.Status.Equals(ServiceControllerStatus.Paused))
                                     //pause service
                                     DoPauseService(service);
-
                             }
-
                         }
                         if (PassThru.IsPresent)
                         {
@@ -1910,7 +1813,6 @@ namespace Microsoft.PowerShell.Commands
                             ServiceController displayservice = new ServiceController(Name, ServiceComputerName);
                             WriteObject(displayservice);
                         }
-
                     }
                     finally
                     {
@@ -1943,7 +1845,6 @@ namespace Microsoft.PowerShell.Commands
                                     "CouldNotSetServiceDescription",
                                     ServiceResources.CouldNotSetServiceDescription,
                                     ErrorCategory.PermissionDenied);
-
                             }
                         }
                     } // finally
@@ -2075,9 +1976,7 @@ namespace Microsoft.PowerShell.Commands
 
             // confirm the operation first
             // this is always false if WhatIf is set
-            if (!ShouldProcessServiceOperation(
-                (null == DisplayName) ? "" : DisplayName,
-                Name))
+            if (!ShouldProcessServiceOperation(DisplayName ?? "", Name))
             {
                 return;
             }
@@ -2266,9 +2165,7 @@ namespace Microsoft.PowerShell.Commands
                             "CouldNotNewServiceDescription",
                             ServiceResources.CouldNotNewServiceDescription,
                             ErrorCategory.PermissionDenied);
-
                     }
-
                 }
             }
         }
@@ -2517,7 +2414,6 @@ namespace Microsoft.PowerShell.Commands
         public static extern bool QueryInformationJobObject(SafeHandle hJob, int JobObjectInfoClass,
                                     ref JOBOBJECT_BASIC_PROCESS_ID_LIST lpJobObjectInfo,
                                     int cbJobObjectLength, IntPtr lpReturnLength);
-
     }
     #endregion NativeMethods
 }

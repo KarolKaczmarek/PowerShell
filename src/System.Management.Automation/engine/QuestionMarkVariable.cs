@@ -3,11 +3,6 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
 
-
-
-
-using System;
-
 namespace System.Management.Automation
 {
     /// <summary>
@@ -22,7 +17,7 @@ namespace System.Management.Automation
         /// <param name="context">
         /// Execution context
         /// </param>
-        internal QuestionMarkVariable (ExecutionContext context)
+        internal QuestionMarkVariable(ExecutionContext context)
             : base(SpecialVariables.Question, true, ScopedItemOptions.ReadOnly | ScopedItemOptions.AllScope, RunspaceInit.DollarHookDescription)
         {
             _context = context;
@@ -48,6 +43,6 @@ namespace System.Management.Automation
                 base.Value = value;
             }
         }
-    } 
- }
+    }
+}
 

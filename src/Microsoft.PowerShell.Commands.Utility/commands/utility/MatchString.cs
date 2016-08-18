@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System;
 using System.Text.RegularExpressions;
 using System.IO;
@@ -33,24 +34,14 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
 
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
-        public string[] PreContext
-        {
-            get { return preContext; }
-            set { preContext = value; }
-        }
-        private string[] preContext;
+        public string[] PreContext { get; set; }
 
         /// <summary>
         /// Lines found after a match.
         /// </summary>
 
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
-        public string[] PostContext
-        {
-            get { return postContext; }
-            set { postContext = value; }
-        }
-        private string[] postContext;
+        public string[] PostContext { get; set; }
 
         /// <summary>
         /// Lines found before a match. Does not include
@@ -59,12 +50,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
 
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
-        public string[] DisplayPreContext
-        {
-            get { return displayPreContext; }
-            set { displayPreContext = value; }
-        }
-        private string[] displayPreContext;
+        public string[] DisplayPreContext { get; set; }
 
         /// <summary>
         /// Lines found after a match. Does not include
@@ -73,12 +59,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
 
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
-        public string[] DisplayPostContext
-        {
-            get { return displayPostContext; }
-            set { displayPostContext = value; }
-        }
-        private string[] displayPostContext;
+        public string[] DisplayPostContext { get; set; }
 
         /// <summary>
         /// Produce a deep copy of this object.
@@ -86,10 +67,10 @@ namespace Microsoft.PowerShell.Commands
         public object Clone()
         {
             MatchInfoContext clone = new MatchInfoContext();
-            clone.PreContext = (clone.PreContext != null) ? (string[]) PreContext.Clone() : null;
-            clone.PostContext = (clone.PostContext != null) ? (string[]) PostContext.Clone() : null;
-            clone.DisplayPreContext = (clone.DisplayPreContext != null) ? (string[]) DisplayPreContext.Clone() : null;
-            clone.DisplayPostContext = (clone.DisplayPostContext != null) ? (string[]) DisplayPostContext.Clone() : null;
+            clone.PreContext = (clone.PreContext != null) ? (string[])PreContext.Clone() : null;
+            clone.PostContext = (clone.PostContext != null) ? (string[])PostContext.Clone() : null;
+            clone.DisplayPreContext = (clone.DisplayPreContext != null) ? (string[])DisplayPreContext.Clone() : null;
+            clone.DisplayPostContext = (clone.DisplayPostContext != null) ? (string[])DisplayPostContext.Clone() : null;
             return clone;
         }
     }
@@ -99,58 +80,25 @@ namespace Microsoft.PowerShell.Commands
     /// </summary>
     public class MatchInfo
     {
-        private static string inputStream = "InputStream";
+        private static string s_inputStream = "InputStream";
 
         /// <summary>
         /// Indicates if the match was done ignoring case.
         /// </summary>
         /// <value>True if case was ignored.</value>
-        public bool IgnoreCase
-        {
-            get
-            {
-                return ignoreCase;
-            }
-            set
-            {
-                ignoreCase = value;
-            }
-        }
-        private bool ignoreCase;
+        public bool IgnoreCase { get; set; }
 
         /// <summary>
         /// Returns the number of the matching line.
         /// </summary>
         /// <value>The number of the matching line.</value>
-        public int LineNumber
-        {
-            get
-            {
-                return lineNumber;
-            }
-            set
-            {
-                lineNumber = value;
-            }
-        }
-        private int lineNumber;
+        public int LineNumber { get; set; }
 
         /// <summary>
         /// Returns the text of the matching line.
         /// </summary>
         /// <value>The text of the matching line.</value>
-        public string Line
-        {
-            get
-            {
-                return line;
-            }
-            set
-            {
-                line = value;
-            }
-        }
-        private string line = "";
+        public string Line { get; set; } = "";
 
         /// <summary>
         /// Returns the base name of the file containing the matching line.
@@ -164,14 +112,12 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                if (!pathSet)
-                    return inputStream;
-                if (filename == null)
-                    filename = System.IO.Path.GetFileName(path);
-                return filename;
+                if (!_pathSet)
+                    return s_inputStream;
+                return _filename ?? (_filename = System.IO.Path.GetFileName(_path));
             }
         }
-        private string filename;
+        private string _filename;
 
 
         /// <summary>
@@ -185,52 +131,30 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                if (!pathSet)
-                    return inputStream;
-                return path;
+                if (!_pathSet)
+                    return s_inputStream;
+                return _path;
             }
             set
             {
-                path = value;
-                pathSet = true;
+                _path = value;
+                _pathSet = true;
             }
         }
-        private string path = inputStream;
-        private bool pathSet;
+        private string _path = s_inputStream;
+        private bool _pathSet;
 
         /// <summary>
         /// Returns the pattern that was used in the match.
         /// </summary>
         /// <value>The pattern string</value>
-        public string Pattern
-        {
-            get
-            {
-                return pattern;
-            }
-            set
-            {
-                pattern = value;
-            }
-        }
-        private string pattern;
+        public string Pattern { get; set; }
 
         /// <summary>
         /// The context for the match, or null if -context was not
         /// specified.
         /// </summary>
-        public MatchInfoContext Context
-        {
-            get
-            {
-                return context;
-            }
-            set
-            {
-                context = value;
-            }
-        }
-        private MatchInfoContext context;
+        public MatchInfoContext Context { get; set; }
 
         /// <summary>
         /// Returns the path of the matching file truncated relative to the <paramref name="directory"/> parameter.
@@ -243,10 +167,10 @@ namespace Microsoft.PowerShell.Commands
         /// <returns>The relative path that was produced.</returns>
         public string RelativePath(string directory)
         {
-            if (!this.pathSet)
+            if (!_pathSet)
                 return this.Path;
 
-            string relPath = this.path;
+            string relPath = _path;
             if (!String.IsNullOrEmpty(directory))
             {
                 if (relPath.StartsWith(directory, StringComparison.OrdinalIgnoreCase))
@@ -297,13 +221,13 @@ namespace Microsoft.PowerShell.Commands
         /// <returns>The string representation of the match object</returns>
         public string ToString(string directory)
         {
-            string displayPath = (directory != null) ? RelativePath(directory) : this.path;
+            string displayPath = (directory != null) ? RelativePath(directory) : _path;
 
             // Just return a single line if the user didn't
             // enable context-tracking.
             if (Context == null)
             {
-                return FormatLine(this.line, this.LineNumber, displayPath, EmptyPrefix);
+                return FormatLine(Line, this.LineNumber, displayPath, EmptyPrefix);
             }
 
             // Otherwise, render the full context.
@@ -315,7 +239,7 @@ namespace Microsoft.PowerShell.Commands
                 lines.Add(FormatLine(contextLine, displayLineNumber++, displayPath, ContextPrefix));
             }
 
-            lines.Add(FormatLine(this.line, displayLineNumber++, displayPath, MatchPrefix));
+            lines.Add(FormatLine(Line, displayLineNumber++, displayPath, MatchPrefix));
 
             foreach (string contextLine in Context.DisplayPostContext)
             {
@@ -335,7 +259,7 @@ namespace Microsoft.PowerShell.Commands
         /// <returns>The formatted line as a string.</returns>
         private string FormatLine(string lineStr, int displayLineNumber, string displayPath, string prefix)
         {
-            if (pathSet)
+            if (_pathSet)
                 return StringUtil.Format(MatchFormat, prefix, displayPath, displayLineNumber, lineStr);
             else
                 return StringUtil.Format(SimpleFormat, prefix, lineStr);
@@ -345,18 +269,7 @@ namespace Microsoft.PowerShell.Commands
         /// A list of all Regex matches on the matching line.
         /// </summary>
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
-        public Match[] Matches
-        {
-            get
-            {
-                return matches;
-            }
-            set
-            {
-                matches = value;
-            }
-        }
-        private Match[] matches = new Match[]{};
+        public Match[] Matches { get; set; } = new Match[] { };
 
         /// <summary>
         /// Create a deep copy of this MatchInfo instance.
@@ -365,16 +278,16 @@ namespace Microsoft.PowerShell.Commands
         {
             // Just do a shallow copy and then deep-copy the
             // fields that need it.
-            MatchInfo clone = (MatchInfo) this.MemberwiseClone();
+            MatchInfo clone = (MatchInfo)this.MemberwiseClone();
 
             if (clone.Context != null)
             {
-                clone.Context = (MatchInfoContext) clone.Context.Clone();
+                clone.Context = (MatchInfoContext)clone.Context.Clone();
             }
 
             // Regex match objects are immutable, so we can get away
             // with just copying the array.
-            clone.Matches = (Match[]) clone.Matches.Clone();
+            clone.Matches = (Match[])clone.Matches.Clone();
 
             return clone;
         }
@@ -393,13 +306,12 @@ namespace Microsoft.PowerShell.Commands
         private class CircularBuffer<T> : ICollection<T>
         {
             // Ring of items
-            private T[] items;
+            private T[] _items;
             // Current length, as opposed to the total capacity
-            private int length;
             // Current start of the list. Starts at 0, but may
             // move forwards or wrap around back to 0 due to
             // rotation.
-            private int firstIndex;
+            private int _firstIndex;
 
             /// <summary>
             /// Construct a new buffer of the specified capacity.
@@ -411,7 +323,7 @@ namespace Microsoft.PowerShell.Commands
                 if (capacity < 0)
                     throw new ArgumentOutOfRangeException("capacity");
 
-                items = new T[capacity];
+                _items = new T[capacity];
                 Clear();
             }
 
@@ -425,7 +337,7 @@ namespace Microsoft.PowerShell.Commands
             {
                 get
                 {
-                    return items.Length;
+                    return _items.Length;
                 }
             }
 
@@ -436,10 +348,10 @@ namespace Microsoft.PowerShell.Commands
             {
                 get
                 {
-                    return length == Capacity;
+                    return Count == Capacity;
                 }
             }
-            
+
             /// <summary>
             /// Convert from a 0-based index to a buffer index which
             /// has been properly offset and wrapped.
@@ -457,15 +369,15 @@ namespace Microsoft.PowerShell.Commands
                     throw new ArgumentOutOfRangeException("zeroBasedIndex");
                 }
 
-                return (zeroBasedIndex + firstIndex) % Capacity;
+                return (zeroBasedIndex + _firstIndex) % Capacity;
             }
-            
+
             #region IEnumerable<T> implementation.
             public IEnumerator<T> GetEnumerator()
             {
-                for (int i = 0; i < length; i++)
+                for (int i = 0; i < Count; i++)
                 {
-                    yield return items[WrapIndex(i)];
+                    yield return _items[WrapIndex(i)];
                 }
             }
 
@@ -476,13 +388,7 @@ namespace Microsoft.PowerShell.Commands
             #endregion
 
             #region ICollection<T> implementation
-            public int Count
-            {
-                get
-                {
-                    return length;
-                }
-            }
+            public int Count { get; private set; }
 
             public bool IsReadOnly
             {
@@ -509,22 +415,22 @@ namespace Microsoft.PowerShell.Commands
 
                 if (IsFull)
                 {
-                    itemIndex = firstIndex;
-                    firstIndex = (firstIndex + 1) % Capacity;
+                    itemIndex = _firstIndex;
+                    _firstIndex = (_firstIndex + 1) % Capacity;
                 }
                 else
                 {
-                    itemIndex = firstIndex + length;
-                    length++;
+                    itemIndex = _firstIndex + Count;
+                    Count++;
                 }
 
-                items[itemIndex] = item;
+                _items[itemIndex] = item;
             }
 
             public void Clear()
             {
-                firstIndex = 0;
-                length = 0;
+                _firstIndex = 0;
+                Count = 0;
             }
 
             public bool Contains(T item)
@@ -542,9 +448,9 @@ namespace Microsoft.PowerShell.Commands
                 if (arrayIndex < 0)
                     throw new ArgumentOutOfRangeException("arrayIndex");
 
-                if (length > (array.Length - arrayIndex))
+                if (Count > (array.Length - arrayIndex))
                     throw new ArgumentException("arrayIndex");
-                               
+
                 // Iterate through the buffer in correct order.
                 foreach (T item in this)
                 {
@@ -585,7 +491,7 @@ namespace Microsoft.PowerShell.Commands
                         throw new ArgumentOutOfRangeException("index");
                     }
 
-                    return items[WrapIndex(index)];
+                    return _items[WrapIndex(index)];
                 }
             }
         }
@@ -633,20 +539,20 @@ namespace Microsoft.PowerShell.Commands
                 CollectPost,
             }
 
-            private ContextState contextState = ContextState.InitialState;
-            private int preContext = 0;
-            private int postContext = 0;
+            private ContextState _contextState = ContextState.InitialState;
+            private int _preContext = 0;
+            private int _postContext = 0;
 
             // The context leading up to the match.
-            private CircularBuffer<string> collectedPreContext = null;
+            private CircularBuffer<string> _collectedPreContext = null;
 
             // The context after the match.
-            private List<string> collectedPostContext = null;
+            private List<string> _collectedPostContext = null;
 
             // Current match info we are tracking postcontext for.
             // At any given time, if set, this value will not be
             // in the emitQueue but will be the next to be added.
-            private MatchInfo matchInfo = null;
+            private MatchInfo _matchInfo = null;
 
             /// <summary>
             /// Constructor for DisplayContextTracker.
@@ -655,12 +561,12 @@ namespace Microsoft.PowerShell.Commands
             /// <param name="postContext">How much precontext to collect at most.</param>
             public DisplayContextTracker(int preContext, int postContext)
             {
-                this.preContext = preContext;
-                this.postContext = postContext;
+                _preContext = preContext;
+                _postContext = postContext;
 
-                collectedPreContext = new CircularBuffer<string>(preContext);
-                collectedPostContext = new List<string>(postContext);
-                emitQueue = new List<MatchInfo>();
+                _collectedPreContext = new CircularBuffer<string>(preContext);
+                _collectedPostContext = new List<string>(postContext);
+                _emitQueue = new List<MatchInfo>();
                 Reset();
             }
 
@@ -669,26 +575,26 @@ namespace Microsoft.PowerShell.Commands
             {
                 get
                 {
-                    return emitQueue;
+                    return _emitQueue;
                 }
             }
-            private List<MatchInfo> emitQueue = null;
+            private List<MatchInfo> _emitQueue = null;
 
             // Track non-matching line
             public void TrackLine(string line)
             {
-                switch (contextState)
+                switch (_contextState)
                 {
                     case ContextState.InitialState:
                         break;
                     case ContextState.CollectPre:
-                        collectedPreContext.Add(line);
+                        _collectedPreContext.Add(line);
                         break;
                     case ContextState.CollectPost:
                         // We're not done collecting post-context.
-                        collectedPostContext.Add(line);
+                        _collectedPostContext.Add(line);
 
-                        if (collectedPostContext.Count >= postContext)
+                        if (_collectedPostContext.Count >= _postContext)
                         {
                             // Now we're done.
                             UpdateQueue();
@@ -702,22 +608,22 @@ namespace Microsoft.PowerShell.Commands
             {
                 // Update the queue in case we were in the middle
                 // of collecting postcontext for an older match...
-                if (contextState == ContextState.CollectPost)
+                if (_contextState == ContextState.CollectPost)
                     UpdateQueue();
 
                 // Update the current matchInfo.
-                matchInfo = match;
+                _matchInfo = match;
 
                 // If postContext is set, then we need to hold
                 // onto the match for a while and gather context.
                 // Otherwise, immediately move the match onto the queue
                 // and let UpdateQueue update our state instead.
-                if (postContext > 0)
-                    contextState = ContextState.CollectPost;
+                if (_postContext > 0)
+                    _contextState = ContextState.CollectPost;
                 else
                     UpdateQueue();
             }
-            
+
             // Track having reached the end of the file.
             public void TrackEOF()
             {
@@ -725,7 +631,7 @@ namespace Microsoft.PowerShell.Commands
                 // already have a match and it's okay to queue it up
                 // early since there are no more lines to track context
                 // for.
-                if (contextState == ContextState.CollectPost)
+                if (_contextState == ContextState.CollectPost)
                     UpdateQueue();
             }
             #endregion
@@ -736,14 +642,14 @@ namespace Microsoft.PowerShell.Commands
             /// </summary>
             private void UpdateQueue()
             {
-                if (matchInfo != null)
+                if (_matchInfo != null)
                 {
-                    emitQueue.Add(matchInfo);
+                    _emitQueue.Add(_matchInfo);
 
-                    if (matchInfo.Context != null)
+                    if (_matchInfo.Context != null)
                     {
-                        matchInfo.Context.DisplayPreContext = collectedPreContext.ToArray();
-                        matchInfo.Context.DisplayPostContext = collectedPostContext.ToArray();
+                        _matchInfo.Context.DisplayPreContext = _collectedPreContext.ToArray();
+                        _matchInfo.Context.DisplayPostContext = _collectedPostContext.ToArray();
                     }
                     Reset();
                 }
@@ -752,12 +658,12 @@ namespace Microsoft.PowerShell.Commands
             // Reset tracking state. Does not reset the emit queue.
             private void Reset()
             {
-                contextState = (preContext > 0)
+                _contextState = (_preContext > 0)
                                ? ContextState.CollectPre
                                : ContextState.InitialState;
-                collectedPreContext.Clear();
-                collectedPostContext.Clear();
-                matchInfo = null;
+                _collectedPreContext.Clear();
+                _collectedPostContext.Clear();
+                _matchInfo = null;
             }
         }
 
@@ -806,10 +712,10 @@ namespace Microsoft.PowerShell.Commands
             // while still filling up the context buffer
             // have been added to the emit queue.
             // Used by UpdateQueue.
-            private bool hasProcessedPreEntries = false;
+            private bool _hasProcessedPreEntries = false;
 
-            private int preContext;
-            private int postContext;
+            private int _preContext;
+            private int _postContext;
             // A circular buffer tracking both precontext and postcontext.
             //
             // Essentially, the buffer is separated into regions:
@@ -823,7 +729,7 @@ namespace Microsoft.PowerShell.Commands
             // enough context to populate the Context properties of the
             // match. At that point, we will add the match object 
             // to the emit queue.
-            private CircularBuffer<ContextEntry> collectedContext = null;
+            private CircularBuffer<ContextEntry> _collectedContext = null;
 
             /// <summary>
             /// Constructor for LogicalContextTracker.
@@ -832,10 +738,10 @@ namespace Microsoft.PowerShell.Commands
             /// <param name="postContext">How much postcontext to collect at most.</param>
             public LogicalContextTracker(int preContext, int postContext)
             {
-                this.preContext = preContext;
-                this.postContext = postContext;
-                collectedContext = new CircularBuffer<ContextEntry>(preContext + postContext + 1);
-                emitQueue = new List<MatchInfo>();
+                _preContext = preContext;
+                _postContext = postContext;
+                _collectedContext = new CircularBuffer<ContextEntry>(preContext + postContext + 1);
+                _emitQueue = new List<MatchInfo>();
             }
 
             #region IContextTracker implementation
@@ -843,22 +749,22 @@ namespace Microsoft.PowerShell.Commands
             {
                 get
                 {
-                    return emitQueue;
+                    return _emitQueue;
                 }
             }
-            private List<MatchInfo> emitQueue = null;
+            private List<MatchInfo> _emitQueue = null;
 
             public void TrackLine(string line)
             {
                 ContextEntry entry = new ContextEntry(line);
-                collectedContext.Add(entry);
+                _collectedContext.Add(entry);
                 UpdateQueue();
             }
 
             public void TrackMatch(MatchInfo match)
             {
                 ContextEntry entry = new ContextEntry(match);
-                collectedContext.Add(entry);
+                _collectedContext.Add(entry);
                 UpdateQueue();
             }
 
@@ -875,8 +781,8 @@ namespace Microsoft.PowerShell.Commands
                 // ever been emitted and everything is still waiting
                 // on postcontext. So process the whole buffer.
 
-                int startIndex = (collectedContext.IsFull) ? preContext + 1 : 0;
-                EmitAllInRange(startIndex, collectedContext.Count - 1);
+                int startIndex = (_collectedContext.IsFull) ? _preContext + 1 : 0;
+                EmitAllInRange(startIndex, _collectedContext.Count - 1);
             }
             #endregion
 
@@ -895,11 +801,11 @@ namespace Microsoft.PowerShell.Commands
             {
                 for (int i = startIndex; i <= endIndex; i++)
                 {
-                    MatchInfo match = collectedContext[i].Match;
+                    MatchInfo match = _collectedContext[i].Match;
                     if (match != null)
                     {
-                        int preStart = Math.Max(i - preContext, 0);
-                        int postLength = Math.Min(postContext, collectedContext.Count - i - 1);
+                        int preStart = Math.Max(i - _preContext, 0);
+                        int postLength = Math.Min(_postContext, _collectedContext.Count - i - 1);
                         Emit(match, preStart, i - preStart, i + 1, postLength);
                     }
                 }
@@ -922,20 +828,20 @@ namespace Microsoft.PowerShell.Commands
                 // have entries that never collected enough
                 // precontext. Otherwise, we should just look at the
                 // middle region.
-                if (collectedContext.IsFull)
+                if (_collectedContext.IsFull)
                 {
-                    if (hasProcessedPreEntries)
+                    if (_hasProcessedPreEntries)
                     {
                         // Only process a potential match with exactly
                         // enough pre and post-context.
-                        EmitAllInRange(preContext, preContext);
+                        EmitAllInRange(_preContext, _preContext);
                     }
                     else
                     {
                         // Some of our early entries may not
                         // have enough precontext. Process them too.
-                        EmitAllInRange(0, preContext);
-                        hasProcessedPreEntries = true;
+                        EmitAllInRange(0, _preContext);
+                        _hasProcessedPreEntries = true;
                     }
                 }
             }
@@ -962,7 +868,7 @@ namespace Microsoft.PowerShell.Commands
                     match.Context.PostContext = CopyContext(postStartIndex, postLength);
                 }
 
-                emitQueue.Add(match);
+                _emitQueue.Add(match);
             }
 
             /// <summary>
@@ -979,7 +885,7 @@ namespace Microsoft.PowerShell.Commands
 
                 for (int i = 0; i < length; i++)
                 {
-                    result[i] = collectedContext[startIndex + i].ToString();
+                    result[i] = _collectedContext[startIndex + i].ToString();
                 }
 
                 return result;
@@ -991,8 +897,8 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         private class ContextTracker : IContextTracker
         {
-            private IContextTracker displayTracker;
-            private IContextTracker logicalTracker;
+            private IContextTracker _displayTracker;
+            private IContextTracker _logicalTracker;
 
             /// <summary>
             /// Constructor for LogicalContextTracker.
@@ -1001,39 +907,32 @@ namespace Microsoft.PowerShell.Commands
             /// <param name="postContext">How much postcontext to collect at most.</param>
             public ContextTracker(int preContext, int postContext)
             {
-                displayTracker = new DisplayContextTracker(preContext, postContext);
-                logicalTracker = new LogicalContextTracker(preContext, postContext);
-                emitQueue = new List<MatchInfo>();
+                _displayTracker = new DisplayContextTracker(preContext, postContext);
+                _logicalTracker = new LogicalContextTracker(preContext, postContext);
+                EmitQueue = new List<MatchInfo>();
             }
 
             #region IContextTracker implementation
-            public IList<MatchInfo> EmitQueue
-            {
-                get
-                {
-                    return emitQueue;
-                }
-            }
-            private IList<MatchInfo> emitQueue;
+            public IList<MatchInfo> EmitQueue { get; }
 
             public void TrackLine(string line)
             {
-                displayTracker.TrackLine(line);
-                logicalTracker.TrackLine(line);
+                _displayTracker.TrackLine(line);
+                _logicalTracker.TrackLine(line);
                 UpdateQueue();
             }
 
             public void TrackMatch(MatchInfo match)
             {
-                displayTracker.TrackMatch(match);
-                logicalTracker.TrackMatch(match);
+                _displayTracker.TrackMatch(match);
+                _logicalTracker.TrackMatch(match);
                 UpdateQueue();
             }
 
             public void TrackEOF()
             {
-                displayTracker.TrackEOF();
-                logicalTracker.TrackEOF();
+                _displayTracker.TrackEOF();
+                _logicalTracker.TrackEOF();
                 UpdateQueue();
             }
             #endregion
@@ -1053,13 +952,13 @@ namespace Microsoft.PowerShell.Commands
                 // be sure the matches will have both logical
                 // and display context already populated.
 
-                foreach (MatchInfo match in logicalTracker.EmitQueue)
+                foreach (MatchInfo match in _logicalTracker.EmitQueue)
                 {
-                    emitQueue.Add(match);
+                    EmitQueue.Add(match);
                 }
 
-                logicalTracker.EmitQueue.Clear();
-                displayTracker.EmitQueue.Clear();
+                _logicalTracker.EmitQueue.Clear();
+                _displayTracker.EmitQueue.Clear();
             }
         }
 
@@ -1071,15 +970,16 @@ namespace Microsoft.PowerShell.Commands
         [AllowEmptyString]
         public PSObject InputObject
         {
-            get {
-                return inputObject;
+            get
+            {
+                return _inputObject;
             }
             set
             {
-                inputObject = LanguagePrimitives.IsNull(value) ? PSObject.AsPSObject("") : value;
+                _inputObject = LanguagePrimitives.IsNull(value) ? PSObject.AsPSObject("") : value;
             }
         }
-        private PSObject inputObject = AutomationNull.Value;
+        private PSObject _inputObject = AutomationNull.Value;
 
         /// <summary>
         /// String index to start from the beginning.
@@ -1089,17 +989,9 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         ///
         [Parameter(Mandatory = true, Position = 0)]
-        public string[] Pattern
-        {
-            get {
-                return pattern;
-            }
-            set {
-                pattern = value;
-            }
-        }
-        private string[] pattern;
-        private Regex[] regexPattern;
+        public string[] Pattern { get; set; }
+
+        private Regex[] _regexPattern;
 
         /// <summary>
         /// file to read from 
@@ -1107,16 +999,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         [Parameter(Position = 1, Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = "File")]
         [FileinfoToString]
-        public string[] Path
-        {
-            get {
-                return fullName;
-            }
-            set {
-                fullName = value;
-            }
-        }
-        private string[] fullName;
+        public string[] Path { get; set; }
 
         /// <summary>
         /// Literal file to read from 
@@ -1130,15 +1013,15 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return fullName;
+                return Path;
             }
             set
             {
-                fullName = value;
-                isLiteralPath = true;
+                Path = value;
+                _isLiteralPath = true;
             }
         }
-        private bool isLiteralPath = false;
+        private bool _isLiteralPath = false;
 
         /// <summary> If set, match pattern string literally. 
         /// If not (default) search using pattern as a Regular Expression
@@ -1146,14 +1029,16 @@ namespace Microsoft.PowerShell.Commands
         [Parameter]
         public SwitchParameter SimpleMatch
         {
-            get {
-                return simpleMatch;
+            get
+            {
+                return _simpleMatch;
             }
-            set {
-                simpleMatch = value;
+            set
+            {
+                _simpleMatch = value;
             }
         }
-        private bool simpleMatch;
+        private bool _simpleMatch;
 
         ///<summary> 
         /// If true, then do case-sensitive searches...
@@ -1161,14 +1046,16 @@ namespace Microsoft.PowerShell.Commands
         [Parameter]
         public SwitchParameter CaseSensitive
         {
-            get {
-                return caseSensitive;
+            get
+            {
+                return _caseSensitive;
             }
-            set {
-                caseSensitive = value;
+            set
+            {
+                _caseSensitive = value;
             }
         }
-        private bool caseSensitive;
+        private bool _caseSensitive;
 
         /// <summary>
         /// If true the cmdlet will stop processing at the first successful match and
@@ -1179,14 +1066,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return quiet;
+                return _quiet;
             }
             set
             {
-                quiet = value;
+                _quiet = value;
             }
         }
-        private bool quiet;
+        private bool _quiet;
 
         /// <summary> 
         /// list files where a match is found
@@ -1199,14 +1086,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return list;
+                return _list;
             }
             set
-            { 
-                list = value; 
+            {
+                _list = value;
             }
         }
-        private bool list;
+        private bool _list;
 
         /// <summary>
         /// Lets you include particular files.  Files not matching
@@ -1284,14 +1171,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return notMatch;
+                return _notMatch;
             }
             set
-            { 
-                notMatch = value; 
+            {
+                _notMatch = value;
             }
         }
-        private bool notMatch;
+        private bool _notMatch;
 
         /// <summary>
         /// If set, sets the Matches property of MatchInfo to the result
@@ -1305,14 +1192,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return allMatches;
+                return _allMatches;
             }
             set
-            { 
-                allMatches = value; 
+            {
+                _allMatches = value;
             }
         }
-        private bool allMatches;
+        private bool _allMatches;
 
         /// <summary>
         /// The text encoding to process each file as.
@@ -1328,19 +1215,9 @@ namespace Microsoft.PowerShell.Commands
             EncodingConversion.BigEndianUnicode,
             EncodingConversion.Default,
             EncodingConversion.OEM })]
-        public string Encoding
-        {
-            get
-            {
-                return encoding;
-            }
-            set
-            {
-                encoding = value;
-            }
-        }
-        private string encoding;
-        private System.Text.Encoding textEncoding;
+        public string Encoding { get; set; }
+
+        private System.Text.Encoding _textEncoding;
 
         /// <summary>
         /// The number of context lines to collect. If set to a
@@ -1358,7 +1235,7 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return context;
+                return _context;
             }
             set
             {
@@ -1369,23 +1246,23 @@ namespace Microsoft.PowerShell.Commands
                     throw PSTraceSource.NewArgumentNullException("value");
                 }
 
-                context = value;
+                _context = value;
 
-                if (context.Length == 1)
+                if (_context.Length == 1)
                 {
-                    preContext = context[0];
-                    postContext = context[0];
+                    _preContext = _context[0];
+                    _postContext = _context[0];
                 }
-                else if (context.Length >= 2)
+                else if (_context.Length >= 2)
                 {
-                    preContext = context[0];
-                    postContext = context[1];
+                    _preContext = _context[0];
+                    _postContext = _context[1];
                 }
             }
         }
-        private int[] context;
-        private int preContext = 0;
-        private int postContext = 0;
+        private int[] _context;
+        private int _preContext = 0;
+        private int _postContext = 0;
 
         // This context tracker is only used for strings which are piped
         // directly into the cmdlet. File processing doesn't need
@@ -1394,15 +1271,15 @@ namespace Microsoft.PowerShell.Commands
         // use a single global tracker for both is that in the case of
         // a mixed list of strings and FileInfo, the context tracker
         // would get reset after each file.
-        private ContextTracker globalContextTracker = null;
+        private ContextTracker _globalContextTracker = null;
 
         /// <summary>
         /// This is used to handle the case were we're done processing input objects.
         /// If true, process record will just return.
         /// </summary>
-        private bool doneProcessing;
+        private bool _doneProcessing;
 
-        private int inputRecordNumber;
+        private int _inputRecordNumber;
 
         /// <summary>
         /// Read command line parameters.
@@ -1410,34 +1287,34 @@ namespace Microsoft.PowerShell.Commands
         protected override void BeginProcessing()
         {
             // Process encoding switch.
-            if (encoding != null)
+            if (Encoding != null)
             {
-                textEncoding = EncodingConversion.Convert (this, encoding);
+                _textEncoding = EncodingConversion.Convert(this, Encoding);
             }
             else
             {
-                textEncoding = new System.Text.UTF8Encoding();
+                _textEncoding = new System.Text.UTF8Encoding();
             }
 
-            if (!simpleMatch)
+            if (!_simpleMatch)
             {
-                RegexOptions regexOptions = (caseSensitive) ? RegexOptions.None : RegexOptions.IgnoreCase;
-                regexPattern = new Regex[pattern.Length];
-                for (int i = 0; i < pattern.Length; i++)
+                RegexOptions regexOptions = (_caseSensitive) ? RegexOptions.None : RegexOptions.IgnoreCase;
+                _regexPattern = new Regex[Pattern.Length];
+                for (int i = 0; i < Pattern.Length; i++)
                 {
                     try
                     {
-                        regexPattern[i] = new Regex(pattern[i], regexOptions);
+                        _regexPattern[i] = new Regex(Pattern[i], regexOptions);
                     }
                     catch (Exception e)
                     {
-                        this.ThrowTerminatingError(BuildErrorRecord(MatchStringStrings.InvalidRegex, pattern[i], e.Message, "InvalidRegex", e));
+                        this.ThrowTerminatingError(BuildErrorRecord(MatchStringStrings.InvalidRegex, Pattern[i], e.Message, "InvalidRegex", e));
                         throw;
                     }
                 }
             }
 
-            globalContextTracker = new ContextTracker(preContext, postContext);
+            _globalContextTracker = new ContextTracker(_preContext, _postContext);
         }
 
         /// <summary>
@@ -1451,19 +1328,19 @@ namespace Microsoft.PowerShell.Commands
         /// <exception cref="DirectoryNotFoundException">A file cannot be found.</exception>
         protected override void ProcessRecord()
         {
-            if (doneProcessing)
+            if (_doneProcessing)
                 return;
 
             List<string> expandedPaths = null;
-            if (fullName != null)
+            if (Path != null)
             {
-                expandedPaths = ResolveFilePaths(fullName, isLiteralPath);
+                expandedPaths = ResolveFilePaths(Path, _isLiteralPath);
                 if (expandedPaths == null)
                     return;
             }
             else
             {
-                FileInfo fileInfo = inputObject.BaseObject as FileInfo;
+                FileInfo fileInfo = _inputObject.BaseObject as FileInfo;
                 if (fileInfo != null)
                 {
                     expandedPaths = new List<string>();
@@ -1476,14 +1353,14 @@ namespace Microsoft.PowerShell.Commands
                 foreach (string filename in expandedPaths)
                 {
                     bool foundMatch = ProcessFile(filename);
-                    if (quiet && foundMatch)
+                    if (_quiet && foundMatch)
                         return;
                 }
 
                 // No results in any files.
-                if (quiet)
+                if (_quiet)
                 {
-                    if (list)
+                    if (_list)
                         WriteObject(null);
                     else
                         WriteObject(false);
@@ -1492,20 +1369,20 @@ namespace Microsoft.PowerShell.Commands
             else
             {
                 // Set the line number in the matched object to be the record number
-                inputRecordNumber++;
+                _inputRecordNumber++;
 
                 bool matched;
                 MatchInfo result;
                 MatchInfo matchInfo = null;
-                var line = inputObject.BaseObject as string;
+                var line = _inputObject.BaseObject as string;
                 if (line != null)
                 {
                     matched = doMatch(line, out result);
                 }
                 else
                 {
-                    matchInfo = inputObject.BaseObject as MatchInfo;
-                    object objectToCheck = matchInfo ?? (object) inputObject;
+                    matchInfo = _inputObject.BaseObject as MatchInfo;
+                    object objectToCheck = matchInfo ?? (object)_inputObject;
                     matched = doMatch(objectToCheck, out result, out line);
                 }
 
@@ -1514,23 +1391,23 @@ namespace Microsoft.PowerShell.Commands
                     // Don't re-write the line number if it was already set...
                     if (matchInfo == null)
                     {
-                        result.LineNumber = inputRecordNumber;
+                        result.LineNumber = _inputRecordNumber;
                     }
                     // doMatch will have already set the pattern and line text...
-                    globalContextTracker.TrackMatch(result);
+                    _globalContextTracker.TrackMatch(result);
                 }
                 else
                 {
-                    globalContextTracker.TrackLine(line);
+                    _globalContextTracker.TrackLine(line);
                 }
 
                 // Emit any queued up objects...
-                if (FlushTrackerQueue(globalContextTracker))
+                if (FlushTrackerQueue(_globalContextTracker))
                 {
                     // If we're in quiet mode, go ahead and stop processing
                     // now.
-                    if (quiet)
-                        doneProcessing = true;
+                    if (_quiet)
+                        _doneProcessing = true;
                 }
             }
         }
@@ -1543,7 +1420,7 @@ namespace Microsoft.PowerShell.Commands
         /// <returns>True if a match was found; otherwise false.</returns>
         private bool ProcessFile(string filename)
         {
-            ContextTracker contextTracker = new ContextTracker(preContext, postContext);
+            ContextTracker contextTracker = new ContextTracker(_preContext, _postContext);
 
             bool foundMatch = false;
 
@@ -1556,7 +1433,7 @@ namespace Microsoft.PowerShell.Commands
 
                 using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
-                    using (StreamReader sr = new StreamReader(fs, textEncoding))
+                    using (StreamReader sr = new StreamReader(fs, _textEncoding))
                     {
                         String line;
                         int lineNo = 0;
@@ -1591,7 +1468,7 @@ namespace Microsoft.PowerShell.Commands
                                 // the result so the downstream cmdlet can actually manipulate the file
                                 // that was found.
 
-                                if (quiet || list)
+                                if (_quiet || _list)
                                 {
                                     break;
                                 }
@@ -1631,7 +1508,7 @@ namespace Microsoft.PowerShell.Commands
 
             return foundMatch;
         }
-        
+
         /// <summary>
         /// Emit any objects which have been queued up, and clear
         /// the queue.
@@ -1645,11 +1522,11 @@ namespace Microsoft.PowerShell.Commands
                 return false;
 
             // If -quiet is specified but not -list return true on first match
-            if (quiet && !list)
+            if (_quiet && !_list)
             {
                 WriteObject(true);
             }
-            else if (list)
+            else if (_list)
             {
                 WriteObject(contextTracker.EmitQueue[0]);
             }
@@ -1672,9 +1549,9 @@ namespace Microsoft.PowerShell.Commands
         protected override void EndProcessing()
         {
             // Check for a leftover match that was still tracking context.
-            globalContextTracker.TrackEOF();
-            if (!doneProcessing)
-                FlushTrackerQueue(globalContextTracker);
+            _globalContextTracker.TrackEOF();
+            if (!_doneProcessing)
+                FlushTrackerQueue(_globalContextTracker);
         }
 
         private bool doMatch(string operandString, out MatchInfo matchResult)
@@ -1696,11 +1573,11 @@ namespace Microsoft.PowerShell.Commands
                 // objects to use the new settings.
                 operandString = matchInfo.Line;
 
-                if (preContext > 0 || postContext > 0)
+                if (_preContext > 0 || _postContext > 0)
                 {
-                    preContext = 0;
-                    postContext = 0;
-                    globalContextTracker = new ContextTracker(preContext, postContext);
+                    _preContext = 0;
+                    _postContext = 0;
+                    _globalContextTracker = new ContextTracker(_preContext, _postContext);
                     WarnFilterContext();
                 }
             }
@@ -1730,16 +1607,16 @@ namespace Microsoft.PowerShell.Commands
             int patternIndex = 0;
             matchResult = null;
 
-            if (!simpleMatch)
+            if (!_simpleMatch)
             {
-                while (patternIndex < pattern.Length)
+                while (patternIndex < Pattern.Length)
                 {
-                    Regex r = regexPattern[patternIndex];
-                    
+                    Regex r = _regexPattern[patternIndex];
+
                     // Only honor allMatches if notMatch is not set,
                     // since it's a fairly expensive operation and
                     // notMatch takes precedent over allMatch.
-                    if (allMatches && !notMatch)
+                    if (_allMatches && !_notMatch)
                     {
                         MatchCollection mc = r.Matches(operandString);
                         if (mc.Count > 0)
@@ -1748,7 +1625,9 @@ namespace Microsoft.PowerShell.Commands
                             ((ICollection)mc).CopyTo(matches, 0);
                             gotMatch = true;
                         }
-                    } else {
+                    }
+                    else
+                    {
                         Match match = r.Match(operandString);
                         gotMatch = match.Success;
 
@@ -1766,11 +1645,11 @@ namespace Microsoft.PowerShell.Commands
             }
             else
             {
-                StringComparison compareOption = caseSensitive ?
+                StringComparison compareOption = _caseSensitive ?
                     StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase;
-                while (patternIndex < pattern.Length)
+                while (patternIndex < Pattern.Length)
                 {
-                    string pat = pattern[patternIndex];
+                    string pat = Pattern[patternIndex];
 
                     if (operandString.IndexOf(pat, compareOption) >= 0)
                     {
@@ -1782,7 +1661,7 @@ namespace Microsoft.PowerShell.Commands
                 }
             }
 
-            if (notMatch)
+            if (_notMatch)
             {
                 gotMatch = !gotMatch;
                 // If notMatch was specified with multiple
@@ -1808,9 +1687,11 @@ namespace Microsoft.PowerShell.Commands
                     if (matchInfo.Context != null)
                     {
                         matchResult = matchInfo.Clone();
-                        matchResult.Context.DisplayPreContext = new string[] {};
-                        matchResult.Context.DisplayPostContext = new string[] {};
-                    } else {
+                        matchResult.Context.DisplayPreContext = new string[] { };
+                        matchResult.Context.DisplayPostContext = new string[] { };
+                    }
+                    else
+                    {
                         // Otherwise, just pass the object as is.
                         matchResult = matchInfo;
                     }
@@ -1820,18 +1701,18 @@ namespace Microsoft.PowerShell.Commands
 
                 // otherwise construct and populate a new MatchInfo object
                 matchResult = new MatchInfo();
-                matchResult.IgnoreCase = !this.caseSensitive;
+                matchResult.IgnoreCase = !_caseSensitive;
                 matchResult.Line = operandString;
-                matchResult.Pattern = pattern[patternIndex];
+                matchResult.Pattern = Pattern[patternIndex];
 
-                if (preContext > 0 || postContext > 0)
+                if (_preContext > 0 || _postContext > 0)
                 {
                     matchResult.Context = new MatchInfoContext();
                 }
 
                 // Matches should be an empty list, rather than null,
                 // in the cases of notMatch and simpleMatch.
-                matchResult.Matches = (matches != null) ? matches : new Match[] {};
+                matchResult.Matches = matches ?? new Match[] { };
 
                 return true;
             }
@@ -1873,12 +1754,12 @@ namespace Microsoft.PowerShell.Commands
 
         private static ErrorRecord BuildErrorRecord(string messageId, string argument, string errorId, Exception innerException)
         {
-            return BuildErrorRecord(messageId, new object[] {argument}, errorId, innerException);
+            return BuildErrorRecord(messageId, new object[] { argument }, errorId, innerException);
         }
 
         private static ErrorRecord BuildErrorRecord(string messageId, string arg0, string arg1, string errorId, Exception innerException)
         {
-            return BuildErrorRecord(messageId, new object[] {arg0, arg1}, errorId, innerException);
+            return BuildErrorRecord(messageId, new object[] { arg0, arg1 }, errorId, innerException);
         }
 
         private static ErrorRecord BuildErrorRecord(string messageId, object[] arguments, string errorId, Exception innerException)
@@ -1887,7 +1768,7 @@ namespace Microsoft.PowerShell.Commands
             ArgumentException e = new ArgumentException(fmtedMsg, innerException);
             return new ErrorRecord(e, errorId, ErrorCategory.InvalidArgument, null);
         }
- 
+
         private void WarnFilterContext()
         {
             string msg = MatchStringStrings.FilterContextWarning;
@@ -1919,7 +1800,7 @@ namespace Microsoft.PowerShell.Commands
                     {
                         object element = argList[i];
 
-                         mso = element as PSObject;
+                        mso = element as PSObject;
                         if (mso != null)
                             element = mso.BaseObject;
 

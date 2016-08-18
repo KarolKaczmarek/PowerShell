@@ -1,9 +1,9 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System;
 using System.Management.Automation;
-using Microsoft.PowerShell.Commands;
 using System.Management.Automation.Internal;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,31 +17,18 @@ namespace Microsoft.PowerShell.Commands.Internal.Format
     /// </summary>
     internal class MshExpressionResult
     {
-        internal MshExpressionResult (object res, MshExpression re, Exception e)
+        internal MshExpressionResult(object res, MshExpression re, Exception e)
         {
-            _result = res;
-            _resolvedExpression = re;
-            _exception = e;
+            Result = res;
+            ResolvedExpression = re;
+            Exception = e;
         }
 
-        internal object Result
-        {
-            get { return _result; }
-        }
+        internal object Result { get; } = null;
 
-        internal MshExpression ResolvedExpression
-        {
-            get { return _resolvedExpression; }
-        }
+        internal MshExpression ResolvedExpression { get; } = null;
 
-        internal Exception Exception
-        {
-            get { return _exception; }
-        }
-
-        private object _result = null;
-        private MshExpression _resolvedExpression = null;
-        private Exception _exception = null;
+        internal Exception Exception { get; } = null;
     }
 
 
@@ -63,11 +50,11 @@ namespace Microsoft.PowerShell.Commands.Internal.Format
         /// <param name="s">expression</param>
         /// <param name="isResolved"><c>true</c> if no further attempts should be made to resolve wildcards</param>
         /// <exception cref="ArgumentNullException"></exception>
-        internal MshExpression (string s, bool isResolved)
+        internal MshExpression(string s, bool isResolved)
         {
-            if (string.IsNullOrEmpty (s))
+            if (string.IsNullOrEmpty(s))
             {
-                throw PSTraceSource.NewArgumentNullException ("s");
+                throw PSTraceSource.NewArgumentNullException("s");
             }
             _stringValue = s;
             _isResolved = isResolved;
@@ -82,56 +69,53 @@ namespace Microsoft.PowerShell.Commands.Internal.Format
         {
             if (scriptBlock == null)
             {
-                throw PSTraceSource.NewArgumentNullException ("scriptBlock");
+                throw PSTraceSource.NewArgumentNullException("scriptBlock");
             }
-            _script = scriptBlock;
+            Script = scriptBlock;
         }
 
-        public ScriptBlock Script
-        {
-            get { return _script; }
-        }
+        public ScriptBlock Script { get; } = null;
 
-        public override string ToString ()
+        public override string ToString()
         {
-            if (_script != null)
-                return _script.ToString ();
+            if (Script != null)
+                return Script.ToString();
 
             return _stringValue;
         }
 
-        internal List<MshExpression> ResolveNames (PSObject target)
+        internal List<MshExpression> ResolveNames(PSObject target)
         {
-            return ResolveNames (target, true);
+            return ResolveNames(target, true);
         }
 
         internal bool HasWildCardCharacters
         {
             get
             {
-                if (this._script != null)
+                if (Script != null)
                     return false;
-                return WildcardPattern.ContainsWildcardCharacters (this._stringValue);
+                return WildcardPattern.ContainsWildcardCharacters(_stringValue);
             }
         }
 
-        internal List<MshExpression> ResolveNames (PSObject target, bool expand)
+        internal List<MshExpression> ResolveNames(PSObject target, bool expand)
         {
-            List<MshExpression> retVal = new List<MshExpression> ();
+            List<MshExpression> retVal = new List<MshExpression>();
 
-            if (this._isResolved)
+            if (_isResolved)
             {
-                retVal.Add (this);
+                retVal.Add(this);
                 return retVal;
             }
 
-            if (_script != null)
+            if (Script != null)
             {
                 // script block, just add it to the list and be done
-                MshExpression ex = new MshExpression (_script);
+                MshExpression ex = new MshExpression(Script);
 
                 ex._isResolved = true;
-                retVal.Add (ex);
+                retVal.Add(ex);
                 return retVal;
             }
 
@@ -140,25 +124,25 @@ namespace Microsoft.PowerShell.Commands.Internal.Format
             if (HasWildCardCharacters)
             {
                 // get the members first: this will expand the globbing on each parameter
-                members = target.Members.Match (this._stringValue,
+                members = target.Members.Match(_stringValue,
                                             PSMemberTypes.Properties | PSMemberTypes.PropertySet);
             }
             else
             {
                 // we have no globbing: try an exact match, because this is quicker.
-                PSMemberInfo x = target.Members[this._stringValue];
-               
-                List<PSMemberInfo> temp = new List<PSMemberInfo> ();
+                PSMemberInfo x = target.Members[_stringValue];
+
+                List<PSMemberInfo> temp = new List<PSMemberInfo>();
                 if (x != null)
                 {
-                    temp.Add (x);
+                    temp.Add(x);
                 }
                 members = temp;
             }
 
             // we now have a list of members, we have to expand property sets
             // and remove duplicates
-            List<PSMemberInfo> temporaryMemberList = new List<PSMemberInfo> ();
+            List<PSMemberInfo> temporaryMemberList = new List<PSMemberInfo>();
 
             foreach (PSMemberInfo member in members)
             {
@@ -176,10 +160,10 @@ namespace Microsoft.PowerShell.Commands.Internal.Format
                         for (int j = 0; j < references.Count; j++)
                         {
                             ReadOnlyPSMemberInfoCollection<PSPropertyInfo> propertyMembers =
-                                                target.Properties.Match (references[j]);
+                                                target.Properties.Match(references[j]);
                             for (int jj = 0; jj < propertyMembers.Count; jj++)
                             {
-                                temporaryMemberList.Add (propertyMembers[jj]);
+                                temporaryMemberList.Add(propertyMembers[jj]);
                             }
                         }
                     }
@@ -188,22 +172,22 @@ namespace Microsoft.PowerShell.Commands.Internal.Format
                 // it can be a property
                 if (member is PSPropertyInfo)
                 {
-                    temporaryMemberList.Add (member);
+                    temporaryMemberList.Add(member);
                 }
             }
 
-            Hashtable hash = new Hashtable ();
+            Hashtable hash = new Hashtable();
 
             // build the list of unique values: remove the possible duplicates
             // from property set expansion
             foreach (PSMemberInfo m in temporaryMemberList)
             {
-                if (!hash.ContainsKey (m.Name))
+                if (!hash.ContainsKey(m.Name))
                 {
                     MshExpression ex = new MshExpression(m.Name);
 
                     ex._isResolved = true;
-                    retVal.Add (ex);
+                    retVal.Add(ex);
                     hash.Add(m.Name, null);
                 }
             }
@@ -211,31 +195,31 @@ namespace Microsoft.PowerShell.Commands.Internal.Format
             return retVal;
         }
 
-        internal List<MshExpressionResult> GetValues (PSObject target)
+        internal List<MshExpressionResult> GetValues(PSObject target)
         {
-            return GetValues (target, true, true);
+            return GetValues(target, true, true);
         }
 
-        internal List<MshExpressionResult> GetValues (PSObject target, bool expand, bool eatExceptions)
+        internal List<MshExpressionResult> GetValues(PSObject target, bool expand, bool eatExceptions)
         {
-            List<MshExpressionResult> retVal = new List<MshExpressionResult> ();
+            List<MshExpressionResult> retVal = new List<MshExpressionResult>();
 
             // process the script case
-            if (_script != null)
+            if (Script != null)
             {
-                MshExpression scriptExpression = new MshExpression (_script);
-                MshExpressionResult r = scriptExpression.GetValue (target, eatExceptions);
-                retVal.Add (r);
+                MshExpression scriptExpression = new MshExpression(Script);
+                MshExpressionResult r = scriptExpression.GetValue(target, eatExceptions);
+                retVal.Add(r);
                 return retVal;
             }
 
             // process the expression
-            List<MshExpression> resolvedExpressionList = this.ResolveNames (target, expand);
+            List<MshExpression> resolvedExpressionList = this.ResolveNames(target, expand);
 
             foreach (MshExpression re in resolvedExpressionList)
             {
-                MshExpressionResult r = re.GetValue (target, eatExceptions);
-                retVal.Add (r);
+                MshExpressionResult r = re.GetValue(target, eatExceptions);
+                retVal.Add(r);
             }
 
             return retVal;
@@ -243,21 +227,21 @@ namespace Microsoft.PowerShell.Commands.Internal.Format
 
         #region Private Members
 
-        private MshExpressionResult GetValue (PSObject target, bool eatExceptions)
+        private MshExpressionResult GetValue(PSObject target, bool eatExceptions)
         {
             try
             {
                 object result;
 
-                if (_script != null)
+                if (Script != null)
                 {
-                    result = _script.DoInvokeReturnAsIs(
-                        useLocalScope:         true,
-                        errorHandlingBehavior: ScriptBlock.ErrorHandlingBehavior.WriteToExternalErrorPipe, 
-                        dollarUnder:           target,
-                        input:                 AutomationNull.Value,
-                        scriptThis:            AutomationNull.Value,
-                        args:                  Utils.EmptyArray<object>());
+                    result = Script.DoInvokeReturnAsIs(
+                        useLocalScope: true,
+                        errorHandlingBehavior: ScriptBlock.ErrorHandlingBehavior.WriteToExternalErrorPipe,
+                        dollarUnder: target,
+                        input: AutomationNull.Value,
+                        scriptThis: AutomationNull.Value,
+                        args: Utils.EmptyArray<object>());
                 }
                 else
                 {
@@ -269,7 +253,7 @@ namespace Microsoft.PowerShell.Commands.Internal.Format
                     result = member.Value;
                 }
 
-                return new MshExpressionResult (result, this, null);
+                return new MshExpressionResult(result, this, null);
             }
             catch (RuntimeException e)
             {
@@ -283,12 +267,11 @@ namespace Microsoft.PowerShell.Commands.Internal.Format
                 }
             }
         }
- 
-     
+
+
         // private members
-        string _stringValue;
-        ScriptBlock _script = null;
-        bool _isResolved = false;
+        private string _stringValue;
+        private bool _isResolved = false;
 
         #endregion Private Members
     }

@@ -4,7 +4,6 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
 using System.Collections.Generic;
 using System.Transactions;
 using System.Management.Automation.Internal;
@@ -31,7 +30,7 @@ namespace System.Management.Automation
         /// </summary>
         Active = 2
     }
-    
+
     /// <summary>
     /// Represents an active transaction
     /// </summary>
@@ -44,9 +43,9 @@ namespace System.Management.Automation
         ///
         internal PSTransaction(RollbackSeverity rollbackPreference, TimeSpan timeout)
         {
-            transaction = new CommittableTransaction(timeout);
-            this.rollbackPreference = rollbackPreference;
-            this.subscriberCount = 1;
+            _transaction = new CommittableTransaction(timeout);
+            RollbackPreference = rollbackPreference;
+            _subscriberCount = 1;
         }
 
         /// <summary>
@@ -55,22 +54,18 @@ namespace System.Management.Automation
         ///
         internal PSTransaction(CommittableTransaction transaction, RollbackSeverity severity)
         {
-            this.transaction = transaction;
-            this.rollbackPreference = severity;
-            this.subscriberCount = 1;
+            _transaction = transaction;
+            RollbackPreference = severity;
+            _subscriberCount = 1;
         }
 
-        private CommittableTransaction transaction;
+        private CommittableTransaction _transaction;
 
         /// <summary>
         /// Gets the rollback preference for this transaction
         /// </summary>
         ///
-        public RollbackSeverity RollbackPreference
-        {
-            get { return rollbackPreference; }
-        }
-        private RollbackSeverity rollbackPreference;
+        public RollbackSeverity RollbackPreference { get; }
 
         /// <summary>
         /// Gets the number of subscribers to this transaction
@@ -86,11 +81,11 @@ namespace System.Management.Automation
                     this.SubscriberCount = 0;
                 }
 
-                return subscriberCount;
+                return _subscriberCount;
             }
-            set { subscriberCount = value; }
+            set { _subscriberCount = value; }
         }
-        private int subscriberCount;
+        private int _subscriberCount;
 
         /// <summary>
         /// Returns the status of this transaction.
@@ -100,11 +95,11 @@ namespace System.Management.Automation
         {
             get
             {
-                if(IsRolledBack)
+                if (IsRolledBack)
                 {
                     return PSTransactionStatus.RolledBack;
                 }
-                else if(IsCommitted)
+                else if (IsCommitted)
                 {
                     return PSTransactionStatus.Committed;
                 }
@@ -121,7 +116,7 @@ namespace System.Management.Automation
         ///
         internal void Activate()
         {
-            Transaction.Current = transaction;
+            Transaction.Current = _transaction;
         }
 
         /// <summary>
@@ -130,8 +125,8 @@ namespace System.Management.Automation
         ///
         internal void Commit()
         {
-            transaction.Commit();
-            this.isCommitted = true;
+            _transaction.Commit();
+            IsCommitted = true;
         }
 
         /// <summary>
@@ -140,8 +135,8 @@ namespace System.Management.Automation
         ///
         internal void Rollback()
         {
-            transaction.Rollback();
-            this.isRolledBack = true;
+            _transaction.Rollback();
+            _isRolledBack = true;
         }
 
         /// <summary>
@@ -155,39 +150,28 @@ namespace System.Management.Automation
             {
                 // Check if it's been aborted underneath us
                 if (
-                    (! isRolledBack) &&
-                    (transaction != null) &&
-                    (transaction.TransactionInformation.Status == TransactionStatus.Aborted))
+                    (!_isRolledBack) &&
+                    (_transaction != null) &&
+                    (_transaction.TransactionInformation.Status == TransactionStatus.Aborted))
                 {
-                    isRolledBack = true;
+                    _isRolledBack = true;
                 }
 
-                return isRolledBack;
+                return _isRolledBack;
             }
             set
             {
-                isRolledBack = value;
+                _isRolledBack = value;
             }
         }
-        private bool isRolledBack = false;
+        private bool _isRolledBack = false;
 
         /// <summary>
         /// Determines whether this PSTransaction
         /// has been committed or not.
         /// </summary>
         ///
-        internal bool IsCommitted
-        {
-            get
-            {
-                return isCommitted;
-            }
-            set
-            {
-                isCommitted = value;
-            }
-        }
-        private bool isCommitted = false;
+        internal bool IsCommitted { get; set; } = false;
 
         /// <summary>
         /// Destructor for the PSTransaction class
@@ -219,11 +203,11 @@ namespace System.Management.Automation
         ///
         public void Dispose(bool disposing)
         {
-            if(disposing)
+            if (disposing)
             {
-                if(transaction != null)
+                if (_transaction != null)
                 {
-                    transaction.Dispose();
+                    _transaction.Dispose();
                 }
             }
         }
@@ -241,10 +225,10 @@ namespace System.Management.Automation
         ///
         internal PSTransactionContext(PSTransactionManager transactionManager)
         {
-            this.transactionManager = transactionManager;
+            _transactionManager = transactionManager;
             transactionManager.SetActive();
         }
-        private PSTransactionManager transactionManager;
+        private PSTransactionManager _transactionManager;
 
         /// <summary>
         /// Destructor for the PSTransactionManager class
@@ -276,9 +260,9 @@ namespace System.Management.Automation
         ///
         private void Dispose(bool disposing)
         {
-            if(disposing)
+            if (disposing)
             {
-                transactionManager.ResetActive();
+                _transactionManager.ResetActive();
             }
         }
     }
@@ -320,8 +304,8 @@ namespace System.Management.Automation.Internal
         ///
         internal PSTransactionManager()
         {
-            transactionStack = new Stack<PSTransaction>();
-            transactionStack.Push(null);
+            _transactionStack = new Stack<PSTransaction>();
+            _transactionStack.Push(null);
         }
 
         /// <summary>
@@ -331,7 +315,7 @@ namespace System.Management.Automation.Internal
         ///
         internal static IDisposable GetEngineProtectionScope()
         {
-            if(engineProtectionEnabled && (Transaction.Current != null))
+            if (s_engineProtectionEnabled && (Transaction.Current != null))
             {
                 return new System.Transactions.TransactionScope(
                     System.Transactions.TransactionScopeOption.Suppress);
@@ -350,9 +334,9 @@ namespace System.Management.Automation.Internal
         ///
         internal static void EnableEngineProtection()
         {
-            engineProtectionEnabled = true;
+            s_engineProtectionEnabled = true;
         }
-        private static bool engineProtectionEnabled = false;
+        private static bool s_engineProtectionEnabled = false;
 
         /// <summary>
         /// Gets the rollback preference for the active transaction
@@ -362,7 +346,7 @@ namespace System.Management.Automation.Internal
         {
             get
             {
-                PSTransaction currentTransaction = transactionStack.Peek();
+                PSTransaction currentTransaction = _transactionStack.Peek();
 
                 if (currentTransaction == null)
                 {
@@ -370,7 +354,7 @@ namespace System.Management.Automation.Internal
 
                     // This is not an expected condition, and is just protective
                     // coding.
-                    #pragma warning suppress 56503
+#pragma warning suppress 56503
                     throw new InvalidOperationException(error);
                 }
 
@@ -395,7 +379,7 @@ namespace System.Management.Automation.Internal
         ///
         internal void CreateOrJoin(RollbackSeverity rollbackPreference, TimeSpan timeout)
         {
-            PSTransaction currentTransaction = transactionStack.Peek();
+            PSTransaction currentTransaction = _transactionStack.Peek();
 
             // There is a transaction on the stack
             if (currentTransaction != null)
@@ -405,10 +389,10 @@ namespace System.Management.Automation.Internal
                 if (currentTransaction.IsRolledBack || currentTransaction.IsCommitted)
                 {
                     // Clean up the "used" one
-                    transactionStack.Pop().Dispose();
+                    _transactionStack.Pop().Dispose();
 
                     // And add a new one to the stack
-                    transactionStack.Push(new PSTransaction(rollbackPreference, timeout));
+                    _transactionStack.Push(new PSTransaction(rollbackPreference, timeout));
                 }
                 else
                 {
@@ -419,7 +403,7 @@ namespace System.Management.Automation.Internal
             else
             {
                 // Add a new transaction to the stack
-                transactionStack.Push(new PSTransaction(rollbackPreference, timeout));
+                _transactionStack.Push(new PSTransaction(rollbackPreference, timeout));
             }
         }
 
@@ -440,7 +424,7 @@ namespace System.Management.Automation.Internal
         ///
         internal void CreateNew(RollbackSeverity rollbackPreference, TimeSpan timeout)
         {
-            transactionStack.Push(new PSTransaction(rollbackPreference, timeout));
+            _transactionStack.Push(new PSTransaction(rollbackPreference, timeout));
         }
 
         /// <summary>
@@ -450,7 +434,7 @@ namespace System.Management.Automation.Internal
         ///
         internal void Commit()
         {
-            PSTransaction currentTransaction = transactionStack.Peek();
+            PSTransaction currentTransaction = _transactionStack.Peek();
 
             // Should not be able to commit a transaction that is not active
             if (currentTransaction == null)
@@ -473,7 +457,7 @@ namespace System.Management.Automation.Internal
                 throw new InvalidOperationException(error);
             }
 
-            if(currentTransaction.SubscriberCount == 1)
+            if (currentTransaction.SubscriberCount == 1)
             {
                 currentTransaction.Commit();
                 currentTransaction.SubscriberCount = 0;
@@ -484,10 +468,10 @@ namespace System.Management.Automation.Internal
             }
 
             // Now that we've committed, go back to the last available transaction
-            while((transactionStack.Count > 2) &&
-                (transactionStack.Peek().IsRolledBack || transactionStack.Peek().IsCommitted))
+            while ((_transactionStack.Count > 2) &&
+                (_transactionStack.Peek().IsRolledBack || _transactionStack.Peek().IsCommitted))
             {
-                transactionStack.Pop().Dispose();
+                _transactionStack.Pop().Dispose();
             }
         }
 
@@ -506,7 +490,7 @@ namespace System.Management.Automation.Internal
         ///
         internal void Rollback(bool suppressErrors)
         {
-            PSTransaction currentTransaction = transactionStack.Peek();
+            PSTransaction currentTransaction = _transactionStack.Peek();
 
             // Should not be able to roll back a transaction that is not active
             if (currentTransaction == null)
@@ -518,7 +502,7 @@ namespace System.Management.Automation.Internal
             // If you are already in a transaction that has been aborted
             if (currentTransaction.IsRolledBack)
             {
-                if(! suppressErrors)
+                if (!suppressErrors)
                 {
                     // Otherwise, you should not be able to roll it back.
                     string error = TransactionStrings.TransactionRolledBackForRollback;
@@ -529,7 +513,7 @@ namespace System.Management.Automation.Internal
             // See if they've already committed the transaction
             if (currentTransaction.IsCommitted)
             {
-                if(! suppressErrors)
+                if (!suppressErrors)
                 {
                     string error = TransactionStrings.CommittedTransactionForRollback;
                     throw new InvalidOperationException(error);
@@ -541,10 +525,10 @@ namespace System.Management.Automation.Internal
             currentTransaction.Rollback();
 
             // Now that we've rolled back, go back to the last available transaction
-            while((transactionStack.Count > 2) &&
-                (transactionStack.Peek().IsRolledBack || transactionStack.Peek().IsCommitted))
+            while ((_transactionStack.Count > 2) &&
+                (_transactionStack.Peek().IsRolledBack || _transactionStack.Peek().IsCommitted))
             {
-                transactionStack.Pop().Dispose();
+                _transactionStack.Pop().Dispose();
             }
         }
 
@@ -559,17 +543,17 @@ namespace System.Management.Automation.Internal
                 throw new InvalidOperationException(TransactionStrings.BaseTransactionMustBeFirst);
             }
 
-            PSTransaction currentTransaction = transactionStack.Peek();
+            PSTransaction currentTransaction = _transactionStack.Peek();
 
             // If there is a "used" transaction at the top of the stack, clean it up
-            while(transactionStack.Peek() != null &&
-                (transactionStack.Peek().IsRolledBack || transactionStack.Peek().IsCommitted))
+            while (_transactionStack.Peek() != null &&
+                (_transactionStack.Peek().IsRolledBack || _transactionStack.Peek().IsCommitted))
             {
-                transactionStack.Pop().Dispose();
+                _transactionStack.Pop().Dispose();
             }
 
-            this.baseTransaction = new PSTransaction(transaction, severity);
-            this.transactionStack.Push(this.baseTransaction);
+            _baseTransaction = new PSTransaction(transaction, severity);
+            _transactionStack.Push(_baseTransaction);
         }
 
         /// <summary>
@@ -578,22 +562,22 @@ namespace System.Management.Automation.Internal
         ///
         internal void ClearBaseTransaction()
         {
-            if (this.baseTransaction == null)
+            if (_baseTransaction == null)
             {
                 throw new InvalidOperationException(TransactionStrings.BaseTransactionNotSet);
             }
-            
-            if (this.transactionStack.Peek() != this.baseTransaction)
+
+            if (_transactionStack.Peek() != _baseTransaction)
             {
                 throw new InvalidOperationException(TransactionStrings.BaseTransactionNotActive);
             }
 
-            this.transactionStack.Pop().Dispose();
-            this.baseTransaction = null;
+            _transactionStack.Pop().Dispose();
+            _baseTransaction = null;
         }
 
-        private Stack<PSTransaction> transactionStack;
-        private PSTransaction baseTransaction;
+        private Stack<PSTransaction> _transactionStack;
+        private PSTransaction _baseTransaction;
 
         /// <summary>
         /// Returns the current engine transaction
@@ -601,7 +585,7 @@ namespace System.Management.Automation.Internal
         ///
         internal PSTransaction GetCurrent()
         {
-            return transactionStack.Peek();
+            return _transactionStack.Peek();
         }
 
         /// <summary>
@@ -611,8 +595,8 @@ namespace System.Management.Automation.Internal
         internal void SetActive()
         {
             PSTransactionManager.EnableEngineProtection();
-            
-            PSTransaction currentTransaction = transactionStack.Peek();
+
+            PSTransaction currentTransaction = _transactionStack.Peek();
 
             // Should not be able to activate a transaction that is not active
             if (currentTransaction == null)
@@ -629,10 +613,10 @@ namespace System.Management.Automation.Internal
                 throw new TransactionAbortedException(error);
             }
 
-            previousActiveTransaction = Transaction.Current;
+            _previousActiveTransaction = Transaction.Current;
             currentTransaction.Activate();
         }
-        private Transaction previousActiveTransaction;
+        private Transaction _previousActiveTransaction;
 
         /// <summary>
         /// Deactivates the current transaction in the engine, and restores the
@@ -644,8 +628,8 @@ namespace System.Management.Automation.Internal
             // Even if you are in a transaction that has been aborted, you
             // should still be able to restore the current transaction.
 
-            Transaction.Current = previousActiveTransaction;
-            previousActiveTransaction = null;
+            Transaction.Current = _previousActiveTransaction;
+            _previousActiveTransaction = null;
         }
 
         /// <summary>
@@ -656,7 +640,7 @@ namespace System.Management.Automation.Internal
         {
             get
             {
-                PSTransaction currentTransaction = transactionStack.Peek();
+                PSTransaction currentTransaction = _transactionStack.Peek();
 
                 if ((currentTransaction != null) &&
                     (!currentTransaction.IsCommitted) &&
@@ -678,7 +662,7 @@ namespace System.Management.Automation.Internal
         {
             get
             {
-                PSTransaction currentTransaction = transactionStack.Peek();
+                PSTransaction currentTransaction = _transactionStack.Peek();
 
                 if (currentTransaction != null)
                 {
@@ -698,7 +682,7 @@ namespace System.Management.Automation.Internal
         {
             get
             {
-                PSTransaction currentTransaction = transactionStack.Peek();
+                PSTransaction currentTransaction = _transactionStack.Peek();
 
                 if (currentTransaction != null)
                 {
@@ -742,15 +726,15 @@ namespace System.Management.Automation.Internal
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "baseTransaction", Justification = "baseTransaction should not be disposed since we do not own it - it belongs to the caller")]
         public void Dispose(bool disposing)
         {
-            if(disposing)
+            if (disposing)
             {
                 ResetActive();
 
-                while(transactionStack.Peek() != null)
+                while (_transactionStack.Peek() != null)
                 {
-                    PSTransaction currentTransaction = transactionStack.Pop();
+                    PSTransaction currentTransaction = _transactionStack.Pop();
 
-                    if (currentTransaction != this.baseTransaction)
+                    if (currentTransaction != _baseTransaction)
                     {
                         currentTransaction.Dispose();
                     }

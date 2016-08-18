@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System;
 using System.Management.Automation;
 using System.Management.Automation.Internal;
@@ -26,21 +27,10 @@ namespace Microsoft.PowerShell.Commands
         /// <summary>
         /// Message to be sent and processed if debug mode is on.
         /// </summary>
-        [Parameter( Position = 0, Mandatory = true, ValueFromPipeline = true )]
+        [Parameter(Position = 0, Mandatory = true, ValueFromPipeline = true)]
         [AllowEmptyString]
         [Alias("Msg")]
-        public string Message
-        {
-            get
-            {
-                return message;
-            }
-            set
-            {
-                message = value;
-            }
-        }
-        private string message = null;
+        public string Message { get; set; } = null;
 
 
         /// <summary>
@@ -87,21 +77,10 @@ namespace Microsoft.PowerShell.Commands
         /// <summary>
         /// Message to be sent if verbose messages are being shown.
         /// </summary>
-        [Parameter( Position = 0, Mandatory = true, ValueFromPipeline = true )]
+        [Parameter(Position = 0, Mandatory = true, ValueFromPipeline = true)]
         [AllowEmptyString]
         [Alias("Msg")]
-        public string Message
-        {
-            get
-            {
-                return message;
-            }
-            set
-            {
-                message = value;
-            }
-        }
-        private string message = null;
+        public string Message { get; set; } = null;
 
 
         /// <summary>
@@ -151,18 +130,7 @@ namespace Microsoft.PowerShell.Commands
         [Parameter(Position = 0, Mandatory = true, ValueFromPipeline = true)]
         [AllowEmptyString]
         [Alias("Msg")]
-        public string Message
-        {
-            get
-            {
-                return message;
-            }
-            set
-            {
-                message = value;
-            }
-        }
-        private string message = null;
+        public string Message { get; set; } = null;
 
 
         /// <summary>
@@ -252,19 +220,13 @@ namespace Microsoft.PowerShell.Commands
     /// </summary>
     public class WriteOrThrowErrorCommand : PSCmdlet
     {
-        private Exception _recordException = null;
         /// <summary>
         /// ErrorRecord.Exception -- if not specified, ErrorRecord.Exception is
         /// System.Exception.
         /// </summary>
         [Parameter(ParameterSetName = "WithException", Mandatory = true)]
-        public Exception Exception
-        {
-            get { return _recordException; }
-            set { _recordException = value; }
-        }
+        public Exception Exception { get; set; } = null;
 
-        private string _message = null;
         /// <summary>
         /// If Exception is specified, this is ErrorRecord.ErrorDetails.Message.
         /// Otherwise, the Exception is System.Exception, and this is
@@ -275,71 +237,42 @@ namespace Microsoft.PowerShell.Commands
         [AllowNull]
         [AllowEmptyString]
         [Alias("Msg")]
-        public string Message
-        {
-            get { return _message; }
-            set { _message = value; }
-        }
+        public string Message { get; set; } = null;
 
-        private ErrorRecord _errorRecord = null;
         /// <summary>
         /// If Exception is specified, this is ErrorRecord.ErrorDetails.Message.
         /// Otherwise, the Exception is System.Exception, and this is
         /// Exception.Message.
         /// </summary>
         [Parameter(ParameterSetName = "ErrorRecord", Mandatory = true)]
-        public ErrorRecord ErrorRecord
-        {
-            get { return _errorRecord; }
-            set { _errorRecord = value; }
-        }
+        public ErrorRecord ErrorRecord { get; set; } = null;
 
-        private ErrorCategory _category = ErrorCategory.NotSpecified;
         /// <summary>
         /// ErrorRecord.CategoryInfo.Category
         /// </summary>
         [Parameter(ParameterSetName = "NoException")]
         [Parameter(ParameterSetName = "WithException")]
-        public ErrorCategory Category
-        {
-            get { return _category; }
-            set { _category = value; }
-        }
+        public ErrorCategory Category { get; set; } = ErrorCategory.NotSpecified;
 
-        private string _errorId = "";
         /// <summary>
         /// ErrorRecord.ErrorId
         /// </summary>
         [Parameter(ParameterSetName = "NoException")]
         [Parameter(ParameterSetName = "WithException")]
-        public string ErrorId
-        {
-            get { return _errorId; }
-            set { _errorId = value; }
-        }
+        public string ErrorId { get; set; } = "";
 
-        private object _targetObject = null;
         /// <summary>
         /// ErrorRecord.TargetObject
         /// </summary>
         [Parameter(ParameterSetName = "NoException")]
         [Parameter(ParameterSetName = "WithException")]
-        public object TargetObject
-        {
-            get { return _targetObject; }
-            set { _targetObject = value; }
-        }
+        public object TargetObject { get; set; } = null;
 
-        private string _recommendedAction = "";
         /// <summary>
         /// ErrorRecord.ErrorDetails.RecommendedAction
         /// </summary>
         [Parameter]
-        public string RecommendedAction
-        {
-            get { return _recommendedAction; }
-            set { _recommendedAction = value; }
-        }
+        public string RecommendedAction { get; set; } = "";
 
         /* 2005/01/25 removing throw-error
         /// <summary>
@@ -348,53 +281,33 @@ namespace Microsoft.PowerShell.Commands
         internal bool _terminating = false;
         */
 
-        private string _activity = "";
         /// <summary>
         /// ErrorRecord.CategoryInfo.Activity
         /// </summary>
         [Parameter]
         [Alias("Activity")]
-        public string CategoryActivity
-        {
-            get { return _activity; }
-            set { _activity = value; }
-        }
+        public string CategoryActivity { get; set; } = "";
 
-        private string _reason = "";
         /// <summary>
         /// ErrorRecord.CategoryInfo.Reason
         /// </summary>
         [Parameter]
         [Alias("Reason")]
-        public string CategoryReason
-        {
-            get { return _reason; }
-            set { _reason = value; }
-        }
+        public string CategoryReason { get; set; } = "";
 
-        private string _targetName = "";
         /// <summary>
         /// ErrorRecord.CategoryInfo.TargetName
         /// </summary>
         [Parameter]
         [Alias("TargetName")]
-        public string CategoryTargetName
-        {
-            get { return _targetName; }
-            set { _targetName = value; }
-        }
+        public string CategoryTargetName { get; set; } = "";
 
-        private string _targetType = "";
         /// <summary>
         /// ErrorRecord.CategoryInfo.TargetType
         /// </summary>
         [Parameter]
         [Alias("TargetType")]
-        public string CategoryTargetType
-        {
-            get { return _targetType; }
-            set { _targetType = value; }
-        }
+        public string CategoryTargetType { get; set; } = "";
 
 
         /// <summary>
@@ -462,17 +375,17 @@ namespace Microsoft.PowerShell.Commands
             {
             */
 
-                // 2005/07/14-913791 "write-error output is confusing and misleading"
-                // set InvocationInfo to the script not the command
-                InvocationInfo myInvocation = GetVariableValue(SpecialVariables.MyInvocation) as InvocationInfo;
-                if (null != myInvocation)
-                {
-                    errorRecord.SetInvocationInfo(myInvocation);
-                    errorRecord.PreserveInvocationInfoOnce = true;
-                    errorRecord.CategoryInfo.Activity = "Write-Error";
-                }
+            // 2005/07/14-913791 "write-error output is confusing and misleading"
+            // set InvocationInfo to the script not the command
+            InvocationInfo myInvocation = GetVariableValue(SpecialVariables.MyInvocation) as InvocationInfo;
+            if (null != myInvocation)
+            {
+                errorRecord.SetInvocationInfo(myInvocation);
+                errorRecord.PreserveInvocationInfoOnce = true;
+                errorRecord.CategoryInfo.Activity = "Write-Error";
+            }
 
-                WriteError(errorRecord);
+            WriteError(errorRecord);
             /*
             }
             */
@@ -494,25 +407,25 @@ namespace Microsoft.PowerShell.Commands
         }
     }
 
-/* 2005/01/25 removing throw-error
-    /// <summary>
-    /// This class implements Write-Error command
-    /// </summary>
-    [Cmdlet("Throw", "Error", DefaultParameterSetName = "NoException")]
-    public sealed class ThrowErrorCommand : WriteOrThrowErrorCommand
-    {
+    /* 2005/01/25 removing throw-error
         /// <summary>
-        /// constructor
+        /// This class implements Write-Error command
         /// </summary>
-        public ThrowErrorCommand()
+        [Cmdlet("Throw", "Error", DefaultParameterSetName = "NoException")]
+        public sealed class ThrowErrorCommand : WriteOrThrowErrorCommand
         {
-            using (tracer.TraceConstructor(this))
+            /// <summary>
+            /// constructor
+            /// </summary>
+            public ThrowErrorCommand()
             {
-                _terminating = true;
+                using (tracer.TraceConstructor(this))
+                {
+                    _terminating = true;
+                }
             }
         }
-    }
-*/
+    */
 
     #endregion WriteOrThrowErrorCommand
 
@@ -573,7 +486,6 @@ namespace Microsoft.PowerShell.Commands
         #endregion Serialization
     } // WriteErrorException
     #endregion WriteErrorException
-
 } //namespace
 
 

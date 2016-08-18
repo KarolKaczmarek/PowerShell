@@ -21,13 +21,8 @@ namespace Microsoft.PowerShell.Commands
         /// 
         /// </summary>
         /// <value></value>
-        [Parameter (ValueFromPipeline = true)]
-        public PSObject InputObject
-        {
-            set { _inputObject = value; }
-            get { return _inputObject; }
-        }
-        private PSObject _inputObject = AutomationNull.Value;
+        [Parameter(ValueFromPipeline = true)]
+        public PSObject InputObject { set; get; } = AutomationNull.Value;
 
 
         /// <summary>
@@ -35,7 +30,7 @@ namespace Microsoft.PowerShell.Commands
         /// strings and the strings should be compared.
         /// </summary>
         /// <value></value>
-        [Parameter (ParameterSetName = "AsString")]
+        [Parameter(ParameterSetName = "AsString")]
         public SwitchParameter AsString
         {
             get { return _asString; }

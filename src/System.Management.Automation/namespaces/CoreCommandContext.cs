@@ -1,16 +1,9 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
-using System.Collections;
-using System.Collections.Generic;
+
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.Globalization;
-using System.Management.Automation;
-using System.Management.Automation.Host;
-using System.Text;
-using Dbg=System.Management.Automation;
+using Dbg = System.Management.Automation;
 
 namespace System.Management.Automation
 {
@@ -37,10 +30,10 @@ namespace System.Management.Automation
         /// using "CmdletProviderContext" as the category.
         /// </summary>
         [Dbg.TraceSourceAttribute(
-             "CmdletProviderContext", 
+             "CmdletProviderContext",
              "The context under which a core command is being run.")]
-        private static Dbg.PSTraceSource tracer =
-            Dbg.PSTraceSource.GetTracer ("CmdletProviderContext",
+        private static Dbg.PSTraceSource s_tracer =
+            Dbg.PSTraceSource.GetTracer("CmdletProviderContext",
              "The context under which a core command is being run.");
 
         #endregion Trace object
@@ -64,18 +57,17 @@ namespace System.Management.Automation
         {
             if (executionContext == null)
             {
-                throw PSTraceSource.NewArgumentNullException ("executionContext");
+                throw PSTraceSource.NewArgumentNullException("executionContext");
             }
 
-            this.executionContext = executionContext;
-            this._origin = CommandOrigin.Internal;
-            this.drive = executionContext.EngineSessionState.CurrentDrive;
+            ExecutionContext = executionContext;
+            Origin = CommandOrigin.Internal;
+            Drive = executionContext.EngineSessionState.CurrentDrive;
             if ((executionContext.CurrentCommandProcessor != null) &&
                 (executionContext.CurrentCommandProcessor.Command is Cmdlet))
             {
-                this.command = (Cmdlet) executionContext.CurrentCommandProcessor.Command;
+                _command = (Cmdlet)executionContext.CurrentCommandProcessor.Command;
             }
-
         } // CmdletProviderContext constructor
 
         /// <summary>
@@ -102,9 +94,8 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentNullException("executionContext");
             }
 
-            this.executionContext = executionContext;
-            this._origin = origin;
-
+            ExecutionContext = executionContext;
+            Origin = origin;
         } // CmdletProviderContext constructor
 
         /// <summary>
@@ -143,15 +134,15 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentNullException("command");
             }
 
-            this.command = command;
-            this._origin = command.CommandOrigin;
-            
+            _command = command;
+            Origin = command.CommandOrigin;
+
             if (credentials != null)
             {
-                this.credentials = credentials;
+                _credentials = credentials;
             }
 
-            this.drive = drive;
+            Drive = drive;
 
             if (command.Host == null)
             {
@@ -162,12 +153,12 @@ namespace System.Management.Automation
             {
                 throw PSTraceSource.NewArgumentException("command.Context");
             }
-            this.executionContext = command.Context;
+            ExecutionContext = command.Context;
 
             // Stream will default to true because command methods will be used.
 
-            this.streamObjects = true;
-            this.streamErrors = true;
+            PassThru = true;
+            _streamErrors = true;
         } // CmdletProviderContext constructor
 
         /// <summary>
@@ -201,12 +192,12 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentNullException("command");
             }
 
-            this.command = command;
-            this._origin = command.CommandOrigin;
-            
+            _command = command;
+            Origin = command.CommandOrigin;
+
             if (credentials != null)
             {
-                this.credentials = credentials;
+                _credentials = credentials;
             }
 
             if (command.Host == null)
@@ -216,14 +207,14 @@ namespace System.Management.Automation
 
             if (command.Context == null)
             {
-                throw PSTraceSource.NewArgumentException ("command.Context");
+                throw PSTraceSource.NewArgumentException("command.Context");
             }
-            this.executionContext = command.Context;
+            ExecutionContext = command.Context;
 
             // Stream will default to true because command methods will be used.
 
-            this.streamObjects = true;
-            this.streamErrors = true;
+            PassThru = true;
+            _streamErrors = true;
         } // CmdletProviderContext constructor
 
         /// <summary>
@@ -252,19 +243,19 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentNullException("command");
             }
 
-            this.command = command;
-            this._origin = command.CommandOrigin;
+            _command = command;
+            Origin = command.CommandOrigin;
 
             if (command.Context == null)
             {
-                throw PSTraceSource.NewArgumentException ("command.Context");
+                throw PSTraceSource.NewArgumentException("command.Context");
             }
-            this.executionContext = command.Context;
+            ExecutionContext = command.Context;
 
             // Stream will default to true because command methods will be used.
 
-            this.streamObjects = true;
-            this.streamErrors = true;
+            PassThru = true;
+            _streamErrors = true;
         } // CmdletProviderContext constructor
 
         /// <summary>
@@ -289,32 +280,32 @@ namespace System.Management.Automation
             {
                 throw PSTraceSource.NewArgumentNullException("contextToCopyFrom");
             }
-            this.executionContext = contextToCopyFrom.ExecutionContext;
+            ExecutionContext = contextToCopyFrom.ExecutionContext;
 
-            this.command = contextToCopyFrom.command;
+            _command = contextToCopyFrom._command;
 
             if (contextToCopyFrom.Credential != null)
             {
-                this.credentials = contextToCopyFrom.Credential;
+                _credentials = contextToCopyFrom.Credential;
             }
 
-            this.drive = contextToCopyFrom.Drive;
-            this.force = contextToCopyFrom.Force;
+            Drive = contextToCopyFrom.Drive;
+            _force = contextToCopyFrom.Force;
             this.CopyFilters(contextToCopyFrom);
-            this.suppressWildcardExpansion = contextToCopyFrom.SuppressWildcardExpansion;
-            this.dynamicParameters = contextToCopyFrom.DynamicParameters;
-            this._origin = contextToCopyFrom._origin;
+            SuppressWildcardExpansion = contextToCopyFrom.SuppressWildcardExpansion;
+            DynamicParameters = contextToCopyFrom.DynamicParameters;
+            Origin = contextToCopyFrom.Origin;
 
             // Copy the stopping state incase the source context
             // has already been signaled for stopping
 
-            this.stopping = contextToCopyFrom.Stopping;
+            Stopping = contextToCopyFrom.Stopping;
 
             // add this context to the stop referral on the copied
             // context
 
             contextToCopyFrom.StopReferrals.Add(this);
-            this.copiedContext = contextToCopyFrom;
+            _copiedContext = contextToCopyFrom;
         } // CmdletProviderContext constructor
 
         #endregion Constructor
@@ -325,49 +316,19 @@ namespace System.Management.Automation
         /// If the constructor that takes a context to copy is
         /// called, this will be set to the context being copied.
         /// </summary>
-        private CmdletProviderContext copiedContext;
-
-        /// <summary>
-        /// The execution context of the engine.
-        /// </summary>
-        private ExecutionContext executionContext;
+        private CmdletProviderContext _copiedContext;
 
         /// <summary>
         /// The credentials under which the operation should run.
         /// </summary>
-        private PSCredential credentials = PSCredential.Empty;
-
-        /// <summary>
-        /// The drive under which this context is operating.
-        /// </summary>
-        private PSDriveInfo drive;
+        private PSCredential _credentials = PSCredential.Empty;
 
         /// <summary>
         /// The force parameter gives guidance to providers on how vigorously they
         /// should try to perform an operation.
         /// </summary>
         ///
-        private bool force;
-
-        /// <summary>
-        /// The provider specific filter used to determine which items to act upon.
-        /// </summary>
-        private string _filter;
-
-        /// <summary>
-        /// A glob string used to include items upon which to act.
-        /// </summary>
-        private Collection<string> _include;
-        
-        /// <summary>
-        /// A glob string used to exclude items upon which to act.
-        /// </summary>
-        private Collection<string> _exclude;
-
-        /// <summary>
-        /// A flag that determines if the provider should glob the paths or not
-        /// </summary>
-        private bool suppressWildcardExpansion;
+        private bool _force;
 
 
         /// <summary>
@@ -375,31 +336,13 @@ namespace System.Management.Automation
         /// made visible to anyone and should only be set through the
         /// constructor.
         /// </summary>
-        private Cmdlet command;
+        private Cmdlet _command;
 
         /// <summary>
         /// This makes the origin of the provider request visible to the internals
         /// </summary>
-        internal CommandOrigin Origin
-        {
-            get
-            {
-                return _origin;
-            }
-        }
-        CommandOrigin _origin = CommandOrigin.Internal;
+        internal CommandOrigin Origin { get; } = CommandOrigin.Internal;
 
-
-        /// <summary>
-        /// This defines the default behavior for the WriteObject method. 
-        /// If it is true, a call to either of these
-        /// methods will result in an immediate call to the command 
-        /// WriteObject(s) method, or to the write(s)ObjectDelegate if
-        /// one has been supplied.
-        /// If it is false, the objects will be accumulated until the
-        /// GetObjects method is called.
-        /// </summary>
-        private bool streamObjects;
 
         /// <summary>
         /// This defines the default behavior for the WriteError method. 
@@ -409,29 +352,24 @@ namespace System.Management.Automation
         /// If it is false, the objects will be accumulated until the
         /// GetErrorObjects method is called.
         /// </summary>
-        private bool streamErrors;
+        private bool _streamErrors;
 
         /// <summary>
         /// A collection in which objects that are written using the WriteObject(s)
-        /// methods are accumulated if <see cref="streamObjects" /> is false.
+        /// methods are accumulated if <see cref="PassThru" /> is false.
         /// </summary>
-        private Collection<PSObject> accumulatedObjects = new Collection<PSObject>();
+        private Collection<PSObject> _accumulatedObjects = new Collection<PSObject>();
 
         /// <summary>
         /// A collection in which objects that are written using the WriteError
-        /// method are accumulated if <see cref="streamObjects" /> is false.
+        /// method are accumulated if <see cref="PassThru" /> is false.
         /// </summary>
-        private Collection<ErrorRecord> accumulatedErrorObjects = new Collection<ErrorRecord>();
+        private Collection<ErrorRecord> _accumulatedErrorObjects = new Collection<ErrorRecord>();
 
         /// <summary>
         /// The instance of the provider that is currently executing in this context.
         /// </summary>
-        private System.Management.Automation.Provider.CmdletProvider providerInstance;
-
-        /// <summary>
-        /// The dynamic parameters for the provider that is currently executing in this context.
-        /// </summary>
-        private object dynamicParameters;
+        private System.Management.Automation.Provider.CmdletProvider _providerInstance;
 
         #endregion private properties
 
@@ -441,13 +379,7 @@ namespace System.Management.Automation
         /// Gets the execution context of the engine
         /// </summary>
         /// 
-        internal ExecutionContext ExecutionContext
-        {
-            get
-            {
-                return executionContext;
-            }
-        } // ExecutionContext
+        internal ExecutionContext ExecutionContext { get; }
 
         /// <summary>
         /// Gets or sets the provider instance for the current
@@ -458,14 +390,13 @@ namespace System.Management.Automation
         {
             get
             {
-                return providerInstance;
+                return _providerInstance;
             } // get
 
             set
             {
-                providerInstance = value;
+                _providerInstance = value;
             } // set
-
         } // ProviderInstance
 
         /// <summary>
@@ -483,16 +414,16 @@ namespace System.Management.Automation
                 context != null,
                 "The caller should have verified the context");
 
-            _include = context.Include;
-            _exclude = context.Exclude;
-            _filter = context.Filter;
+            Include = context.Include;
+            Exclude = context.Exclude;
+            Filter = context.Filter;
         } // CopyFilters
 
         internal void RemoveStopReferral()
         {
-            if (copiedContext != null)
+            if (_copiedContext != null)
             {
-                copiedContext.StopReferrals.Remove(this);
+                _copiedContext.StopReferrals.Remove(this);
             }
         }
         #endregion Internal properties
@@ -503,18 +434,7 @@ namespace System.Management.Automation
         /// Gets or sets the dynamic parameters for the context
         /// </summary>
         /// 
-        internal object DynamicParameters
-        {
-            get
-            {
-                return dynamicParameters;
-            } // get
-
-            set
-            {
-                dynamicParameters = value;
-            } // set
-        } // DynamicParameters
+        internal object DynamicParameters { get; set; }
 
         /// <summary>
         /// Returns MyInvocation from the underlying cmdlet
@@ -523,9 +443,9 @@ namespace System.Management.Automation
         {
             get
             {
-                if (command != null)
+                if (_command != null)
                 {
-                    return command.MyInvocation;
+                    return _command.MyInvocation;
                 }
                 else
                 {
@@ -539,18 +459,7 @@ namespace System.Management.Automation
         /// instance if there is one.  The default value is true.
         /// </summary>
         /// 
-        internal bool PassThru
-        {
-            get
-            {
-                return streamObjects;
-            } // get
-
-            set
-            {
-                streamObjects = value;
-            } // set
-        } // PassThru
+        internal bool PassThru { get; set; }
 
         /// <summary>
         /// The drive associated with this context.
@@ -560,18 +469,7 @@ namespace System.Management.Automation
         /// If <paramref name="value"/> is null on set.
         /// </exception>
         /// 
-        internal PSDriveInfo Drive
-        {
-            get
-            {
-                return drive;
-            } // get
-
-            set
-            {
-                this.drive = value;
-            } // set
-        } // Drive
+        internal PSDriveInfo Drive { get; set; }
 
         /// <summary>
         /// Gets the user name under which the operation should run.
@@ -580,15 +478,15 @@ namespace System.Management.Automation
         {
             get
             {
-                PSCredential result = credentials;
+                PSCredential result = _credentials;
 
                 // If the username wasn't specified, use the drive credentials
 
-                if (credentials == null && drive != null)
+                if (_credentials == null && Drive != null)
                 {
-                    result = drive.Credential;
+                    result = Drive.Credential;
                 }
-                    
+
                 return result;
             }
         } // Credential
@@ -602,11 +500,11 @@ namespace System.Management.Automation
         {
             get
             {
-                if((this.command != null) && (this.command.CommandRuntime != null))
+                if ((_command != null) && (_command.CommandRuntime != null))
                 {
-                    MshCommandRuntime mshRuntime = this.command.CommandRuntime as MshCommandRuntime;
+                    MshCommandRuntime mshRuntime = _command.CommandRuntime as MshCommandRuntime;
 
-                    if(mshRuntime != null)
+                    if (mshRuntime != null)
                     {
                         return mshRuntime.UseTransaction;
                     }
@@ -621,9 +519,9 @@ namespace System.Management.Automation
         /// </summary>
         public bool TransactionAvailable()
         {
-            if(this.command != null)
+            if (_command != null)
             {
-                return this.command.TransactionAvailable();
+                return _command.TransactionAvailable();
             }
 
             return false;
@@ -637,9 +535,9 @@ namespace System.Management.Automation
         {
             get
             {
-                if(this.command != null)
+                if (_command != null)
                 {
-                    return this.command.CurrentPSTransaction;
+                    return _command.CurrentPSTransaction;
                 }
 
                 return null;
@@ -654,62 +552,30 @@ namespace System.Management.Automation
         /// 
         internal SwitchParameter Force
         {
-            get
-            {
-                return force;
-            } // get
-
-            set
-            {
-                force = value;
-            } // set
-        } // Force
+            get { return _force; }
+            set { _force = value; }
+        }
 
         /// <summary>
         /// The provider specific filter that should be used when determining
         /// which items an action should take place on.
         /// </summary>
         /// 
-        internal string Filter
-        {
-            get
-            {
-                return _filter;
-            } // get
-
-            set
-            {
-                _filter = value;
-            } // set
-        } // Filter
+        internal string Filter { get; set; }
 
         /// <summary>
         /// A glob string that signifies which items should be included when determining
         /// which items the action should occur on.
         /// </summary>
         /// 
-        internal Collection<string> Include
-        {
-            get
-            {
-                return _include;
-            } // get
-
-        } // Include
+        internal Collection<string> Include { get; private set; }
 
         /// <summary>
         /// A glob string that signifies which items should be excluded when determining
         /// which items the action should occur on.
         /// </summary>
         /// 
-        internal Collection<string> Exclude
-        {
-            get
-            {
-                return _exclude;
-            } // get
-
-        } // Exclude
+        internal Collection<string> Exclude { get; private set; }
 
         /// <summary>
         /// Gets or sets the property that tells providers (that
@@ -718,18 +584,7 @@ namespace System.Management.Automation
         /// -LiteralPath parameter to one of the core commands.
         /// </summary>
         /// 
-        public bool SuppressWildcardExpansion
-        {
-            get
-            {
-                return (bool) suppressWildcardExpansion;
-            } // get
-
-            internal set
-            {
-                suppressWildcardExpansion = value;
-            } // set
-        } // SuppressWildcardExpansion
+        public bool SuppressWildcardExpansion { get; internal set; }
 
         #region User feedback mechanisms
 
@@ -750,9 +605,9 @@ namespace System.Management.Automation
             string target)
         {
             bool result = true;
-            if (command != null)
+            if (_command != null)
             {
-                result = command.ShouldProcess(target);
+                result = _command.ShouldProcess(target);
             }
 
             return result;
@@ -773,13 +628,13 @@ namespace System.Management.Automation
         /// Also, this occurs if the pipeline was already stopped.
         /// </exception>
         internal bool ShouldProcess(
-            string target, 
+            string target,
             string action)
         {
             bool result = true;
-            if (command != null)
+            if (_command != null)
             {
-                result = command.ShouldProcess(target, action);
+                result = _command.ShouldProcess(target, action);
             }
 
             return result;
@@ -817,9 +672,9 @@ namespace System.Management.Automation
             string caption)
         {
             bool result = true;
-            if (command != null)
+            if (_command != null)
             {
-                result = command.ShouldProcess(
+                result = _command.ShouldProcess(
                     verboseDescription,
                     verboseWarning,
                     caption);
@@ -867,9 +722,9 @@ namespace System.Management.Automation
             out ShouldProcessReason shouldProcessReason)
         {
             bool result = true;
-            if (command != null)
+            if (_command != null)
             {
-                result = command.ShouldProcess(
+                result = _command.ShouldProcess(
                     verboseDescription,
                     verboseWarning,
                     caption,
@@ -906,9 +761,9 @@ namespace System.Management.Automation
             string caption)
         {
             bool result = true;
-            if (command != null)
+            if (_command != null)
             {
-                result = command.ShouldContinue(query, caption);
+                result = _command.ShouldContinue(query, caption);
             }
 
             return result;
@@ -947,9 +802,9 @@ namespace System.Management.Automation
             ref bool noToAll)
         {
             bool result = true;
-            if (command != null)
+            if (_command != null)
             {
-                result = command.ShouldContinue(
+                result = _command.ShouldContinue(
                     query, caption, ref yesToAll, ref noToAll);
             }
             else
@@ -971,9 +826,9 @@ namespace System.Management.Automation
         ///
         internal void WriteVerbose(string text)
         {
-            if (command != null)
+            if (_command != null)
             {
-                command.WriteVerbose(text);
+                _command.WriteVerbose(text);
             }
         } // WriteVerbose
 
@@ -987,17 +842,17 @@ namespace System.Management.Automation
         ///
         internal void WriteWarning(string text)
         {
-            if (command != null)
+            if (_command != null)
             {
-                command.WriteWarning(text);
+                _command.WriteWarning(text);
             }
         } // WriteWarning
 
         internal void WriteProgress(ProgressRecord record)
         {
-            if (command != null)
+            if (_command != null)
             {
-                command.WriteProgress(record);
+                _command.WriteProgress(record);
             }
         } // WriteProgress
 
@@ -1011,25 +866,25 @@ namespace System.Management.Automation
         ///
         internal void WriteDebug(string text)
         {
-            if (command != null)
+            if (_command != null)
             {
-                command.WriteDebug(text);
+                _command.WriteDebug(text);
             }
         } // WriteDebug
 
         internal void WriteInformation(InformationRecord record)
         {
-            if (command != null)
+            if (_command != null)
             {
-                command.WriteInformation(record);
+                _command.WriteInformation(record);
             }
         } // WriteInformation
 
         internal void WriteInformation(Object messageData, string[] tags)
         {
-            if (command != null)
+            if (_command != null)
             {
-                command.WriteInformation(messageData, tags);
+                _command.WriteInformation(messageData, tags);
             }
         } // WriteInformation
 
@@ -1059,9 +914,9 @@ namespace System.Management.Automation
         ///
         internal void SetFilters(Collection<string> include, Collection<string> exclude, string filter)
         {
-            _include = include;
-            _exclude = exclude;
-            _filter = filter;
+            Include = include;
+            Exclude = exclude;
+            Filter = filter;
         } // SetFilters
 
         /// <summary>
@@ -1078,8 +933,8 @@ namespace System.Management.Automation
         {
             // Get the contents as an array
 
-            Collection<PSObject> results = accumulatedObjects;
-            accumulatedObjects = new Collection<PSObject>();
+            Collection<PSObject> results = _accumulatedObjects;
+            _accumulatedObjects = new Collection<PSObject>();
 
             // Return the array
 
@@ -1100,8 +955,8 @@ namespace System.Management.Automation
         {
             // Get the contents as an array
 
-            Collection<ErrorRecord> results = accumulatedErrorObjects;
-            accumulatedErrorObjects = new Collection<ErrorRecord> ();
+            Collection<ErrorRecord> results = _accumulatedErrorObjects;
+            _accumulatedErrorObjects = new Collection<ErrorRecord>();
 
             // Return the array
 
@@ -1119,7 +974,7 @@ namespace System.Management.Automation
         /// 
         internal void ThrowFirstErrorOrDoNothing()
         {
-            ThrowFirstErrorOrDoNothing (true);
+            ThrowFirstErrorOrDoNothing(true);
         }
 
         /// <summary>
@@ -1162,7 +1017,7 @@ namespace System.Management.Automation
                         }
 
                         ProviderInvocationException e =
-                            new ProviderInvocationException (
+                            new ProviderInvocationException(
                                 providerInfo,
                                 errors[0]);
 
@@ -1181,9 +1036,9 @@ namespace System.Management.Automation
                         throw errors[0].Exception;
                     }
                 }
-            }        
+            }
         }
-            
+
         /// <summary>
         /// Writes all the accumulated errors to the specified context using WriteError
         /// </summary>
@@ -1207,7 +1062,7 @@ namespace System.Management.Automation
             {
                 foreach (ErrorRecord errorRecord in GetAccumulatedErrorObjects())
                 {
-                    errorContext.WriteError (errorRecord);
+                    errorContext.WriteError(errorRecord);
                 }
             }
         }
@@ -1253,16 +1108,16 @@ namespace System.Management.Automation
                 throw stopPipeline;
             }
 
-            if (streamObjects)
+            if (PassThru)
             {
-                if (command != null)
+                if (_command != null)
                 {
-                    tracer.WriteLine("Writing to command pipeline");
+                    s_tracer.WriteLine("Writing to command pipeline");
 
                     // Since there was no writeObject handler use
                     // the command WriteObject method.
 
-                    command.WriteObject(obj);
+                    _command.WriteObject(obj);
                 }
                 else
                 {
@@ -1277,7 +1132,7 @@ namespace System.Management.Automation
             }
             else
             {
-                tracer.WriteLine("Writing to accumulated objects");
+                s_tracer.WriteLine("Writing to accumulated objects");
 
                 // Convert the object to a PSObject if it's not already
                 // one.
@@ -1286,7 +1141,7 @@ namespace System.Management.Automation
 
                 // Since we are not streaming, just add the object to the accumulatedObjects
 
-                accumulatedObjects.Add(newObj);
+                _accumulatedObjects.Add(newObj);
             }
         } // WriteObject
 
@@ -1322,14 +1177,14 @@ namespace System.Management.Automation
 
                 throw stopPipeline;
             }
-            
-            if (streamErrors)
-            {
-                if (command != null)
-                {
-                    tracer.WriteLine("Writing error package to command error pipe");
 
-                    command.WriteError(errorRecord);
+            if (_streamErrors)
+            {
+                if (_command != null)
+                {
+                    s_tracer.WriteLine("Writing error package to command error pipe");
+
+                    _command.WriteError(errorRecord);
                 }
                 else
                 {
@@ -1342,9 +1197,9 @@ namespace System.Management.Automation
             else
             {
                 // Since we are not streaming, just add the object to the accumulatedErrorObjects
-                accumulatedErrorObjects.Add(errorRecord);
+                _accumulatedErrorObjects.Add(errorRecord);
 
-                if (   null != errorRecord.ErrorDetails
+                if (null != errorRecord.ErrorDetails
                     && null != errorRecord.ErrorDetails.TextLookupError)
                 {
                     Exception textLookupError = errorRecord.ErrorDetails.TextLookupError;
@@ -1369,8 +1224,7 @@ namespace System.Management.Automation
         /// 
         internal bool HasErrors()
         {
-            return accumulatedErrorObjects != null && accumulatedErrorObjects.Count > 0;
-
+            return _accumulatedErrorObjects != null && _accumulatedErrorObjects.Count > 0;
         } // HasErrors
 
         /// <summary>
@@ -1381,16 +1235,15 @@ namespace System.Management.Automation
         /// 
         internal void StopProcessing()
         {
-            stopping = true;
+            Stopping = true;
 
-            if (providerInstance != null)
+            if (_providerInstance != null)
             {
-
                 // We don't need to catch any of the exceptions here because
                 // we are terminating the pipeline and any exception will 
                 // be caught by the engine.
 
-                providerInstance.StopProcessing();
+                _providerInstance.StopProcessing();
             }
 
             // Call the stop referrals if any
@@ -1401,26 +1254,14 @@ namespace System.Management.Automation
             }
         } // StopProcessing
 
-        internal bool Stopping
-        {
-            get
-            {
-                return stopping;
-            }
-        }
-        private bool stopping;
+        internal bool Stopping { get; private set; }
 
         /// <summary>
         /// The list of contexts to which the StopProcessing calls
         /// should be referred.
         /// </summary>
         /// 
-        internal Collection<CmdletProviderContext> StopReferrals
-        {
-            get { return stopReferrals; }
-        }
-        private Collection<CmdletProviderContext> stopReferrals =
-            new Collection<CmdletProviderContext>();
+        internal Collection<CmdletProviderContext> StopReferrals { get; } = new Collection<CmdletProviderContext>();
 
         internal bool HasIncludeOrExclude
         {
@@ -1432,9 +1273,7 @@ namespace System.Management.Automation
         }
 
         #endregion Public methods
-
     } // CmdletProviderContext
-
 }
-        
+
 

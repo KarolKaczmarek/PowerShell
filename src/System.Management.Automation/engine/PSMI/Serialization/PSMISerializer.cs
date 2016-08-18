@@ -1,19 +1,5 @@
-﻿using System.IO;
-using System.Linq;
-using System.Management.Automation.Internal;
-using System.Management.Automation.Language;
-using System.Management.Automation.Runspaces;
-using System.Management.Automation.Tracing;
-using System.Runtime.CompilerServices;
-using System.Security;
-using System.Text;
-using System.Xml;
-using Microsoft.Management.Infrastructure;
-using Microsoft.Management.Infrastructure.Serialization;
-using Microsoft.PowerShell;
+﻿using Microsoft.Management.Infrastructure;
 using Dbg = System.Management.Automation.Diagnostics;
-using System.Management.Automation.Remoting;
-using System.Collections.Generic;
 
 namespace System.Management.Automation
 {
@@ -22,12 +8,11 @@ namespace System.Management.Automation
     /// </summary>
     internal class PSMISerializer
     {
-
         //TODO, insivara : Depth implementation will be added subsequently
         /// <summary>
         /// Default depth of serialization
         /// </summary>
-        private static int mshDefaultMISerializationDepth = 1;
+        private static int s_mshDefaultMISerializationDepth = 1;
 
         internal PSMISerializer()
         {
@@ -40,7 +25,7 @@ namespace System.Management.Automation
         /// <returns>The serialized object, as CimInstance</returns>n
         public static CimInstance Serialize(Object source)
         {
-            return Serialize(source, mshDefaultMISerializationDepth);
+            return Serialize(source, s_mshDefaultMISerializationDepth);
         }
 
         /// <summary>

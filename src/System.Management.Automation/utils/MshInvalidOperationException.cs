@@ -2,7 +2,6 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
 using System.Runtime.Serialization;
 
 #if !CORECLR
@@ -93,7 +92,7 @@ namespace System.Management.Automation
         /// <returns> constructed object </returns>
         public PSInvalidOperationException(string message,
                                             Exception innerException)
-                : base (message, innerException)
+                : base(message, innerException)
         {
         }
 
@@ -129,8 +128,8 @@ namespace System.Management.Automation
             {
                 if (null == _errorRecord)
                 {
-                    _errorRecord = new ErrorRecord (
-                        new ParentContainsErrorRecordException (this),
+                    _errorRecord = new ErrorRecord(
+                        new ParentContainsErrorRecordException(this),
                         _errorId,
                         _errorCategory,
                         _target);
@@ -147,7 +146,6 @@ namespace System.Management.Automation
 
         private ErrorCategory _errorCategory = ErrorCategory.InvalidOperation;
         private object _target = null;
-        
     } // PSInvalidOperationException
 } // System.Management.Automation
 

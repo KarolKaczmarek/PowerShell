@@ -1,11 +1,10 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Management.Automation;
-using System.Management.Automation.Provider;
 using System.Management.Automation.Internal;
 using Dbg = System.Management.Automation;
 
@@ -14,7 +13,7 @@ namespace Microsoft.PowerShell.Commands
     /// <summary>
     /// A command that appends the specified content to the item at the specified path.
     /// </summary>
-    [Cmdlet (VerbsCommon.Add, "Content", DefaultParameterSetName = "Path", SupportsShouldProcess = true, SupportsTransactions = true,
+    [Cmdlet(VerbsCommon.Add, "Content", DefaultParameterSetName = "Path", SupportsShouldProcess = true, SupportsTransactions = true,
         HelpUri = "http://go.microsoft.com/fwlink/?LinkID=113278")]
     public class AddContentCommand : WriteContentCommandBase
     {
@@ -85,13 +84,12 @@ namespace Microsoft.PowerShell.Commands
         {
             string action = NavigationResources.AddContentAction;
 
-            string target = StringUtil.Format(NavigationResources.AddContentTarget,path);
+            string target = StringUtil.Format(NavigationResources.AddContentTarget, path);
 
             return ShouldProcess(target, action);
         }
 
         #endregion protected members
     } // AddContentCommand
-
 } // namespace Microsoft.PowerShell.Commands
 

@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 
 namespace System.Management.Automation.Language
@@ -45,7 +44,7 @@ namespace System.Management.Automation.Language
         /// Tokens with this kind are always instances of <see cref="System.Management.Automation.Language.ParameterToken"/>.
         /// </summary>
         Parameter = 3,
-        
+
         /// <summary>
         /// Any numerical literal token.
         /// Tokens with this kind are always instances of <see cref="System.Management.Automation.Language.NumberToken"/>.
@@ -728,7 +727,7 @@ namespace System.Management.Automation.Language
     /// </summary>
     public static class TokenTraits
     {
-        private readonly static TokenFlags[] _staticTokenFlags = new TokenFlags[]
+        private static readonly TokenFlags[] s_staticTokenFlags = new TokenFlags[]
         {
             #region Flags for unclassified tokens
 
@@ -923,11 +922,10 @@ namespace System.Management.Automation.Language
             /*               Hidden */ TokenFlags.Keyword,
             /*                 Base */ TokenFlags.Keyword,
 
-
             #endregion Flags for keywords
         };
 
-        private static readonly string[] _tokenText = new string[]
+        private static readonly string[] s_tokenText = new string[]
         {
             #region Text for unclassified tokens
 
@@ -1128,9 +1126,9 @@ namespace System.Management.Automation.Language
 #if DEBUG
         static TokenTraits()
         {
-            Diagnostics.Assert(_staticTokenFlags.Length == ((int)TokenKind.Base + 1),
+            Diagnostics.Assert(s_staticTokenFlags.Length == ((int)TokenKind.Base + 1),
                                "Table size out of sync with enum - _staticTokenFlags");
-            Diagnostics.Assert(_tokenText.Length == ((int)TokenKind.Base + 1),
+            Diagnostics.Assert(s_tokenText.Length == ((int)TokenKind.Base + 1),
                                "Table size out of sync with enum - _tokenText");
             // Some random assertions to make sure the enum and the traits are in sync
             Diagnostics.Assert(GetTraits(TokenKind.Begin) == (TokenFlags.Keyword | TokenFlags.ScriptBlockBlockName),
@@ -1141,7 +1139,7 @@ namespace System.Management.Automation.Language
                                "Table out of sync with enum - flags Sequence");
             Diagnostics.Assert(GetTraits(TokenKind.Shr) == (TokenFlags.BinaryOperator | TokenFlags.BinaryPrecedenceComparison | TokenFlags.CanConstantFold),
                                "Table out of sync with enum - flags Shr");
-            Diagnostics.Assert(_tokenText[(int)TokenKind.Shr].Equals("-shr", StringComparison.OrdinalIgnoreCase),
+            Diagnostics.Assert(s_tokenText[(int)TokenKind.Shr].Equals("-shr", StringComparison.OrdinalIgnoreCase),
                                "Table out of sync with enum - text Shr");
         }
 #endif
@@ -1151,7 +1149,7 @@ namespace System.Management.Automation.Language
         /// </summary>
         public static TokenFlags GetTraits(this TokenKind kind)
         {
-            return _staticTokenFlags[(int)kind];
+            return s_staticTokenFlags[(int)kind];
         }
 
         /// <summary>
@@ -1165,7 +1163,7 @@ namespace System.Management.Automation.Language
         internal static int GetBinaryPrecedence(this TokenKind kind)
         {
             Diagnostics.Assert(HasTrait(kind, TokenFlags.BinaryOperator), "Token doesn't have binary precedence.");
-            return (int)(_staticTokenFlags[(int)kind] & TokenFlags.BinaryPrecedenceMask);
+            return (int)(s_staticTokenFlags[(int)kind] & TokenFlags.BinaryPrecedenceMask);
         }
 
         /// <summary>
@@ -1173,7 +1171,7 @@ namespace System.Management.Automation.Language
         /// </summary>
         public static string Text(this TokenKind kind)
         {
-            return _tokenText[(int) kind];
+            return s_tokenText[(int)kind];
         }
     }
 
@@ -1188,9 +1186,9 @@ namespace System.Management.Automation.Language
 
         internal Token(InternalScriptExtent scriptExtent, TokenKind kind, TokenFlags tokenFlags)
         {
-            this._scriptExtent = scriptExtent;
-            this._kind = kind;
-            this._tokenFlags = tokenFlags | kind.GetTraits();
+            _scriptExtent = scriptExtent;
+            _kind = kind;
+            _tokenFlags = tokenFlags | kind.GetTraits();
         }
 
         internal void SetIsCommandArgument()
@@ -1252,7 +1250,7 @@ namespace System.Management.Automation.Language
         internal NumberToken(InternalScriptExtent scriptExtent, object value, TokenFlags tokenFlags)
             : base(scriptExtent, TokenKind.Number, tokenFlags)
         {
-            this._value = value;
+            _value = value;
         }
 
         internal override string ToDebugString(int indent)
@@ -1337,18 +1335,16 @@ namespace System.Management.Automation.Language
     /// </summary>
     public abstract class StringToken : Token
     {
-        readonly string _value;
-
         internal StringToken(InternalScriptExtent scriptExtent, TokenKind kind, TokenFlags tokenFlags, string value)
             : base(scriptExtent, kind, tokenFlags)
         {
-            this._value = value;
+            Value = value;
         }
 
         /// <summary>
         /// The string value without quotes or leading newlines in the case of a here string.
         /// </summary>
-        public string Value { get { return _value; } }
+        public string Value { get; }
 
         internal override string ToDebugString(int indent)
         {
@@ -1373,7 +1369,6 @@ namespace System.Management.Automation.Language
     /// </summary>
     public class StringExpandableToken : StringToken
     {
-        private readonly string _formatString;
         private ReadOnlyCollection<Token> _nestedTokens;
 
         internal StringExpandableToken(InternalScriptExtent scriptExtent, TokenKind tokenKind, string value, string formatString, List<Token> nestedTokens, TokenFlags flags)
@@ -1381,10 +1376,10 @@ namespace System.Management.Automation.Language
         {
             if (nestedTokens != null && nestedTokens.Count > 0)
             {
-                this._nestedTokens = new ReadOnlyCollection<Token>(nestedTokens.ToArray());
+                _nestedTokens = new ReadOnlyCollection<Token>(nestedTokens.ToArray());
             }
 
-            this._formatString = formatString;
+            FormatString = formatString;
         }
 
         internal static void ToDebugString(ReadOnlyCollection<Token> nestedTokens,
@@ -1411,7 +1406,7 @@ namespace System.Management.Automation.Language
             internal set { _nestedTokens = value; }
         }
 
-        internal string FormatString { get { return _formatString; } }
+        internal string FormatString { get; }
 
         internal override string ToDebugString(int indent)
         {
@@ -1431,18 +1426,16 @@ namespace System.Management.Automation.Language
     /// </summary>
     public class LabelToken : Token
     {
-        private readonly string _labelText;
-
         internal LabelToken(InternalScriptExtent scriptExtent, TokenFlags tokenFlags, string labelText)
             : base(scriptExtent, TokenKind.Label, tokenFlags)
         {
-            this._labelText = labelText;
+            LabelText = labelText;
         }
 
         /// <summary>
         /// 
         /// </summary>
-        public string LabelText { get { return _labelText; } }
+        public string LabelText { get; }
     }
 
     /// <summary>

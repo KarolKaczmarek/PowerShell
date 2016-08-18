@@ -1,7 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
+
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -31,7 +31,7 @@ namespace System.Management.Automation
         /// <summary>
         /// Constructs a runtime-defined parameter instance.
         /// </summary>
-        public RuntimeDefinedParameter ()
+        public RuntimeDefinedParameter()
         {
         } // RuntimeDefinedParameter
 
@@ -62,9 +62,9 @@ namespace System.Management.Automation
         /// </exception>
         public RuntimeDefinedParameter(string name, Type parameterType, Collection<Attribute> attributes)
         {
-            if (String.IsNullOrEmpty (name))
+            if (String.IsNullOrEmpty(name))
             {
-                throw PSTraceSource.NewArgumentException ("name");
+                throw PSTraceSource.NewArgumentException("name");
             }
 
             if (parameterType == null)
@@ -72,12 +72,12 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentNullException("parameterType");
             }
 
-            this._name = name;
-            this._parameterType = parameterType;
+            _name = name;
+            _parameterType = parameterType;
 
             if (attributes != null)
             {
-                this._attributes = attributes;
+                Attributes = attributes;
             }
         } // RuntimeDefinedParameter
 
@@ -88,17 +88,17 @@ namespace System.Management.Automation
         /// <exception cref="ArgumentException">
         /// If <paramref name="value"/> is null or empty on set.
         /// </exception>
-        public string Name 
-        { 
+        public string Name
+        {
             get
             {
                 return _name;
             }
             set
             {
-                if (String.IsNullOrEmpty (value))
+                if (String.IsNullOrEmpty(value))
                 {
-                    throw PSTraceSource.NewArgumentException ("name");
+                    throw PSTraceSource.NewArgumentException("name");
                 }
                 _name = value;
             }
@@ -127,7 +127,7 @@ namespace System.Management.Automation
             {
                 if (value == null)
                 {
-                    throw PSTraceSource.NewArgumentNullException ("value");
+                    throw PSTraceSource.NewArgumentNullException("value");
                 }
                 _parameterType = value;
             }
@@ -142,7 +142,7 @@ namespace System.Management.Automation
         /// If the value is set prior to parameter binding, the value will be 
         /// reset before each pipeline object is processed.
         /// </remarks>
-        public object Value 
+        public object Value
         {
             get
             {
@@ -152,7 +152,7 @@ namespace System.Management.Automation
             set
             {
                 this.IsSet = true;
-                this._value = value;
+                _value = value;
             }
         }
         private object _value;
@@ -169,9 +169,7 @@ namespace System.Management.Automation
         /// <remarks>
         /// This can be any attribute that can be applied to a normal parameter.
         /// </remarks>
-        public Collection<Attribute> Attributes { get { return _attributes; } }
-        private readonly Collection<Attribute> _attributes = new Collection<Attribute> ();
-
+        public Collection<Attribute> Attributes { get; } = new Collection<Attribute>();
     } // class RuntimeDefinedParameter
 
     /// <summary>
@@ -203,10 +201,10 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets or sets the help file that documents these parameters
         /// </summary>
-        public string HelpFile 
+        public string HelpFile
         {
             get { return _helpFile; }
-            set { _helpFile = String.IsNullOrEmpty (value) ? String.Empty : value; }
+            set { _helpFile = String.IsNullOrEmpty(value) ? String.Empty : value; }
         }
         private string _helpFile = String.Empty;
 
@@ -217,5 +215,4 @@ namespace System.Management.Automation
 
         internal static RuntimeDefinedParameter[] EmptyParameterArray = new RuntimeDefinedParameter[0];
     } // class RuntimeDefinedParameterDictionary
-
 } // namespace System.Management.Automation

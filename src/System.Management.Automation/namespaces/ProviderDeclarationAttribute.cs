@@ -1,8 +1,6 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
-
 
 namespace System.Management.Automation.Provider
 {
@@ -48,50 +46,33 @@ namespace System.Management.Automation.Provider
                 throw PSTraceSource.NewArgumentNullException("providerName");
             }
 
-            if (providerName.IndexOfAny(illegalCharacters) != -1)
+            if (providerName.IndexOfAny(_illegalCharacters) != -1)
             {
                 throw PSTraceSource.NewArgumentException(
                     "providerName",
-                    SessionStateStrings.ProviderNameNotValid, 
+                    SessionStateStrings.ProviderNameNotValid,
                     providerName);
             }
 
-            this.provider = providerName;
-            this.providerCapabilities = providerCapabilities;
+            ProviderName = providerName;
+            ProviderCapabilities = providerCapabilities;
         } // constructor
 
-        private char[] illegalCharacters = new char[] { ':', '\\', '[', ']', '?', '*' };
+        private char[] _illegalCharacters = new char[] { ':', '\\', '[', ']', '?', '*' };
 
         /// <summary>
         /// Gets the name of the provider.
         /// </summary>
-        public string ProviderName
-        {
-            get
-            {
-                return provider;
-            }
-        } // Provider
-
+        public string ProviderName { get; } = String.Empty;
 
         /// <summary>
         /// Gets the flags that represent the capabilities of the provider.
         /// </summary>
-        public ProviderCapabilities ProviderCapabilities
-        {
-            get
-            {
-                return providerCapabilities;
-            }
-        } // FriendlyName
+        public ProviderCapabilities ProviderCapabilities { get; } = ProviderCapabilities.None;
 
         #region private data
 
-        private string provider = String.Empty;
-        private ProviderCapabilities providerCapabilities = ProviderCapabilities.None;
-
         #endregion private data
-
     } // class CmdletProviderAttribute
 
     /// <summary>
@@ -180,5 +161,4 @@ namespace System.Management.Automation.Provider
         /// </summary>
         Transactions = 0x40,
     } // ProviderCapabilities
-
 } // namespace System.Management.Automation

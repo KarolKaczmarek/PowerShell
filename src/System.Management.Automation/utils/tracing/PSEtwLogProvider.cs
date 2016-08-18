@@ -24,27 +24,27 @@ namespace System.Management.Automation.Tracing
 //#endif
         private static EventDescriptor _xferEventDescriptor = new EventDescriptor(0x1f05, 0x1, 0x11, 0x5, 0x14, 0x0, (long)0x4000000000000000);
 
-        static class Strings
+        private static class Strings
         {
             // The strings are stored in a different class to defer loading the resources until as late
             // as possible, e.g. if logging is never on, these strings won't be loaded.
-            internal static readonly string LogContextSeverity        = EtwLoggingStrings.LogContextSeverity;
-            internal static readonly string LogContextHostName        = EtwLoggingStrings.LogContextHostName;
-            internal static readonly string LogContextHostVersion     = EtwLoggingStrings.LogContextHostVersion;
-            internal static readonly string LogContextHostId          = EtwLoggingStrings.LogContextHostId;
+            internal static readonly string LogContextSeverity = EtwLoggingStrings.LogContextSeverity;
+            internal static readonly string LogContextHostName = EtwLoggingStrings.LogContextHostName;
+            internal static readonly string LogContextHostVersion = EtwLoggingStrings.LogContextHostVersion;
+            internal static readonly string LogContextHostId = EtwLoggingStrings.LogContextHostId;
             internal static readonly string LogContextHostApplication = EtwLoggingStrings.LogContextHostApplication;
-            internal static readonly string LogContextEngineVersion   = EtwLoggingStrings.LogContextEngineVersion;
-            internal static readonly string LogContextRunspaceId      = EtwLoggingStrings.LogContextRunspaceId;
-            internal static readonly string LogContextPipelineId      = EtwLoggingStrings.LogContextPipelineId;
-            internal static readonly string LogContextCommandName     = EtwLoggingStrings.LogContextCommandName;
-            internal static readonly string LogContextCommandType     = EtwLoggingStrings.LogContextCommandType;
-            internal static readonly string LogContextScriptName      = EtwLoggingStrings.LogContextScriptName;
-            internal static readonly string LogContextCommandPath     = EtwLoggingStrings.LogContextCommandPath;
-            internal static readonly string LogContextSequenceNumber  = EtwLoggingStrings.LogContextSequenceNumber;
-            internal static readonly string LogContextUser            = EtwLoggingStrings.LogContextUser;
-            internal static readonly string LogContextConnectedUser   = EtwLoggingStrings.LogContextConnectedUser;
-            internal static readonly string LogContextTime            = EtwLoggingStrings.LogContextTime;
-            internal static readonly string LogContextShellId         = EtwLoggingStrings.LogContextShellId;
+            internal static readonly string LogContextEngineVersion = EtwLoggingStrings.LogContextEngineVersion;
+            internal static readonly string LogContextRunspaceId = EtwLoggingStrings.LogContextRunspaceId;
+            internal static readonly string LogContextPipelineId = EtwLoggingStrings.LogContextPipelineId;
+            internal static readonly string LogContextCommandName = EtwLoggingStrings.LogContextCommandName;
+            internal static readonly string LogContextCommandType = EtwLoggingStrings.LogContextCommandType;
+            internal static readonly string LogContextScriptName = EtwLoggingStrings.LogContextScriptName;
+            internal static readonly string LogContextCommandPath = EtwLoggingStrings.LogContextCommandPath;
+            internal static readonly string LogContextSequenceNumber = EtwLoggingStrings.LogContextSequenceNumber;
+            internal static readonly string LogContextUser = EtwLoggingStrings.LogContextUser;
+            internal static readonly string LogContextConnectedUser = EtwLoggingStrings.LogContextConnectedUser;
+            internal static readonly string LogContextTime = EtwLoggingStrings.LogContextTime;
+            internal static readonly string LogContextShellId = EtwLoggingStrings.LogContextShellId;
         }
 
         /// <summary>
@@ -69,7 +69,7 @@ namespace System.Management.Automation.Tracing
         /// </remarks>
         internal bool IsEnabled(PSLevel level, PSKeyword keywords)
         {
-            return etwProvider.IsEnabled((byte) level, (long) keywords);
+            return etwProvider.IsEnabled((byte)level, (long)keywords);
         }
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace System.Management.Automation.Tracing
         /// <param name="exception"></param>
         /// <param name="additionalInfo"></param>
         /// 
-        override internal void LogEngineHealthEvent(LogContext logContext, int eventId, Exception exception, Dictionary<String, String> additionalInfo)
+        internal override void LogEngineHealthEvent(LogContext logContext, int eventId, Exception exception, Dictionary<String, String> additionalInfo)
         {
             StringBuilder payload = new StringBuilder();
 
@@ -98,7 +98,7 @@ namespace System.Management.Automation.Tracing
         /// <param name="newState"></param>
         /// <param name="previousState"></param>
         /// 
-        override internal void LogEngineLifecycleEvent(LogContext logContext, EngineState newState, EngineState previousState)
+        internal override void LogEngineLifecycleEvent(LogContext logContext, EngineState newState, EngineState previousState)
         {
             if (IsEnabled(PSLevel.Informational, PSKeyword.Cmdlets | PSKeyword.UseAlwaysAnalytic))
             {
@@ -125,7 +125,7 @@ namespace System.Management.Automation.Tracing
         /// </summary>
         /// <param name="logContext"></param>
         /// <param name="exception"></param>
-        override internal void LogCommandHealthEvent(LogContext logContext, Exception exception)
+        internal override void LogCommandHealthEvent(LogContext logContext, Exception exception)
         {
             StringBuilder payload = new StringBuilder();
 
@@ -140,7 +140,7 @@ namespace System.Management.Automation.Tracing
         /// <param name="getLogContext"></param>
         /// <param name="newState"></param>
         /// 
-        override internal void LogCommandLifecycleEvent(Func<LogContext> getLogContext, CommandState newState)
+        internal override void LogCommandLifecycleEvent(Func<LogContext> getLogContext, CommandState newState)
         {
             if (IsEnabled(PSLevel.Informational, PSKeyword.Cmdlets | PSKeyword.UseAlwaysAnalytic))
             {
@@ -176,7 +176,7 @@ namespace System.Management.Automation.Tracing
         /// </summary>
         /// <param name="logContext"></param>
         /// <param name="pipelineExecutionDetail"></param>
-        override internal void LogPipelineExecutionDetailEvent(LogContext logContext, List<String> pipelineExecutionDetail)
+        internal override void LogPipelineExecutionDetailEvent(LogContext logContext, List<String> pipelineExecutionDetail)
         {
             StringBuilder payload = new StringBuilder();
 
@@ -197,7 +197,7 @@ namespace System.Management.Automation.Tracing
         /// <param name="logContext"></param>
         /// <param name="providerName"></param>
         /// <param name="exception"></param>
-        override internal void LogProviderHealthEvent(LogContext logContext, string providerName, Exception exception)
+        internal override void LogProviderHealthEvent(LogContext logContext, string providerName, Exception exception)
         {
             StringBuilder payload = new StringBuilder();
 
@@ -220,7 +220,7 @@ namespace System.Management.Automation.Tracing
         /// <param name="providerName"></param>
         /// <param name="newState"></param>
         /// 
-        override internal void LogProviderLifecycleEvent(LogContext logContext, string providerName, ProviderState newState)
+        internal override void LogProviderLifecycleEvent(LogContext logContext, string providerName, ProviderState newState)
         {
             if (IsEnabled(PSLevel.Informational, PSKeyword.Cmdlets | PSKeyword.UseAlwaysAnalytic))
             {
@@ -247,7 +247,7 @@ namespace System.Management.Automation.Tracing
         /// <param name="value"></param>
         /// <param name="previousValue"></param>
         /// 
-        override internal void LogSettingsEvent(LogContext logContext, string variableName, string value, string previousValue)
+        internal override void LogSettingsEvent(LogContext logContext, string variableName, string value, string previousValue)
         {
             if (IsEnabled(PSLevel.Informational, PSKeyword.Cmdlets | PSKeyword.UseAlwaysAnalytic))
             {
@@ -450,7 +450,7 @@ namespace System.Management.Automation.Tracing
 
             etwProvider.WriteEvent(ref desc, args);
         }
-        
+
         /// <summary>
         /// Writes an activity transfer event
         /// </summary>

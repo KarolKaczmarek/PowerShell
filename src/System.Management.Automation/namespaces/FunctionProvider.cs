@@ -4,16 +4,14 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 using System;
-using Dbg=System.Management.Automation;
+using Dbg = System.Management.Automation;
 using System.Collections;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Management.Automation;
 using System.Management.Automation.Provider;
 
 namespace Microsoft.PowerShell.Commands
 {
-
     /// <summary>
     /// This provider is the data accessor for shell functions. It uses
     /// the SessionStateProviderBase as the base class to produce a view on
@@ -39,8 +37,8 @@ namespace Microsoft.PowerShell.Commands
         /// The constructor for the provider that exposes variables to the user
         /// as drives.
         /// </summary>
-        public FunctionProvider  () 
-        { 
+        public FunctionProvider()
+        {
         } // constructor
 
         #endregion Constructor
@@ -55,11 +53,11 @@ namespace Microsoft.PowerShell.Commands
         /// An array of a single PSDriveInfo object representing the functions drive.
         /// </returns>
         ///
-        protected override Collection<PSDriveInfo> InitializeDefaultDrives ()
+        protected override Collection<PSDriveInfo> InitializeDefaultDrives()
         {
             string description = SessionStateStrings.FunctionDriveDescription;
 
-            PSDriveInfo functionDrive = 
+            PSDriveInfo functionDrive =
                 new PSDriveInfo(
                     DriveNames.FunctionDrive,
                     ProviderInfo,
@@ -174,7 +172,7 @@ namespace Microsoft.PowerShell.Commands
                 !String.IsNullOrEmpty(name),
                 "The caller should verify this parameter");
 
-            FunctionProviderDynamicParameters dynamicParameters = 
+            FunctionProviderDynamicParameters dynamicParameters =
                 DynamicParameters as FunctionProviderDynamicParameters;
 
             CommandInfo modifiedItem = null;
@@ -281,7 +279,7 @@ namespace Microsoft.PowerShell.Commands
         /// The name of the function to remove from session state.
         /// </param>
         /// 
-        internal override void RemoveSessionStateItem (string name)
+        internal override void RemoveSessionStateItem(string name)
         {
             Dbg.Diagnostics.Assert(
                 !String.IsNullOrEmpty(name),
@@ -321,7 +319,7 @@ namespace Microsoft.PowerShell.Commands
             {
                 value = function.ScriptBlock;
             }
-         
+
             return value;
         } // GetValueOfItem
 
@@ -334,7 +332,7 @@ namespace Microsoft.PowerShell.Commands
         /// session state.
         /// </returns>
         /// 
-        internal override IDictionary GetSessionStateTable ()
+        internal override IDictionary GetSessionStateTable()
         {
             return SessionState.Internal.GetFunctionTable();
         } // GetSessionStateTable
@@ -379,7 +377,6 @@ namespace Microsoft.PowerShell.Commands
         }
 
         #endregion protected members
-
     } // FunctionProvider
 
     /// <summary>
@@ -394,14 +391,14 @@ namespace Microsoft.PowerShell.Commands
         [Parameter]
         public ScopedItemOptions Options
         {
-            get { return options; }
-            set 
+            get { return _options; }
+            set
             {
-                optionsSet = true;
-                options = value;
+                _optionsSet = true;
+                _options = value;
             }
         }
-        private ScopedItemOptions options = ScopedItemOptions.None;
+        private ScopedItemOptions _options = ScopedItemOptions.None;
 
 
         /// <summary>
@@ -410,9 +407,9 @@ namespace Microsoft.PowerShell.Commands
         /// <value></value>
         internal bool OptionsSet
         {
-            get { return optionsSet; }
+            get { return _optionsSet; }
         }
-        private bool optionsSet;
+        private bool _optionsSet;
     }
 }
 

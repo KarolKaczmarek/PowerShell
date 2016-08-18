@@ -13,16 +13,7 @@
  *
  * ***************************************************************************/
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Dynamic;
-using System.Globalization;
-using System.IO;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Collections.ObjectModel;
-using System.Linq.Expressions;
+
 #if ENABLE_BINDER_DEBUG_LOGGING && !CORECLR
 namespace System.Management.Automation.Language {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling")]
@@ -155,7 +146,7 @@ namespace System.Management.Automation.Language {
             }
         }
 
-        #region The printing code
+#region The printing code
 
         private void Out(string s) {
             Out(Flow.None, s, Flow.None);
@@ -215,9 +206,9 @@ namespace System.Management.Automation.Language {
             return flow;
         }
 
-        #endregion
+#endregion
 
-        #region The AST Output
+#region The AST Output
 
         // More proper would be to make this a virtual method on Action
         private static string FormatBinder(CallSiteBinder binder) {
@@ -1180,7 +1171,7 @@ namespace System.Management.Automation.Language {
             }
         }
 
-        #endregion
+#endregion
     }
 }
 #endif

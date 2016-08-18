@@ -2,6 +2,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 namespace System.Management.Automation
 {
     /// <summary>
@@ -22,7 +23,7 @@ namespace System.Management.Automation
         /// Element tag for PSObject
         /// </summary>
         internal const string PSObjectTag = "Obj";
-        
+
         /// <summary>
         /// Element tag for properties
         /// </summary>
@@ -204,7 +205,7 @@ namespace System.Management.Automation
         /// </summary>
         /// <remarks>This property is used for System.Security.SecureString type</remarks>
         internal const string SecureStringTag = "SS";
-        
+
         /// <summary>
         /// Element tag for unsignedShort property. 
         /// </summary>
@@ -233,6 +234,11 @@ namespace System.Management.Automation
         /// Element tag for Version property
         /// </summary>
         internal const string VersionTag = "Version";
+
+        /// <summary>
+        /// Element tag for SemanticVersion property
+        /// </summary>
+        internal const string SemanticVersionTag = "SemanticVersion";
 
         /// <summary>
         /// Element tag for XmlDocument
@@ -288,7 +294,7 @@ namespace System.Management.Automation
         /// String for stream attribute
         /// </summary>
         internal const string StreamNameAttribute = "S";
-        
+
         #endregion attribute tags
 
         #region namespace values

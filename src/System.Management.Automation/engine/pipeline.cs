@@ -30,29 +30,28 @@ namespace System.Management.Automation.Internal
 
         private List<CommandProcessorBase> _commands = new List<CommandProcessorBase>();
         private List<PipelineProcessor> _redirectionPipes;
-        private PipelineReader<object> externalInputPipe;
-        private PipelineWriter externalSuccessOutput;
-        private PipelineWriter externalErrorOutput;
-        private bool executionStarted = false;
-        private bool topLevel = false;
-        private bool stopping = false;
-        private SessionStateScope executionScope;        
+        private PipelineReader<object> _externalInputPipe;
+        private PipelineWriter _externalSuccessOutput;
+        private PipelineWriter _externalErrorOutput;
+        private bool _executionStarted = false;
+        private bool _stopping = false;
+        private SessionStateScope _executionScope;
 
-        private ExceptionDispatchInfo firstTerminatingError = null;
+        private ExceptionDispatchInfo _firstTerminatingError = null;
 
         private bool _linkedSuccessOutput = false;
         private bool _linkedErrorOutput = false;
 
 #if !CORECLR // Impersonation Not Supported On CSS
         // This is the security context when the pipeline was allocated
-        internal System.Security.SecurityContext SecurityContext = 
+        internal System.Security.SecurityContext SecurityContext =
             System.Security.SecurityContext.Capture();
 #endif
         #endregion private_members
 
         #region IDispose
 
-        private bool disposed = false;
+        private bool _disposed = false;
 
         /// <summary>
         /// When the command is complete, PipelineProcessor will be
@@ -66,45 +65,45 @@ namespace System.Management.Automation.Internal
         /// </remarks>
         public void Dispose()
         {
-            Dispose (true);
-            GC.SuppressFinalize (this);
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         private void Dispose(bool disposing)
         {
-            if (disposed)
+            if (_disposed)
                 return;
 
             if (disposing)
             {
                 DisposeCommands();
-                localPipeline = null;
-                externalSuccessOutput = null;
-                externalErrorOutput = null;
-                executionScope = null;
-                eventLogBuffer = null;
+                _localPipeline = null;
+                _externalSuccessOutput = null;
+                _externalErrorOutput = null;
+                _executionScope = null;
+                _eventLogBuffer = null;
 #if !CORECLR // Impersonation Not Supported On CSS
                 SecurityContext.Dispose();
                 SecurityContext = null;
 #endif
             }
 
-            disposed = true;
+            _disposed = true;
         }
 
         /// <summary>
         /// Finalizer for class PipelineProcessor
         /// </summary>
-        ~PipelineProcessor ()
+        ~PipelineProcessor()
         {
-            Dispose (false);
+            Dispose(false);
         }
 
         #endregion IDispose
 
         #region Execution Logging
 
-        private bool executionFailed = false;
+        private bool _executionFailed = false;
 
         internal List<CommandProcessorBase> Commands
         {
@@ -115,11 +114,11 @@ namespace System.Management.Automation.Internal
         {
             get
             {
-                return executionFailed;
+                return _executionFailed;
             }
             set
             {
-                executionFailed = value;
+                _executionFailed = value;
             }
         }
 
@@ -155,16 +154,16 @@ namespace System.Management.Automation.Internal
             Log(message, invocationInfo, PipelineExecutionStatus.Error);
         }
 
-        private bool terminatingErrorLogged = false;
+        private bool _terminatingErrorLogged = false;
         internal void LogExecutionException(Exception exception)
         {
-            this.executionFailed = true;
+            _executionFailed = true;
 
             // Only log one terminating error for pipeline execution.
-            if (terminatingErrorLogged)
+            if (_terminatingErrorLogged)
                 return;
 
-            terminatingErrorLogged = true;
+            _terminatingErrorLogged = true;
 
             if (exception == null)
                 return;
@@ -229,7 +228,7 @@ namespace System.Management.Automation.Internal
 
             if (!String.IsNullOrEmpty(logElement))
             {
-                eventLogBuffer.Add(logElement);
+                _eventLogBuffer.Add(logElement);
             }
         }
 
@@ -239,11 +238,11 @@ namespace System.Management.Automation.Internal
             {
                 // We check to see if the command is needs writing (or if there is anything in the buffer)
                 // before we flush it. Flushing the empty buffer causes a measurable performance degradation.
-                if (_commands == null || _commands.Count <= 0 || eventLogBuffer.Count == 0)
+                if (_commands == null || _commands.Count <= 0 || _eventLogBuffer.Count == 0)
                     return;
 
                 MshLog.LogPipelineExecutionDetailEvent(_commands[0].Command.Context,
-                                                       eventLogBuffer,
+                                                       _eventLogBuffer,
                                                        _commands[0].Command.MyInvocation);
             }
         }
@@ -264,7 +263,7 @@ namespace System.Management.Automation.Internal
             return false;
         }
 
-        List<String> eventLogBuffer = new List<string>();
+        private List<String> _eventLogBuffer = new List<string>();
         #endregion
 
         #region public_methods
@@ -289,7 +288,6 @@ namespace System.Management.Automation.Internal
             if (_redirectionPipes == null)
                 _redirectionPipes = new List<PipelineProcessor>();
             _redirectionPipes.Add(pipelineProcessor);
-
         }
 
         // 2004/02/28-JSnover (from spec review) ReadFromErrorQueue
@@ -325,11 +323,11 @@ namespace System.Management.Automation.Internal
                 // "_commands == null"
                 throw PSTraceSource.NewInvalidOperationException();
             }
-            if (disposed)
+            if (_disposed)
             {
                 throw PSTraceSource.NewObjectDisposedException("PipelineProcessor");
             }
-            if (executionStarted)
+            if (_executionStarted)
             {
                 throw PSTraceSource.NewInvalidOperationException(
                     PipelineStrings.ExecutionAlreadyStarted);
@@ -367,7 +365,7 @@ namespace System.Management.Automation.Internal
                     // "PipelineProcessor.AddCommand(): previous request object == null"
                     throw PSTraceSource.NewInvalidOperationException();
                 }
-                Pipe UpstreamPipe = (readErrorQueue) ? 
+                Pipe UpstreamPipe = (readErrorQueue) ?
                     prevcommandProcessor.CommandRuntime.ErrorOutputPipe : prevcommandProcessor.CommandRuntime.OutputPipe;
                 if (null == UpstreamPipe)
                 {
@@ -409,7 +407,6 @@ namespace System.Management.Automation.Internal
                         prevcommandProcessor.CommandRuntime.ErrorOutputPipe = UpstreamPipe;
                     }
                 } // if MergeUnclaimedPreviousErrorResults
-
             }
             _commands.Add(commandProcessor);
 
@@ -505,8 +502,8 @@ namespace System.Management.Automation.Internal
                 catch (PipelineStoppedException)
                 {
                     StopUpstreamCommandsException stopUpstreamCommandsException =
-                        this.firstTerminatingError != null
-                            ? firstTerminatingError.SourceException as StopUpstreamCommandsException
+                        _firstTerminatingError != null
+                            ? _firstTerminatingError.SourceException as StopUpstreamCommandsException
                             : null;
                     if (stopUpstreamCommandsException == null)
                     {
@@ -514,7 +511,7 @@ namespace System.Management.Automation.Internal
                     }
                     else
                     {
-                        this.firstTerminatingError = null;
+                        _firstTerminatingError = null;
                         commandRequestingUpstreamCommandsToStop = stopUpstreamCommandsException.RequestingCommandProcessor;
                     }
                 }
@@ -524,9 +521,9 @@ namespace System.Management.Automation.Internal
                 // By this point, we are sure all commandProcessors hosted by the current pipelineProcess are done execution,
                 // so if there are any redirection pipelineProcessors associated with any of those commandProcessors, we should
                 // call DoComplete on them.
-                if (this._redirectionPipes != null)
+                if (_redirectionPipes != null)
                 {
-                    foreach (PipelineProcessor redirectPipelineProcessor in this._redirectionPipes)
+                    foreach (PipelineProcessor redirectPipelineProcessor in _redirectionPipes)
                     {
                         redirectPipelineProcessor.DoCompleteCore(null);
                     }
@@ -539,18 +536,18 @@ namespace System.Management.Automation.Internal
                 // The error we want to report is the first terminating error
                 // which occurred during pipeline execution, regardless
                 // of whether other errors occurred afterward.
-                toRethrowInfo = firstTerminatingError ?? ExceptionDispatchInfo.Capture(e);
+                toRethrowInfo = _firstTerminatingError ?? ExceptionDispatchInfo.Capture(e);
                 this.LogExecutionException(toRethrowInfo.SourceException);
             }
-                // NTRAID#Windows Out Of Band Releases-929020-2006/03/14-JonN
+            // NTRAID#Windows Out Of Band Releases-929020-2006/03/14-JonN
             catch (System.Runtime.InteropServices.InvalidComObjectException comException)
             {
                 // The error we want to report is the first terminating error
                 // which occurred during pipeline execution, regardless
                 // of whether other errors occurred afterward.
-                if (null != firstTerminatingError)
+                if (null != _firstTerminatingError)
                 {
-                    toRethrowInfo = firstTerminatingError;
+                    toRethrowInfo = _firstTerminatingError;
                 }
                 else
                 {
@@ -612,8 +609,8 @@ namespace System.Management.Automation.Internal
                     catch (PipelineStoppedException)
                     {
                         StopUpstreamCommandsException stopUpstreamCommandsException =
-                            this.firstTerminatingError != null
-                                ? this.firstTerminatingError.SourceException as StopUpstreamCommandsException
+                            _firstTerminatingError != null
+                                ? _firstTerminatingError.SourceException as StopUpstreamCommandsException
                                 : null;
                         if (stopUpstreamCommandsException == null)
                         {
@@ -621,7 +618,7 @@ namespace System.Management.Automation.Internal
                         }
                         else
                         {
-                            this.firstTerminatingError = null;
+                            _firstTerminatingError = null;
                             commandRequestingUpstreamCommandsToStop = stopUpstreamCommandsException.RequestingCommandProcessor;
                         }
                     }
@@ -650,17 +647,17 @@ namespace System.Management.Automation.Internal
             {
                 // Only log the pipeline completion if this wasn't a nested pipeline, as
                 // pipeline state in transcription is associated with the toplevel pipeline
-                if ((this.LocalPipeline == null) || (! this.LocalPipeline.IsNested))
+                if ((this.LocalPipeline == null) || (!this.LocalPipeline.IsNested))
                 {
                     lastCommandRuntime.PipelineProcessor.LogPipelineComplete();
                 }
             }
 
             // If a terminating error occurred, report it now.
-            if (firstTerminatingError != null)
+            if (_firstTerminatingError != null)
             {
-                this.LogExecutionException(firstTerminatingError.SourceException);
-                firstTerminatingError.Throw();
+                this.LogExecutionException(_firstTerminatingError.SourceException);
+                _firstTerminatingError.Throw();
             }
         }
 
@@ -676,7 +673,7 @@ namespace System.Management.Automation.Internal
                 throw new PipelineStoppedException();
             }
 
-            if (!executionStarted)
+            if (!_executionStarted)
             {
                 throw PSTraceSource.NewInvalidOperationException(
                     PipelineStrings.PipelineNotStarted);
@@ -694,7 +691,7 @@ namespace System.Management.Automation.Internal
                 // The error we want to report is the first terminating error
                 // which occurred during pipeline execution, regardless
                 // of whether other errors occurred afterward.
-                toRethrowInfo = firstTerminatingError ?? ExceptionDispatchInfo.Capture(e);
+                toRethrowInfo = _firstTerminatingError ?? ExceptionDispatchInfo.Capture(e);
                 this.LogExecutionException(toRethrowInfo.SourceException);
             }
             // NTRAID#Windows Out Of Band Releases-929020-2006/03/14-JonN
@@ -703,9 +700,9 @@ namespace System.Management.Automation.Internal
                 // The error we want to report is the first terminating error
                 // which occurred during pipeline execution, regardless
                 // of whether other errors occurred afterward.
-                if (null != firstTerminatingError)
+                if (null != _firstTerminatingError)
                 {
-                    toRethrowInfo = firstTerminatingError;
+                    toRethrowInfo = _firstTerminatingError;
                 }
                 else
                 {
@@ -748,9 +745,9 @@ namespace System.Management.Automation.Internal
                 Start(expectInput);
 
                 // If a terminating error occurred, report it now.
-                if (null != firstTerminatingError)
+                if (null != _firstTerminatingError)
                 {
-                    firstTerminatingError.Throw();
+                    _firstTerminatingError.Throw();
                 }
             }
             catch (PipelineStoppedException)
@@ -760,9 +757,9 @@ namespace System.Management.Automation.Internal
                 // The error we want to report is the first terminating error
                 // which occurred during pipeline execution, regardless
                 // of whether other errors occurred afterward.
-                if (null != firstTerminatingError)
+                if (null != _firstTerminatingError)
                 {
-                    firstTerminatingError.Throw();
+                    _firstTerminatingError.Throw();
                 }
                 throw;
             }
@@ -861,9 +858,9 @@ namespace System.Management.Automation.Internal
                 Inject(input, enumerate: false);
 
                 // If a terminating error occurred, report it now.
-                if (null != firstTerminatingError)
+                if (null != _firstTerminatingError)
                 {
-                    firstTerminatingError.Throw();
+                    _firstTerminatingError.Throw();
                 }
 
                 return RetrieveResults();
@@ -875,9 +872,9 @@ namespace System.Management.Automation.Internal
                 // The error we want to report is the first terminating error
                 // which occurred during pipeline execution, regardless
                 // of whether other errors occurred afterward.
-                if (null != firstTerminatingError)
+                if (null != _firstTerminatingError)
                 {
-                    firstTerminatingError.Throw();
+                    _firstTerminatingError.Throw();
                 }
                 throw;
             }
@@ -922,7 +919,7 @@ namespace System.Management.Automation.Internal
         private void Start(bool incomingStream)
         {
             // Every call to Step or SynchronousExecute will call Start.
-            if (disposed)
+            if (_disposed)
             {
                 throw PSTraceSource.NewObjectDisposedException("PipelineProcessor");
             }
@@ -931,7 +928,7 @@ namespace System.Management.Automation.Internal
                 throw new PipelineStoppedException();
             }
 
-            if (executionStarted)
+            if (_executionStarted)
                 return;
 
             if (null == _commands || 0 == _commands.Count)
@@ -949,9 +946,9 @@ namespace System.Management.Automation.Internal
             }
 
             // Set the execution scope using the current scope
-            if (executionScope == null)
+            if (_executionScope == null)
             {
-                executionScope = firstcommandProcessor.Context.EngineSessionState.CurrentScope;
+                _executionScope = firstcommandProcessor.Context.EngineSessionState.CurrentScope;
             }
 
             // add ExternalSuccessOutput to the last command
@@ -983,7 +980,7 @@ namespace System.Management.Automation.Internal
             IDictionary psDefaultParameterValues =
                 firstcommandProcessor.Context.GetVariableValue(SpecialVariables.PSDefaultParameterValuesVarPath, false) as IDictionary;
 
-            executionStarted = true;
+            _executionStarted = true;
 
             //
             // Allocate the pipeline iteration array; note that the pipeline position for
@@ -1001,7 +998,7 @@ namespace System.Management.Automation.Internal
                     // "null command " + i
                     throw PSTraceSource.NewInvalidOperationException();
                 }
-              
+
                 // Generate new Activity Id for the thread
                 Guid pipelineActivityId = EtwActivity.CreateActivityId();
 
@@ -1161,7 +1158,6 @@ namespace System.Management.Automation.Internal
             // Execute the first command - In the streamlet model, Execute of the first command will
             // automatically call the downstream command incase if there are any objects in the pipe.
             firstcommandProcessor.DoExecute();
-
         } // private void Inject
 
         /// <summary>
@@ -1244,7 +1240,6 @@ namespace System.Management.Automation.Internal
 
             LastCommandProcessor.CommandRuntime.OutputPipe = pipeToUse;
             _linkedSuccessOutput = true;
-
         } // private void SetResultPipe
 
         internal void LinkPipelineErrorOutput(Pipe pipeToUse)
@@ -1282,7 +1277,7 @@ namespace System.Management.Automation.Internal
             // Note that this is not in a lock.
             // We do not make Dispose() wait until StopProcessing()
             // has completed.
-            stopping = true;
+            _stopping = true;
 
             LogToEventLog();
 
@@ -1370,7 +1365,7 @@ namespace System.Management.Automation.Internal
             _redirectionPipes = null;
         }
 
-        private object StopReasonLock = new object();
+        private object _stopReasonLock = new object();
         /// <summary>
         /// Makes an internal note of the exception, but only if this is
         /// the first error.
@@ -1381,18 +1376,18 @@ namespace System.Management.Automation.Internal
         internal bool RecordFailure(Exception e, InternalCommand command)
         {
             bool wasStopping = false;
-            lock (StopReasonLock)
+            lock (_stopReasonLock)
             {
-                if (null == firstTerminatingError)
+                if (null == _firstTerminatingError)
                 {
-                    firstTerminatingError = ExceptionDispatchInfo.Capture(e);
+                    _firstTerminatingError = ExceptionDispatchInfo.Capture(e);
                 }
                 // 905900-2005/05/12
                 // Drop5: Error Architecture: Log/trace second and subsequent RecordFailure
                 // Note that the pipeline could have been stopped asynchronously
                 // before hitting the error, therefore we check whether
                 // firstTerminatingError is PipelineStoppedException.
-                else if ((!(firstTerminatingError.SourceException is PipelineStoppedException))
+                else if ((!(_firstTerminatingError.SourceException is PipelineStoppedException))
                     && null != command && null != command.Context)
                 {
                     Exception ex = e;
@@ -1404,8 +1399,8 @@ namespace System.Management.Automation.Internal
                     if (!(ex is PipelineStoppedException))
                     {
                         string message = StringUtil.Format(PipelineStrings.SecondFailure,
-                            firstTerminatingError.GetType().Name,
-                            firstTerminatingError.SourceException.StackTrace,
+                            _firstTerminatingError.GetType().Name,
+                            _firstTerminatingError.SourceException.StackTrace,
                             ex.GetType().Name,
                             ex.StackTrace
                         );
@@ -1417,8 +1412,8 @@ namespace System.Management.Automation.Internal
                             Severity.Warning);
                     }
                 }
-                wasStopping = stopping;
-                stopping = true;
+                wasStopping = _stopping;
+                _stopping = true;
             }
             return !wasStopping;
         }
@@ -1429,7 +1424,7 @@ namespace System.Management.Automation.Internal
         /// </summary>
         internal void ForgetFailure()
         {
-            firstTerminatingError = null;
+            _firstTerminatingError = null;
         }
 
         // NOTICE-2004/06/08-JonN 959638
@@ -1458,16 +1453,15 @@ namespace System.Management.Automation.Internal
         /// </exception>
         internal PipelineReader<object> ExternalInput
         {
-            get { return externalInputPipe; }
+            get { return _externalInputPipe; }
             set
             {
-                if (executionStarted)
+                if (_executionStarted)
                 {
-                    throw PSTraceSource.NewInvalidOperationException (
+                    throw PSTraceSource.NewInvalidOperationException(
                         PipelineStrings.ExecutionAlreadyStarted);
-            
                 }
-                externalInputPipe = value;
+                _externalInputPipe = value;
             }
         }
 
@@ -1483,15 +1477,15 @@ namespace System.Management.Automation.Internal
         /// </exception>
         internal PipelineWriter ExternalSuccessOutput
         {
-            get { return externalSuccessOutput; }
+            get { return _externalSuccessOutput; }
             set
             {
-                if (executionStarted)
+                if (_executionStarted)
                 {
-                    throw PSTraceSource.NewInvalidOperationException (
+                    throw PSTraceSource.NewInvalidOperationException(
                         PipelineStrings.ExecutionAlreadyStarted);
                 }
-                externalSuccessOutput = value;
+                _externalSuccessOutput = value;
             }
         }
 
@@ -1508,16 +1502,16 @@ namespace System.Management.Automation.Internal
         /// </exception>
         internal PipelineWriter ExternalErrorOutput
         {
-            get { return externalErrorOutput; }
+            get { return _externalErrorOutput; }
             set
             {
-                if (executionStarted)
+                if (_executionStarted)
                 {
-                    throw PSTraceSource.NewInvalidOperationException (
+                    throw PSTraceSource.NewInvalidOperationException(
                         PipelineStrings.ExecutionAlreadyStarted);
                 }
 
-                externalErrorOutput = value;
+                _externalErrorOutput = value;
             }
         }
 
@@ -1527,7 +1521,7 @@ namespace System.Management.Automation.Internal
         /// </summary>
         internal bool ExecutionStarted
         {
-            get { return executionStarted; }
+            get { return _executionStarted; }
         }
 
         /// <summary>
@@ -1535,21 +1529,17 @@ namespace System.Management.Automation.Internal
         /// </summary>
         internal bool Stopping
         {
-            get { return localPipeline != null && localPipeline.IsStopping; }
+            get { return _localPipeline != null && _localPipeline.IsStopping; }
         }
 
-        private LocalPipeline localPipeline;
+        private LocalPipeline _localPipeline;
         internal LocalPipeline LocalPipeline
         {
-            get { return localPipeline; }
-            set { localPipeline = value; }
+            get { return _localPipeline; }
+            set { _localPipeline = value; }
         }
 
-        internal bool TopLevel
-        {
-            get { return topLevel; }
-            set { topLevel = value; }
-        }
+        internal bool TopLevel { get; set; } = false;
 
         /// <summary>
         /// The scope the pipeline should execute in.
@@ -1557,12 +1547,13 @@ namespace System.Management.Automation.Internal
         /// 
         internal SessionStateScope ExecutionScope
         {
-            get { return executionScope; }
-            set {
+            get { return _executionScope; }
+            set
+            {
                 // This needs to be settable so that a steppable pipeline
                 // can be stepped in the context of the caller, not where
                 // it was created...
-                executionScope = value;
+                _executionScope = value;
             }
         }
         #endregion public_properties
@@ -1576,8 +1567,5 @@ namespace System.Management.Automation.Internal
             PipelineComplete
         }
     }
-
-
-
 } // namespace System.Management.Automation
 

@@ -1,7 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
+
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Management.Automation;
@@ -21,7 +21,7 @@ namespace Microsoft.PowerShell.Commands
         /// Gets or sets the path parameter to the command
         /// </summary>
         [Parameter(Position = 0, ParameterSetName = "Path",
-                   Mandatory = true, ValueFromPipeline=true, ValueFromPipelineByPropertyName = true)]
+                   Mandatory = true, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
         public string[] Path
         {
             get
@@ -39,7 +39,7 @@ namespace Microsoft.PowerShell.Commands
         /// Gets or sets the literal path parameter to the command
         /// </summary>
         [Parameter(ParameterSetName = "LiteralPath",
-                   Mandatory = true, ValueFromPipeline=false, ValueFromPipelineByPropertyName = true)]
+                   Mandatory = true, ValueFromPipeline = false, ValueFromPipelineByPropertyName = true)]
         [Alias("PSPath")]
         public string[] LiteralPath
         {
@@ -65,12 +65,12 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return property;
+                return _property;
             } // get
 
             set
             {
-                property = value;
+                _property = value;
             }
         } // Property
 
@@ -94,22 +94,22 @@ namespace Microsoft.PowerShell.Commands
             if (Path != null && Path.Length > 0)
             {
                 return InvokeProvider.Property.GetPropertyDynamicParameters(
-                    Path[0], 
-                    SessionStateUtilities.ConvertArrayToCollection<string>(property), context);
+                    Path[0],
+                    SessionStateUtilities.ConvertArrayToCollection<string>(_property), context);
             }
             return InvokeProvider.Property.GetPropertyDynamicParameters(
                 ".",
-                SessionStateUtilities.ConvertArrayToCollection<string>(property), context);
+                SessionStateUtilities.ConvertArrayToCollection<string>(_property), context);
         } // GetDynamicParameters
-        
+
         #endregion Parameters
 
         #region parameter data
-        
+
         /// <summary>
         /// The properties to be retrieved.
         /// </summary>
-        private string[] property;
+        private string[] _property;
 
         #endregion parameter data
 
@@ -118,15 +118,15 @@ namespace Microsoft.PowerShell.Commands
         /// <summary>
         /// Gets the properties of an item at the specified path
         /// </summary>
-        protected override void ProcessRecord ()
+        protected override void ProcessRecord()
         {
-           foreach (string path in Path)
-           {
+            foreach (string path in Path)
+            {
                 try
                 {
                     InvokeProvider.Property.Get(
-                        path, 
-                        SessionStateUtilities.ConvertArrayToCollection<string>(property), 
+                        path,
+                        SessionStateUtilities.ConvertArrayToCollection<string>(_property),
                         CmdletProviderContext);
                 }
                 catch (PSNotSupportedException notSupported)
@@ -161,13 +161,10 @@ namespace Microsoft.PowerShell.Commands
                             pathNotFound));
                     continue;
                 }
-
             }
         } // ProcessRecord
 
         #endregion Command code
-
-
     } // GetItemPropertyCommand
 
     /// <summary>
@@ -228,12 +225,12 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return property;
+                return _property;
             } // get
 
             set
             {
-                property = value;
+                _property = value;
             }
         } // Property
 
@@ -258,11 +255,11 @@ namespace Microsoft.PowerShell.Commands
             {
                 return InvokeProvider.Property.GetPropertyDynamicParameters(
                     Path[0],
-                    SessionStateUtilities.ConvertArrayToCollection<string>(property), context);
+                    SessionStateUtilities.ConvertArrayToCollection<string>(_property), context);
             }
             return InvokeProvider.Property.GetPropertyDynamicParameters(
                 ".",
-                SessionStateUtilities.ConvertArrayToCollection<string>(property), context);
+                SessionStateUtilities.ConvertArrayToCollection<string>(_property), context);
         } // GetDynamicParameters
 
         #endregion Parameters
@@ -272,7 +269,7 @@ namespace Microsoft.PowerShell.Commands
         /// <summary>
         /// The properties to be retrieved.
         /// </summary>
-        private string[] property;
+        private string[] _property;
 
         #endregion parameter data
 
@@ -283,17 +280,17 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         protected override void ProcessRecord()
         {
-           if (Path == null || Path.Length == 0)
-           {
-              paths = new string[] { "." };
-           }
-           foreach (string path in Path)
-           {
+            if (Path == null || Path.Length == 0)
+            {
+                paths = new string[] { "." };
+            }
+            foreach (string path in Path)
+            {
                 try
                 {
                     Collection<PSObject> itemProperties = InvokeProvider.Property.Get(
                         new string[] { path },
-                        SessionStateUtilities.ConvertArrayToCollection<string>(property),
+                        SessionStateUtilities.ConvertArrayToCollection<string>(_property),
                         base.SuppressWildcardExpansion);
 
                     if (itemProperties != null)
@@ -304,7 +301,7 @@ namespace Microsoft.PowerShell.Commands
                             {
                                 foreach (string currentPropertyName in this.Name)
                                 {
-                                    if (currentItem.Properties != null && 
+                                    if (currentItem.Properties != null &&
                                         currentItem.Properties[currentPropertyName] != null &&
                                         currentItem.Properties[currentPropertyName].Value != null)
                                     {
@@ -314,7 +311,6 @@ namespace Microsoft.PowerShell.Commands
                             }
                         }
                     }
-
                 }
                 catch (PSNotSupportedException notSupported)
                 {
@@ -348,10 +344,9 @@ namespace Microsoft.PowerShell.Commands
                             pathNotFound));
                     continue;
                 }
-
             }
-        } 
+        }
 
         #endregion Command code
-    } 
+    }
 } // namespace Microsoft.PowerShell.Commands

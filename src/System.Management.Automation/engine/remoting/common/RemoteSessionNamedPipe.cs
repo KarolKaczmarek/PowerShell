@@ -13,7 +13,6 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
-using Microsoft.PowerShell.Commands.Internal;
 using System.Diagnostics.CodeAnalysis;
 using Dbg = System.Diagnostics.Debug;
 
@@ -88,7 +87,7 @@ namespace System.Management.Automation.Remoting
             {
                 throw new PSArgumentNullException("proc");
             }
-            
+
             if (string.IsNullOrEmpty(appDomainName))
             {
                 appDomainName = DefaultAppDomainName;
@@ -223,10 +222,10 @@ namespace System.Management.Automation.Remoting
            uint nDefaultTimeOut,
            SECURITY_ATTRIBUTES securityAttributes);
 
-        internal static SECURITY_ATTRIBUTES GetSecurityAttributes(GCHandle securityDescriptorPinnedHandle)
+        internal static SECURITY_ATTRIBUTES GetSecurityAttributes(GCHandle securityDescriptorPinnedHandle, bool inheritHandle = false)
         {
             SECURITY_ATTRIBUTES securityAttributes = new NamedPipeNative.SECURITY_ATTRIBUTES();
-            securityAttributes.InheritHandle = false;
+            securityAttributes.InheritHandle = inheritHandle;
             securityAttributes.NLength = (int)Marshal.SizeOf(securityAttributes);
             securityAttributes.LPSecurityDescriptor = securityDescriptorPinnedHandle.AddrOfPinnedObject();
             return securityAttributes;
@@ -315,21 +314,14 @@ namespace System.Management.Automation.Remoting
     {
         #region Members
 
-        private readonly NamedPipeServerStream _serverPipeStream;
-        private readonly string _pipeName;
         private readonly object _syncObject;
-        private bool _disposed;
-        private bool _listenerRunning;
-        private string _configurationName;
-        private StreamReader _streamReader;
-        private StreamWriter _streamWriter;
         private PowerShellTraceSource _tracer = PowerShellTraceSourceFactory.GetTraceSource();
 
         private const string _threadName = "IPC Listener Thread";
         private const int _namedPipeBufferSizeForRemoting = 32768;
 
         // Singleton server.
-        private static object SyncObject;
+        private static object s_syncObject;
         internal static RemoteSessionNamedPipeServer IPCNamedPipeServer;
         internal static bool IPCNamedPipeServerEnabled;
 
@@ -346,59 +338,37 @@ namespace System.Management.Automation.Remoting
         /// <summary>
         /// Returns the Named Pipe stream object.
         /// </summary>
-        public NamedPipeServerStream Stream
-        {
-            get { return _serverPipeStream; }
-        }
+        public NamedPipeServerStream Stream { get; }
 
         /// <summary>
         /// Returns the Named Pipe name.
         /// </summary>
-        public string PipeName
-        {
-            get { return _pipeName; }
-        }
+        public string PipeName { get; }
 
         /// <summary>
         /// Returns true if listener is currently running.
         /// </summary>
-        public bool IsListenerRunning
-        {
-            get { return _listenerRunning; }
-        }
+        public bool IsListenerRunning { get; private set; }
 
         /// <summary>
         /// Name of session configuration.
         /// </summary>
-        public string ConfigurationName
-        {
-            get { return _configurationName; }
-            set { _configurationName = value; }
-        }
+        public string ConfigurationName { get; set; }
 
         /// <summary>
         /// Accessor for the named pipe reader.
         /// </summary>
-        public StreamReader TextReader
-        {
-            get { return _streamReader; }
-        }
+        public StreamReader TextReader { get; private set; }
 
         /// <summary>
         /// Accessor for the named pipe writer.
         /// </summary>
-        public StreamWriter TextWriter
-        {
-            get { return _streamWriter; }
-        }
+        public StreamWriter TextWriter { get; private set; }
 
         /// <summary>
         /// Returns true if object is currently disposed.
         /// </summary>
-        public bool IsDisposed
-        {
-            get { return _disposed; }
-        }
+        public bool IsDisposed { get; private set; }
 
         /// <summary>
         /// Buffer size for PSRP fragmentor.
@@ -447,9 +417,9 @@ namespace System.Management.Automation.Remoting
             }
 
             _syncObject = new object();
-            _pipeName = pipeName;
+            PipeName = pipeName;
 
-            _serverPipeStream = CreateNamedPipe(
+            Stream = CreateNamedPipe(
                 serverName: ".",
                 namespaceName: "pipe",
                 coreName: pipeName,
@@ -530,7 +500,7 @@ namespace System.Management.Automation.Remoting
 
         static RemoteSessionNamedPipeServer()
         {
-            SyncObject = new object();
+            s_syncObject = new object();
 
             // All PowerShell instances will start with the named pipe
             // and listner created and running.
@@ -556,27 +526,27 @@ namespace System.Management.Automation.Remoting
         {
             lock (_syncObject)
             {
-                if (_disposed) { return; }
-                _disposed = true;
+                if (IsDisposed) { return; }
+                IsDisposed = true;
             }
 
-            if (_streamReader != null)
+            if (TextReader != null)
             {
-                try { _streamReader.Dispose(); }
+                try { TextReader.Dispose(); }
                 catch (ObjectDisposedException) { }
-                _streamReader = null;
+                TextReader = null;
             }
 
-            if (_streamWriter != null)
+            if (TextWriter != null)
             {
-                try { _streamWriter.Dispose(); }
+                try { TextWriter.Dispose(); }
                 catch (ObjectDisposedException) { }
-                _streamWriter = null;
+                TextWriter = null;
             }
 
-            if (_serverPipeStream != null)
-            {        
-                try { _serverPipeStream.Dispose(); } 
+            if (Stream != null)
+            {
+                try { Stream.Dispose(); }
                 catch (ObjectDisposedException) { }
             }
         }
@@ -602,11 +572,11 @@ namespace System.Management.Automation.Remoting
 
             lock (_syncObject)
             {
-                if (_listenerRunning)
+                if (IsListenerRunning)
                 {
                     throw new InvalidOperationException(RemotingErrorIdStrings.NamedPipeAlreadyListening);
                 }
-                _listenerRunning = true;
+                IsListenerRunning = true;
 
                 // Create listener thread.
                 Thread listenterThread = new Thread(ProcessListeningThread);
@@ -620,8 +590,8 @@ namespace System.Management.Automation.Remoting
 
         #region Private Methods
 
-        private static CommonSecurityDescriptor GetServerPipeSecurity()
-        {  
+        internal static CommonSecurityDescriptor GetServerPipeSecurity()
+        {
             // Built-in Admin SID
             SecurityIdentifier adminSID = new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null);
             DiscretionaryAcl dacl = new DiscretionaryAcl(false, false, 1);
@@ -657,7 +627,7 @@ namespace System.Management.Automation.Remoting
         /// </summary>
         private void WaitForConnection()
         {
-            _serverPipeStream.WaitForConnection();
+            Stream.WaitForConnection();
         }
 
         /// <summary>
@@ -687,7 +657,7 @@ namespace System.Management.Automation.Remoting
             {
                 // Begin listening for a client connect.
                 this.WaitForConnection();
-                
+
                 try
                 {
                     userName = WindowsIdentity.GetCurrent().Name;
@@ -703,9 +673,9 @@ namespace System.Management.Automation.Remoting
                     processId, appDomainName, userName);
 
                 // Create reader/writer streams.
-                _streamReader = new StreamReader(_serverPipeStream);
-                _streamWriter = new StreamWriter(_serverPipeStream);
-                _streamWriter.AutoFlush = true;
+                TextReader = new StreamReader(Stream);
+                TextWriter = new StreamWriter(Stream);
+                TextWriter.AutoFlush = true;
             }
             catch (Exception e)
             {
@@ -784,7 +754,7 @@ namespace System.Management.Automation.Remoting
 
             lock (_syncObject)
             {
-                _listenerRunning = false;
+                IsListenerRunning = false;
             }
 
             // Ensure this named pipe server object is disposed.
@@ -837,7 +807,7 @@ namespace System.Management.Automation.Remoting
         /// </summary>
         internal static void CreateIPCNamedPipeServerSingleton()
         {
-            lock (SyncObject)
+            lock (s_syncObject)
             {
                 if (!IPCNamedPipeServerEnabled) { return; }
 
@@ -923,8 +893,6 @@ namespace System.Management.Automation.Remoting
         #region Members
 
         private NamedPipeClientStream _clientPipeStream;
-        private StreamReader _streamReader;
-        private StreamWriter _streamWriter;
         private PowerShellTraceSource _tracer = PowerShellTraceSourceFactory.GetTraceSource();
 
         protected string _pipeName;
@@ -936,18 +904,12 @@ namespace System.Management.Automation.Remoting
         /// <summary>
         /// Accessor for the named pipe reader.
         /// </summary>
-        public StreamReader TextReader
-        {
-            get { return _streamReader; }
-        }
+        public StreamReader TextReader { get; private set; }
 
         /// <summary>
         /// Accessor for the named pipe writer.
         /// </summary>
-        public StreamWriter TextWriter
-        {
-            get { return _streamWriter; }
-        }
+        public StreamWriter TextWriter { get; private set; }
 
         /// <summary>
         /// Name of pipe.
@@ -973,23 +935,23 @@ namespace System.Management.Automation.Remoting
         /// </summary>
         public void Dispose()
         {
-            if (_streamReader != null)
+            if (TextReader != null)
             {
-                try { _streamReader.Dispose(); } 
+                try { TextReader.Dispose(); }
                 catch (ObjectDisposedException) { }
-                _streamReader = null;
+                TextReader = null;
             }
 
-            if (_streamWriter != null)
+            if (TextWriter != null)
             {
-                try { _streamWriter.Dispose(); }
+                try { TextWriter.Dispose(); }
                 catch (ObjectDisposedException) { }
-                _streamWriter = null;
+                TextWriter = null;
             }
 
             if (_clientPipeStream != null)
             {
-                try { _clientPipeStream.Dispose(); } 
+                try { _clientPipeStream.Dispose(); }
                 catch (ObjectDisposedException) { }
             }
         }
@@ -1010,9 +972,9 @@ namespace System.Management.Automation.Remoting
             _clientPipeStream = DoConnect(timeout);
 
             // Create reader/writer streams.
-            _streamReader = new StreamReader(_clientPipeStream);
-            _streamWriter = new StreamWriter(_clientPipeStream);
-            _streamWriter.AutoFlush = true;
+            TextReader = new StreamReader(_clientPipeStream);
+            TextWriter = new StreamWriter(_clientPipeStream);
+            TextWriter.AutoFlush = true;
 
             _tracer.WriteMessage("NamedPipeClientBase", "Connect", Guid.Empty,
                 "Connection started on pipe: {0}", _pipeName);
@@ -1033,7 +995,7 @@ namespace System.Management.Automation.Remoting
         { }
 
         protected virtual NamedPipeClientStream DoConnect(int timeout)
-        { 
+        {
             return null;
         }
 
@@ -1074,7 +1036,7 @@ namespace System.Management.Automation.Remoting
         /// <param name="procId">Target process Id for pipe.</param>
         /// <param name="appDomainName">AppDomain name or null for default AppDomain</param>
         public RemoteSessionNamedPipeClient(
-            int procId, string appDomainName) : 
+            int procId, string appDomainName) :
             this(NamedPipeUtils.CreateProcessPipeName(procId, appDomainName))
         { }
 
@@ -1095,7 +1057,7 @@ namespace System.Management.Automation.Remoting
             // Defer creating the .Net NamedPipeClientStream object until we connect.
             // _clientPipeStream == null.
         }
-        
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -1132,14 +1094,14 @@ namespace System.Management.Automation.Remoting
         #endregion
 
         #region Protected Methods
-        
+
         protected override NamedPipeClientStream DoConnect(int timeout)
         {
             // Repeatedly attempt connection to pipe until timeout expires.
             int startTime = Environment.TickCount;
             int elapsedTime = 0;
             _connecting = true;
-        
+
             do
             {
                 // Wait in 100 mSec increments.
@@ -1151,7 +1113,6 @@ namespace System.Management.Automation.Remoting
 
                 _connecting = false;
                 return OpenNamedPipe();
-
             } while (_connecting && (elapsedTime < timeout));
 
             _connecting = false;
@@ -1187,7 +1148,7 @@ namespace System.Management.Automation.Remoting
             {
                 throw new System.ComponentModel.Win32Exception(lastError);
             }
-            
+
             try
             {
                 return new NamedPipeClientStream(
@@ -1223,8 +1184,8 @@ namespace System.Management.Automation.Remoting
         /// <param name="appDomainName">AppDomain name or null for default AppDomain</param>
         /// <param name="containerObRoot">Container OB root.</param>
         public ContainerSessionNamedPipeClient(
-            int procId, 
-            string appDomainName, 
+            int procId,
+            string appDomainName,
             string containerObRoot)
         {
             if (String.IsNullOrEmpty(containerObRoot))
@@ -1242,7 +1203,7 @@ namespace System.Management.Automation.Remoting
         #endregion
 
         #region Protected Methods
-        
+
         /// <summary>
         /// Helper method to open a named pipe via native APIs and return in
         /// .Net NamedPipeClientStream wrapper object.
@@ -1259,7 +1220,7 @@ namespace System.Management.Automation.Remoting
             int startTime = Environment.TickCount;
             int elapsedTime = 0;
             SafePipeHandle pipeHandle = null;
-            
+
             do
             {
                 // Get handle to pipe.
@@ -1292,7 +1253,7 @@ namespace System.Management.Automation.Remoting
                     break;
                 }
             } while (elapsedTime < timeout);
-            
+
             try
             {
                 return new NamedPipeClientStream(

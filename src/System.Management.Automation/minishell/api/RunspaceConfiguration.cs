@@ -3,6 +3,7 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
 #pragma warning disable 1634, 1691
+
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reflection;
@@ -110,7 +111,7 @@ namespace System.Management.Automation.Runspaces
 #endif
     abstract class RunspaceConfiguration
     {
-#region RunspaceConfiguration Factory
+        #region RunspaceConfiguration Factory
 
 #if V2
 
@@ -163,7 +164,7 @@ namespace System.Management.Automation.Runspaces
 
             // If this assembly can't be loaded, Assembly.Load will throw an exception.
             // Just let the exception bubble up.
-           
+
             Assembly assembly = null;
             foreach (Assembly asm in ClrFacade.GetAssemblies())
             {
@@ -286,9 +287,9 @@ namespace System.Management.Automation.Runspaces
             return (RunspaceConfiguration)method.Invoke(null, null);
         }
 
-#endregion RunspaceConfiguration Factory
+        #endregion RunspaceConfiguration Factory
 
-#region Shell Id
+        #region Shell Id
 
         /// <summary>
         /// Gets the shell id for current runspace configuration.
@@ -298,9 +299,9 @@ namespace System.Management.Automation.Runspaces
             get;
         }
 
-#endregion
+        #endregion
 
-#region PSSnapin Api's
+        #region PSSnapin Api's
 
         /// <summary>
         /// Add a PSSnapin to runspace configuration.
@@ -345,9 +346,9 @@ namespace System.Management.Automation.Runspaces
             throw PSTraceSource.NewNotSupportedException();
         }
 
-#endregion
+        #endregion
 
-#region Cmdlet, Provider, Relationship
+        #region Cmdlet, Provider, Relationship
 
         private RunspaceConfigurationEntryCollection<CmdletConfigurationEntry> _cmdlets;
 
@@ -359,14 +360,8 @@ namespace System.Management.Automation.Runspaces
         /// </remarks>
         public virtual RunspaceConfigurationEntryCollection<CmdletConfigurationEntry> Cmdlets
         {
-            get
-            {
-                if (_cmdlets == null)
-                {
-                    _cmdlets = new RunspaceConfigurationEntryCollection<CmdletConfigurationEntry>();
-                }
-
-                return _cmdlets;
+            get {
+                return _cmdlets ?? (_cmdlets = new RunspaceConfigurationEntryCollection<CmdletConfigurationEntry>());
             }
         }
 
@@ -380,14 +375,9 @@ namespace System.Management.Automation.Runspaces
         /// </remarks>
         public virtual RunspaceConfigurationEntryCollection<ProviderConfigurationEntry> Providers
         {
-            get
-            {
-                if (_providers == null)
-                {
-                    _providers = new RunspaceConfigurationEntryCollection<ProviderConfigurationEntry>();
-                }
-
-                return _providers;
+            get {
+                return _providers ??
+                       (_providers = new RunspaceConfigurationEntryCollection<ProviderConfigurationEntry>());
             }
         }
 
@@ -401,9 +391,9 @@ namespace System.Management.Automation.Runspaces
         }
         */
 
-#endregion
+        #endregion
 
-#region Types and Formats
+        #region Types and Formats
 
         /// <summary>
         /// types.ps1xml information
@@ -411,14 +401,9 @@ namespace System.Management.Automation.Runspaces
         /// 
         internal TypeTable TypeTable
         {
-            get
-            {
-                if (typeTable == null)
-                    typeTable = new TypeTable();
-                return typeTable;
-            }
+            get { return _typeTable ?? (_typeTable = new TypeTable()); }
         }
-        private TypeTable typeTable;
+        private TypeTable _typeTable;
 
         private RunspaceConfigurationEntryCollection<TypeConfigurationEntry> _types;
 
@@ -431,15 +416,7 @@ namespace System.Management.Automation.Runspaces
         /// </remarks>
         public virtual RunspaceConfigurationEntryCollection<TypeConfigurationEntry> Types
         {
-            get
-            {
-                if (_types == null)
-                {
-                    _types = new RunspaceConfigurationEntryCollection<TypeConfigurationEntry>();
-                }
-
-                return _types;
-            }
+            get { return _types ?? (_types = new RunspaceConfigurationEntryCollection<TypeConfigurationEntry>()); }
         }
 
         private RunspaceConfigurationEntryCollection<FormatConfigurationEntry> _formats;
@@ -453,26 +430,16 @@ namespace System.Management.Automation.Runspaces
         /// </remarks>
         public virtual RunspaceConfigurationEntryCollection<FormatConfigurationEntry> Formats
         {
-            get
-            {
-                if (_formats == null)
-                {
-                    _formats = new RunspaceConfigurationEntryCollection<FormatConfigurationEntry>();
-                }
-
-                return _formats;
+            get {
+                return _formats ?? (_formats = new RunspaceConfigurationEntryCollection<FormatConfigurationEntry>());
             }
         }
-        private TypeInfoDataBaseManager formatDBManger = new TypeInfoDataBaseManager();
 
-        internal TypeInfoDataBaseManager FormatDBManager
-        {
-            get { return formatDBManger; }
-        }
-	
-#endregion
+        internal TypeInfoDataBaseManager FormatDBManager { get; } = new TypeInfoDataBaseManager();
 
-#region Script Data
+        #endregion
+
+        #region Script Data
 
         private RunspaceConfigurationEntryCollection<ScriptConfigurationEntry> _scripts;
 
@@ -485,20 +452,14 @@ namespace System.Management.Automation.Runspaces
         /// </remarks>
         public virtual RunspaceConfigurationEntryCollection<ScriptConfigurationEntry> Scripts
         {
-            get
-            {
-                if (_scripts == null)
-                {
-                    _scripts = new RunspaceConfigurationEntryCollection<ScriptConfigurationEntry>();
-                }
-
-                return _scripts;
+            get {
+                return _scripts ?? (_scripts = new RunspaceConfigurationEntryCollection<ScriptConfigurationEntry>());
             }
         }
 
-#endregion
+        #endregion
 
-#region Profile configuration
+        #region Profile configuration
 
         private RunspaceConfigurationEntryCollection<ScriptConfigurationEntry> _initializationScripts;
 
@@ -511,20 +472,15 @@ namespace System.Management.Automation.Runspaces
         /// </remarks>
         public virtual RunspaceConfigurationEntryCollection<ScriptConfigurationEntry> InitializationScripts
         {
-            get
-            {
-                if (_initializationScripts == null)
-                {
-                    _initializationScripts = new RunspaceConfigurationEntryCollection<ScriptConfigurationEntry>();
-                }
-
-                return _initializationScripts;
+            get {
+                return _initializationScripts ??
+                       (_initializationScripts = new RunspaceConfigurationEntryCollection<ScriptConfigurationEntry>());
             }
         }
 
-#endregion
+        #endregion
 
-#region Assemblies
+        #region Assemblies
 
         private RunspaceConfigurationEntryCollection<AssemblyConfigurationEntry> _assemblies;
 
@@ -537,20 +493,15 @@ namespace System.Management.Automation.Runspaces
         /// </remarks>
         public virtual RunspaceConfigurationEntryCollection<AssemblyConfigurationEntry> Assemblies
         {
-            get
-            {
-                if (_assemblies == null)
-                {
-                    _assemblies = new RunspaceConfigurationEntryCollection<AssemblyConfigurationEntry>();
-                }
-
-                return _assemblies;
+            get {
+                return _assemblies ??
+                       (_assemblies = new RunspaceConfigurationEntryCollection<AssemblyConfigurationEntry>());
             }
         }
 
-#endregion
+        #endregion
 
-#region Security Manager
+        #region Security Manager
 
         private AuthorizationManager _authorizationManager = null;
 
@@ -563,20 +514,15 @@ namespace System.Management.Automation.Runspaces
         /// </remarks>
         public virtual AuthorizationManager AuthorizationManager
         {
-            get
-            {
-                if(_authorizationManager == null)
-                {
-                    _authorizationManager = new Microsoft.PowerShell.PSAuthorizationManager(this.ShellId);
-                }
-
-                return _authorizationManager;    
+            get {
+                return _authorizationManager ??
+                       (_authorizationManager = new Microsoft.PowerShell.PSAuthorizationManager(this.ShellId));
             }
         }
 
-#endregion
+        #endregion
 
-#region Configuration Update
+        #region Configuration Update
 
         private PSHost _host = null;
         internal void Bind(ExecutionContext executionContext)
@@ -587,14 +533,14 @@ namespace System.Management.Automation.Runspaces
 
             this.Assemblies.OnUpdate += executionContext.UpdateAssemblyCache;
 
-            runspaceInitTracer.WriteLine("initializing assembly list");
+            s_runspaceInitTracer.WriteLine("initializing assembly list");
             try
             {
                 this.Assemblies.Update(true);
             }
             catch (RuntimeException e)
             {
-                runspaceInitTracer.WriteLine("assembly list initialization failed");
+                s_runspaceInitTracer.WriteLine("assembly list initialization failed");
                 MshLog.LogEngineHealthEvent(
                     executionContext,
                     MshLog.EVENT_ID_CONFIGURATION_FAILURE,
@@ -610,14 +556,14 @@ namespace System.Management.Automation.Runspaces
                 this.Cmdlets.OnUpdate += executionContext.CommandDiscovery.UpdateCmdletCache;
 
                 // Force an update here so that cmdlet cache is updated in engine.
-                runspaceInitTracer.WriteLine("initializing cmdlet list");
+                s_runspaceInitTracer.WriteLine("initializing cmdlet list");
                 try
                 {
                     this.Cmdlets.Update(true);
                 }
                 catch (PSNotSupportedException e)
                 {
-                    runspaceInitTracer.WriteLine("cmdlet list initialization failed");
+                    s_runspaceInitTracer.WriteLine("cmdlet list initialization failed");
                     MshLog.LogEngineHealthEvent(
                         executionContext,
                         MshLog.EVENT_ID_CONFIGURATION_FAILURE,
@@ -631,16 +577,16 @@ namespace System.Management.Automation.Runspaces
             if (executionContext.EngineSessionState != null)
             {
                 this.Providers.OnUpdate += executionContext.EngineSessionState.UpdateProviders;
-                
+
                 // Force an update here so that provider cache is updated in engine.
-                runspaceInitTracer.WriteLine("initializing provider list");
+                s_runspaceInitTracer.WriteLine("initializing provider list");
                 try
                 {
                     this.Providers.Update(true);
                 }
                 catch (PSNotSupportedException e)
                 {
-                    runspaceInitTracer.WriteLine("provider list initialization failed");
+                    s_runspaceInitTracer.WriteLine("provider list initialization failed");
                     MshLog.LogEngineHealthEvent(
                         executionContext,
                         MshLog.EVENT_ID_CONFIGURATION_FAILURE,
@@ -671,7 +617,7 @@ namespace System.Management.Automation.Runspaces
         }
 
         private bool _initialized = false;
-        Object _syncObject = new Object();
+        private Object _syncObject = new Object();
         internal void Initialize(ExecutionContext executionContext)
         {
 #pragma warning disable 56517
@@ -685,14 +631,14 @@ namespace System.Management.Automation.Runspaces
                     this.Types.OnUpdate += this.UpdateTypes;
                     this.Formats.OnUpdate += this.UpdateFormats;
 
-                    runspaceInitTracer.WriteLine("initializing types information");
+                    s_runspaceInitTracer.WriteLine("initializing types information");
                     try
                     {
                         this.UpdateTypes();
                     }
                     catch (RuntimeException e)
                     {
-                        runspaceInitTracer.WriteLine("type information initialization failed");
+                        s_runspaceInitTracer.WriteLine("type information initialization failed");
                         MshLog.LogEngineHealthEvent(
                             executionContext,
                             MshLog.EVENT_ID_CONFIGURATION_FAILURE,
@@ -701,14 +647,14 @@ namespace System.Management.Automation.Runspaces
                         executionContext.ReportEngineStartupError(e.Message);
                     }
 
-                    runspaceInitTracer.WriteLine("initializing format information");
+                    s_runspaceInitTracer.WriteLine("initializing format information");
                     try
                     {
                         this.UpdateFormats(true);
                     }
                     catch (RuntimeException e)
                     {
-                        runspaceInitTracer.WriteLine("format information initialization failed");
+                        s_runspaceInitTracer.WriteLine("format information initialization failed");
                         MshLog.LogEngineHealthEvent(
                             executionContext,
                             MshLog.EVENT_ID_CONFIGURATION_FAILURE,
@@ -728,8 +674,8 @@ namespace System.Management.Automation.Runspaces
             Collection<int> entryIndicesToRemove = new Collection<int>();
             Collection<PSSnapInTypeAndFormatErrors> PSSnapinFiles = FormatAndTypeDataHelper.GetFormatAndTypesErrors(
                     this,
-                    this._host,
-                    this.Types, 
+                    _host,
+                    this.Types,
                     independentErrors,
                     entryIndicesToRemove);
 
@@ -738,10 +684,10 @@ namespace System.Management.Automation.Runspaces
                 RemoveNeedlessEntries(RunspaceConfigurationCategory.Types, entryIndicesToRemove);
             }
 
-            this.TypeTable.Update(PSSnapinFiles, this._authorizationManager, this._host);
+            this.TypeTable.Update(PSSnapinFiles, _authorizationManager, _host);
             FormatAndTypeDataHelper.ThrowExceptionOnError(
-                "ErrorsUpdatingTypes", 
-                independentErrors, 
+                "ErrorsUpdatingTypes",
+                independentErrors,
                 PSSnapinFiles,
                 RunspaceConfigurationCategory.Types);
         }
@@ -757,8 +703,8 @@ namespace System.Management.Automation.Runspaces
             Collection<int> entryIndicesToRemove = new Collection<int>();
             Collection<PSSnapInTypeAndFormatErrors> PSSnapinFiles = FormatAndTypeDataHelper.GetFormatAndTypesErrors(
                 this,
-                this._host,
-                this.Formats, 
+                _host,
+                this.Formats,
                 independentErrors,
                 entryIndicesToRemove);
 
@@ -767,10 +713,10 @@ namespace System.Management.Automation.Runspaces
                 RemoveNeedlessEntries(RunspaceConfigurationCategory.Formats, entryIndicesToRemove);
             }
 
-            this.FormatDBManager.UpdateDataBase(PSSnapinFiles, this.AuthorizationManager, this._host, preValidated);
+            this.FormatDBManager.UpdateDataBase(PSSnapinFiles, this.AuthorizationManager, _host, preValidated);
             FormatAndTypeDataHelper.ThrowExceptionOnError(
-                "ErrorsUpdatingFormats", 
-                independentErrors, 
+                "ErrorsUpdatingFormats",
+                independentErrors,
                 PSSnapinFiles,
                 RunspaceConfigurationCategory.Formats);
         }
@@ -795,11 +741,10 @@ namespace System.Management.Automation.Runspaces
             }
         }
 
-#endregion
+        #endregion
 
         [TraceSource("RunspaceInit", "Initialization code for Runspace")]
-        static private PSTraceSource runspaceInitTracer = PSTraceSource.GetTracer("RunspaceInit", "Initialization code for Runspace", false);
-
+        private static PSTraceSource s_runspaceInitTracer = PSTraceSource.GetTracer("RunspaceInit", "Initialization code for Runspace", false);
     }
 
     /// <summary>
@@ -844,7 +789,7 @@ namespace System.Management.Automation.Runspaces
         /// <summary>
         /// Formats
         /// </summary>
-        Formats, 
+        Formats,
     }
 
 #if V2

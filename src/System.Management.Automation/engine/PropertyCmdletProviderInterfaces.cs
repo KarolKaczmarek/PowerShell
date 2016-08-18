@@ -1,9 +1,9 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
+
 using System.Collections.ObjectModel;
-using Dbg=System.Management.Automation;
+using Dbg = System.Management.Automation;
 
 namespace System.Management.Automation
 {
@@ -45,8 +45,8 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentNullException("cmdlet");
             }
 
-            this.cmdlet = cmdlet;
-            this.sessionState = cmdlet.Context.EngineSessionState;
+            _cmdlet = cmdlet;
+            _sessionState = cmdlet.Context.EngineSessionState;
         } // PropertyCmdletProviderIntrinsics internal
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentNullException("sessionState");
             }
 
-            this.sessionState = sessionState;
+            _sessionState = sessionState;
         } // PropertyCmdletProviderIntrinsics internal
 
         #endregion Constructors
@@ -121,16 +121,16 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         public Collection<PSObject> Get(
-            string path, 
+            string path,
             Collection<string> providerSpecificPickList)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return sessionState.GetProperty(new string[] { path }, providerSpecificPickList, false);
+            return _sessionState.GetProperty(new string[] { path }, providerSpecificPickList, false);
         } // GetProperty
 
         /// <summary>
@@ -186,12 +186,12 @@ namespace System.Management.Automation
             bool literalPath)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return sessionState.GetProperty(path, providerSpecificPickList, literalPath);
+            return _sessionState.GetProperty(path, providerSpecificPickList, literalPath);
         } // GetProperty
 
         /// <summary>
@@ -243,17 +243,17 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         internal void Get(
-            string path, 
+            string path,
             Collection<string> providerSpecificPickList,
             CmdletProviderContext context)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            sessionState.GetProperty(new string[] { path }, providerSpecificPickList, context);
+            _sessionState.GetProperty(new string[] { path }, providerSpecificPickList, context);
         } // GetProperty
 
         /// <summary>
@@ -300,17 +300,17 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         internal object GetPropertyDynamicParameters(
-            string path, 
-            Collection<string> providerSpecificPickList, 
+            string path,
+            Collection<string> providerSpecificPickList,
             CmdletProviderContext context)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return sessionState.GetPropertyDynamicParameters(path, providerSpecificPickList, context);
+            return _sessionState.GetPropertyDynamicParameters(path, providerSpecificPickList, context);
         } // GetPropertyDynamicParameters
 
         #endregion GetProperty
@@ -359,16 +359,16 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         public Collection<PSObject> Set(
-            string path, 
+            string path,
             PSObject propertyValue)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return sessionState.SetProperty(new string[] { path }, propertyValue, false, false);
+            return _sessionState.SetProperty(new string[] { path }, propertyValue, false, false);
         } // SetProperty
 
 
@@ -428,12 +428,12 @@ namespace System.Management.Automation
             bool literalPath)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return sessionState.SetProperty(path, propertyValue, force, literalPath);
+            return _sessionState.SetProperty(path, propertyValue, force, literalPath);
         } // SetProperty
 
 
@@ -483,17 +483,17 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         internal void Set(
-            string path, 
+            string path,
             PSObject propertyValue,
             CmdletProviderContext context)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            sessionState.SetProperty(new string[] { path }, propertyValue, context);
+            _sessionState.SetProperty(new string[] { path }, propertyValue, context);
         } // SetProperty
 
         /// <summary>
@@ -539,19 +539,19 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         internal object SetPropertyDynamicParameters(
-            string path, 
-            PSObject propertyValue, 
+            string path,
+            PSObject propertyValue,
             CmdletProviderContext context)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return sessionState.SetPropertyDynamicParameters(path, propertyValue, context);
+            return _sessionState.SetPropertyDynamicParameters(path, propertyValue, context);
         } // SetPropertyDynamicParameters
-        
+
         #endregion SetProperty
 
         #region ClearProperty
@@ -594,16 +594,16 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         public void Clear(
-            string path, 
+            string path,
             Collection<string> propertyToClear)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            sessionState.ClearProperty(new string[] { path }, propertyToClear, false, false);
+            _sessionState.ClearProperty(new string[] { path }, propertyToClear, false, false);
         } // ClearProperty
 
         /// <summary>
@@ -618,7 +618,7 @@ namespace System.Management.Automation
         /// The properties to clear from the item(s).
         /// </param>
         ///
-         /// <param name="force">
+        /// <param name="force">
         /// Passed on to providers to force operations.
         /// </param>
         /// 
@@ -626,7 +626,7 @@ namespace System.Management.Automation
         /// If true, globbing is not done on paths.
         /// </param>
         /// 
-       /// <exception cref="ArgumentNullException">
+        /// <exception cref="ArgumentNullException">
         /// If <paramref name="path"/> or <paramref name="propertyToClear"/> is null.
         /// </exception>
         /// 
@@ -658,12 +658,12 @@ namespace System.Management.Automation
             bool literalPath)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            sessionState.ClearProperty(path, propertyToClear, force, literalPath);
+            _sessionState.ClearProperty(path, propertyToClear, force, literalPath);
         } // ClearProperty
 
         /// <summary>
@@ -708,17 +708,17 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         internal void Clear(
-            string path, 
+            string path,
             Collection<string> propertyToClear,
             CmdletProviderContext context)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            sessionState.ClearProperty(new string[] { path }, propertyToClear, context);
+            _sessionState.ClearProperty(new string[] { path }, propertyToClear, context);
         } // ClearProperty
 
         /// <summary>
@@ -764,17 +764,17 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         internal object ClearPropertyDynamicParameters(
-            string path, 
-            Collection<string> propertyToClear, 
+            string path,
+            Collection<string> propertyToClear,
             CmdletProviderContext context)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return sessionState.ClearPropertyDynamicParameters(path, propertyToClear, context);
+            return _sessionState.ClearPropertyDynamicParameters(path, propertyToClear, context);
         } // ClearPropertyDynamicParameters
 
         #endregion ClearProperty
@@ -832,18 +832,18 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         public Collection<PSObject> New(
-            string path, 
-            string propertyName, 
-            string propertyTypeName, 
+            string path,
+            string propertyName,
+            string propertyTypeName,
             object value)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return sessionState.NewProperty(new string[] { path }, propertyName, propertyTypeName, value, false, false);
+            return _sessionState.NewProperty(new string[] { path }, propertyName, propertyTypeName, value, false, false);
         } // NewProperty
 
         /// <summary>
@@ -913,12 +913,12 @@ namespace System.Management.Automation
             bool literalPath)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return sessionState.NewProperty(path, propertyName, propertyTypeName, value, force, literalPath);
+            return _sessionState.NewProperty(path, propertyName, propertyTypeName, value, force, literalPath);
         } // NewProperty
 
         /// <summary>
@@ -984,12 +984,12 @@ namespace System.Management.Automation
             CmdletProviderContext context)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            sessionState.NewProperty(new string[] { path }, propertyName, type, value, context);
+            _sessionState.NewProperty(new string[] { path }, propertyName, type, value, context);
         } // NewProperty
 
         /// <summary>
@@ -1043,19 +1043,19 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         internal object NewPropertyDynamicParameters(
-            string path, 
-            string propertyName, 
-            string type, 
-            object value, 
+            string path,
+            string propertyName,
+            string type,
+            object value,
             CmdletProviderContext context)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return sessionState.NewPropertyDynamicParameters(path, propertyName, type, value, context);
+            return _sessionState.NewPropertyDynamicParameters(path, propertyName, type, value, context);
         } // NewPropertyDynamicParameters
 
         #endregion NewProperty
@@ -1102,12 +1102,12 @@ namespace System.Management.Automation
         public void Remove(string path, string propertyName)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            sessionState.RemoveProperty(new string[] { path }, propertyName, false, false);
+            _sessionState.RemoveProperty(new string[] { path }, propertyName, false, false);
         } // RemoveProperty
 
         /// <summary>
@@ -1158,12 +1158,12 @@ namespace System.Management.Automation
         public void Remove(string[] path, string propertyName, bool force, bool literalPath)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            sessionState.RemoveProperty(path, propertyName, force, literalPath);
+            _sessionState.RemoveProperty(path, propertyName, force, literalPath);
         } // RemoveProperty
 
         /// <summary>
@@ -1208,17 +1208,17 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         internal void Remove(
-            string path, 
+            string path,
             string propertyName,
             CmdletProviderContext context)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            sessionState.RemoveProperty(new string[] { path }, propertyName, context);
+            _sessionState.RemoveProperty(new string[] { path }, propertyName, context);
         } // RemoveProperty
 
         /// <summary>
@@ -1264,17 +1264,17 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         internal object RemovePropertyDynamicParameters(
-            string path, 
-            string propertyName, 
+            string path,
+            string propertyName,
             CmdletProviderContext context)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return sessionState.RemovePropertyDynamicParameters(path, propertyName, context);
+            return _sessionState.RemovePropertyDynamicParameters(path, propertyName, context);
         } // RemovePropertyDynamicParameters
 
         #endregion RemoveProperty
@@ -1328,17 +1328,17 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         public Collection<PSObject> Rename(
-            string path, 
-            string sourceProperty, 
+            string path,
+            string sourceProperty,
             string destinationProperty)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return sessionState.RenameProperty(new string[] { path }, sourceProperty, destinationProperty, false, false);
+            return _sessionState.RenameProperty(new string[] { path }, sourceProperty, destinationProperty, false, false);
         } // RenameProperty
 
         /// <summary>
@@ -1403,12 +1403,12 @@ namespace System.Management.Automation
             bool literalPath)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return sessionState.RenameProperty(path, sourceProperty, destinationProperty, force, literalPath);
+            return _sessionState.RenameProperty(path, sourceProperty, destinationProperty, force, literalPath);
         } // RenameProperty
 
         /// <summary>
@@ -1463,18 +1463,18 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         internal void Rename(
-            string path, 
+            string path,
             string sourceProperty,
             string destinationProperty,
             CmdletProviderContext context)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            sessionState.RenameProperty(new string[] { path }, sourceProperty, destinationProperty, context);
+            _sessionState.RenameProperty(new string[] { path }, sourceProperty, destinationProperty, context);
         } // RenameProperty
 
         /// <summary>
@@ -1524,18 +1524,18 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         internal object RenamePropertyDynamicParameters(
-            string path, 
-            string sourceProperty, 
-            string destinationProperty, 
+            string path,
+            string sourceProperty,
+            string destinationProperty,
             CmdletProviderContext context)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return sessionState.RenamePropertyDynamicParameters(path, sourceProperty, destinationProperty, context);
+            return _sessionState.RenamePropertyDynamicParameters(path, sourceProperty, destinationProperty, context);
         } // RenamePropertyDynamicParameters
 
         #endregion RenameProperty
@@ -1595,22 +1595,22 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         public Collection<PSObject> Copy(
-            string sourcePath, 
-            string sourceProperty, 
+            string sourcePath,
+            string sourceProperty,
             string destinationPath,
             string destinationProperty)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return 
-                sessionState.CopyProperty(
+            return
+                _sessionState.CopyProperty(
                     new string[] { sourcePath },
-                    sourceProperty, 
-                    destinationPath, 
+                    sourceProperty,
+                    destinationPath,
                     destinationProperty,
                     false, false);
         } // CopyProperty
@@ -1685,13 +1685,13 @@ namespace System.Management.Automation
             bool literalPath)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
             return
-                sessionState.CopyProperty(
+                _sessionState.CopyProperty(
                     sourcePath,
                     sourceProperty,
                     destinationPath,
@@ -1759,22 +1759,22 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         internal void Copy(
-            string sourcePath, 
-            string sourceProperty, 
+            string sourcePath,
+            string sourceProperty,
             string destinationPath,
             string destinationProperty,
             CmdletProviderContext context)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            sessionState.CopyProperty(
+            _sessionState.CopyProperty(
                 new string[] { sourcePath },
-                sourceProperty, 
-                destinationPath, 
+                sourceProperty,
+                destinationPath,
                 destinationProperty,
                 context);
         } // CopyProperty
@@ -1831,19 +1831,19 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         internal object CopyPropertyDynamicParameters(
-            string path, 
-            string sourceProperty, 
-            string destinationPath, 
-            string destinationProperty, 
+            string path,
+            string sourceProperty,
+            string destinationPath,
+            string destinationProperty,
             CmdletProviderContext context)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return sessionState.CopyPropertyDynamicParameters(path, sourceProperty, destinationPath, destinationProperty, context);
+            return _sessionState.CopyPropertyDynamicParameters(path, sourceProperty, destinationPath, destinationProperty, context);
         } // CopyPropertyDynamicParameters
 
         #endregion CopyProperty
@@ -1907,22 +1907,22 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         public Collection<PSObject> Move(
-            string sourcePath, 
-            string sourceProperty, 
+            string sourcePath,
+            string sourceProperty,
             string destinationPath,
             string destinationProperty)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return 
-                sessionState.MoveProperty(
-                    new string[] { sourcePath }, 
-                    sourceProperty, 
-                    destinationPath, 
+            return
+                _sessionState.MoveProperty(
+                    new string[] { sourcePath },
+                    sourceProperty,
+                    destinationPath,
                     destinationProperty,
                     false,
                     false);
@@ -2002,13 +2002,13 @@ namespace System.Management.Automation
             bool literalPath)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
             return
-                sessionState.MoveProperty(
+                _sessionState.MoveProperty(
                     sourcePath,
                     sourceProperty,
                     destinationPath,
@@ -2080,22 +2080,22 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         internal void Move(
-            string sourcePath, 
-            string sourceProperty, 
+            string sourcePath,
+            string sourceProperty,
             string destinationPath,
             string destinationProperty,
             CmdletProviderContext context)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            sessionState.MoveProperty(
+            _sessionState.MoveProperty(
                 new string[] { sourcePath },
-                sourceProperty, 
-                destinationPath, 
+                sourceProperty,
+                destinationPath,
                 destinationProperty,
                 context);
         } // MoveProperty
@@ -2152,19 +2152,19 @@ namespace System.Management.Automation
         /// If the provider threw an exception.
         /// </exception>
         internal object MovePropertyDynamicParameters(
-            string path, 
-            string sourceProperty, 
-            string destinationPath, 
-            string destinationProperty, 
+            string path,
+            string sourceProperty,
+            string destinationPath,
+            string destinationProperty,
             CmdletProviderContext context)
         {
             Dbg.Diagnostics.Assert(
-                sessionState != null,
+                _sessionState != null,
                 "The only constructor for this class should always set the sessionState field");
 
             // Parameter validation is done in the session state object
 
-            return sessionState.MovePropertyDynamicParameters(path, sourceProperty, destinationPath, destinationProperty, context);
+            return _sessionState.MovePropertyDynamicParameters(path, sourceProperty, destinationPath, destinationProperty, context);
         } // MovePropertyDynamicParameters
 
         #endregion MoveProperty
@@ -2173,8 +2173,8 @@ namespace System.Management.Automation
 
         #region private data
 
-        private Cmdlet cmdlet;
-        private SessionStateInternal sessionState;
+        private Cmdlet _cmdlet;
+        private SessionStateInternal _sessionState;
 
         #endregion private data
     } // PropertyCmdletProviderIntrinsics

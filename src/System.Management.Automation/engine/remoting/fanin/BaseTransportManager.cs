@@ -7,17 +7,13 @@
  * 
  */
 
-using System;
 using System.Management.Automation.Tracing;
 using System.Text;
 using System.IO;
 using System.Xml;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Threading;
-using System.Runtime.InteropServices;
-using System.Diagnostics.CodeAnalysis;
 using System.Management.Automation.Internal;
 #if !CORECLR
 using System.Security.Principal;
@@ -25,14 +21,10 @@ using System.Security.Principal;
 
 // Don't expose the System.Management.Automation namespace here. This is transport layer
 // and it shouldn't know anything about the engine.
-using System.Management.Automation.Remoting;
 using System.Management.Automation.Remoting.Client;
 // TODO: this seems ugly...Remoting datatypes should be in remoting namespace
 using System.Management.Automation.Runspaces.Internal;
 using PSRemotingCryptoHelper = System.Management.Automation.Internal.PSRemotingCryptoHelper;
-using PowerShell = System.Management.Automation.PowerShell;
-using RunspacePool = System.Management.Automation.Runspaces.RunspacePool;
-using Runspace = System.Management.Automation.Runspaces.Runspace;
 using RunspaceConnectionInfo = System.Management.Automation.Runspaces.RunspaceConnectionInfo;
 using TypeTable = System.Management.Automation.Runspaces.TypeTable;
 using Dbg = System.Management.Automation.Diagnostics;
@@ -63,9 +55,6 @@ namespace System.Management.Automation.Remoting
     /// </summary>
     internal class TransportErrorOccuredEventArgs : EventArgs
     {
-        private PSRemotingTransportException exception;
-        private TransportMethodEnum method;
-
         /// <summary>
         /// Constructor
         /// </summary>
@@ -78,23 +67,19 @@ namespace System.Management.Automation.Remoting
         internal TransportErrorOccuredEventArgs(PSRemotingTransportException e,
             TransportMethodEnum m)
         {
-            exception = e;
-            method = m;
+            Exception = e;
+            ReportingTransportMethod = m;
         }
 
         /// <summary>
         /// Gets the error occurred.
         /// </summary>
-        internal PSRemotingTransportException Exception
-        {
-            get { return exception; }
-            set { exception = value; }
-        }
+        internal PSRemotingTransportException Exception { get; set; }
 
         /// <summary>
         /// Transport method that is reporting this error.
         /// </summary>
-        internal TransportMethodEnum ReportingTransportMethod { get { return method; } }
+        internal TransportMethodEnum ReportingTransportMethod { get; }
     }
 
     #endregion
@@ -119,17 +104,12 @@ namespace System.Management.Automation.Remoting
     /// </summary>
     internal class ConnectionStatusEventArgs : EventArgs
     {
-        private ConnectionStatus _notification;
-
         internal ConnectionStatusEventArgs(ConnectionStatus notification)
         {
-            _notification = notification;
+            Notification = notification;
         }
 
-        internal ConnectionStatus Notification
-        {
-            get { return _notification; }
-        }
+        internal ConnectionStatus Notification { get; }
     }
 
     #endregion
@@ -141,16 +121,12 @@ namespace System.Management.Automation.Remoting
     /// </summary>
     internal class CreateCompleteEventArgs : EventArgs
     {
-        readonly private RunspaceConnectionInfo _connectionInfo;
-        internal RunspaceConnectionInfo ConnectionInfo
-        {
-            get { return _connectionInfo; }
-        }
+        internal RunspaceConnectionInfo ConnectionInfo { get; }
 
         internal CreateCompleteEventArgs(
             RunspaceConnectionInfo connectionInfo)
         {
-            _connectionInfo = connectionInfo;
+            ConnectionInfo = connectionInfo;
         }
     }
 
@@ -165,7 +141,7 @@ namespace System.Management.Automation.Remoting
         #region tracer
 
         [TraceSourceAttribute("Transport", "Traces BaseWSManTransportManager")]
-        static private PSTraceSource baseTracer = PSTraceSource.GetTracer("Transport", "Traces BaseWSManTransportManager");
+        private static PSTraceSource s_baseTracer = PSTraceSource.GetTracer("Transport", "Traces BaseWSManTransportManager");
 
         #endregion
 
@@ -202,13 +178,10 @@ namespace System.Management.Automation.Remoting
         #region Private Data
 
         // fragmentor used to fragment & defragment objects added to this collection.
-        private Fragmentor fragmentor;
-        private PriorityReceiveDataCollection recvdData;// callbacks
-        private ReceiveDataCollection.OnDataAvailableCallback onDataAvailableCallback;
+        private ReceiveDataCollection.OnDataAvailableCallback _onDataAvailableCallback;
 
         // crypto helper used for encrypting/decrypting
         // secure string
-        private PSRemotingCryptoHelper cryptoHelper;
 
         #endregion
 
@@ -235,24 +208,20 @@ namespace System.Management.Automation.Remoting
 
         protected BaseTransportManager(PSRemotingCryptoHelper cryptoHelper)
         {
-            this.cryptoHelper = cryptoHelper;
+            CryptoHelper = cryptoHelper;
             // create a common fragmentor used by this transport manager to send and receive data.
             // so type information is serialized only the first time an object of a particular type
             // is sent. only data is serialized for the rest of the objects of the same type.
-            fragmentor = new Fragmentor(DefaultFragmentSize, cryptoHelper);
-            recvdData = new PriorityReceiveDataCollection(fragmentor, (this is BaseClientTransportManager));
-            onDataAvailableCallback = new ReceiveDataCollection.OnDataAvailableCallback(OnDataAvailableCallback);
+            Fragmentor = new Fragmentor(DefaultFragmentSize, cryptoHelper);
+            ReceivedDataCollection = new PriorityReceiveDataCollection(Fragmentor, (this is BaseClientTransportManager));
+            _onDataAvailableCallback = new ReceiveDataCollection.OnDataAvailableCallback(OnDataAvailableCallback);
         }
 
         #endregion
 
         #region Helper Methods
 
-        internal Fragmentor Fragmentor
-        {
-            get { return fragmentor; }
-            set { fragmentor = value; }
-        }
+        internal Fragmentor Fragmentor { get; set; }
 
         /// <summary>
         /// This is needed to deserialize objects coming from the network. 
@@ -264,10 +233,10 @@ namespace System.Management.Automation.Remoting
         /// </summary>
         internal TypeTable TypeTable
         {
-            get { return fragmentor.TypeTable; }
-            set { fragmentor.TypeTable = value; }
+            get { return Fragmentor.TypeTable; }
+            set { Fragmentor.TypeTable = value; }
         }
-        
+
         /// <summary>
         /// Uses the "OnDataAvailableCallback" to handle Deserialized objects
         /// </summary>
@@ -281,7 +250,7 @@ namespace System.Management.Automation.Remoting
         {
             try
             {
-                ProcessRawData(data, stream, onDataAvailableCallback);
+                ProcessRawData(data, stream, _onDataAvailableCallback);
             }
             catch (Exception exception)
             {
@@ -289,7 +258,7 @@ namespace System.Management.Automation.Remoting
                 // so we need to protect that thread, hence catching
                 // all exceptions
                 CommandProcessorBase.CheckForSevereException(exception);
-                baseTracer.WriteLine("Exception processing data. {0}", exception.Message);
+                s_baseTracer.WriteLine("Exception processing data. {0}", exception.Message);
 
                 PSRemotingTransportException e = new PSRemotingTransportException(exception.Message, exception);
                 TransportErrorOccuredEventArgs eventargs =
@@ -321,7 +290,7 @@ namespace System.Management.Automation.Remoting
         {
             Dbg.Assert(null != data, "Cannot process null data");
 
-            baseTracer.WriteLine("Processing incoming data for stream {0}.", stream);
+            s_baseTracer.WriteLine("Processing incoming data for stream {0}.", stream);
 
             bool shouldProcess = false;
 
@@ -345,10 +314,10 @@ namespace System.Management.Automation.Remoting
                     WSManNativeApi.WSMAN_STREAM_ID_STDIN,
                     WSManNativeApi.WSMAN_STREAM_ID_STDOUT,
                     WSManNativeApi.WSMAN_STREAM_ID_PROMPTRESPONSE));
-                baseTracer.WriteLine("{0} is not a valid stream", stream);
+                s_baseTracer.WriteLine("{0} is not a valid stream", stream);
             }
             // process data
-            recvdData.ProcessRawData(data, dataPriority, dataAvailableCallback);
+            ReceivedDataCollection.ProcessRawData(data, dataPriority, dataAvailableCallback);
         }
 
         /// <summary>
@@ -403,25 +372,12 @@ namespace System.Management.Automation.Remoting
         /// Crypto handler to be used for encrypting/decrypting
         /// secure strings
         /// </summary>
-        internal PSRemotingCryptoHelper CryptoHelper
-        {
-            get
-            {
-                return cryptoHelper;
-            }
-            set
-            {
-                cryptoHelper = value;
-            }
-        }
+        internal PSRemotingCryptoHelper CryptoHelper { get; set; }
 
         /// <summary>
         /// A data buffer used to store data received from remote machine.
         /// </summary>
-        internal PriorityReceiveDataCollection ReceivedDataCollection
-        {
-            get { return recvdData; }
-        }
+        internal PriorityReceiveDataCollection ReceivedDataCollection { get; }
 
         #endregion
 
@@ -443,7 +399,7 @@ namespace System.Management.Automation.Remoting
         {
             if (isDisposing)
             {
-                recvdData.Dispose();
+                ReceivedDataCollection.Dispose();
             }
         }
 
@@ -457,7 +413,7 @@ namespace System.Management.Automation.Remoting.Client
     {
         #region Tracer
         [TraceSourceAttribute("ClientTransport", "Traces ClientTransportManager")]
-        static protected PSTraceSource tracer = PSTraceSource.GetTracer("ClientTransport", "Traces ClientTransportManager");
+        protected static PSTraceSource tracer = PSTraceSource.GetTracer("ClientTransport", "Traces ClientTransportManager");
         #endregion
 
         #region Data
@@ -466,14 +422,13 @@ namespace System.Management.Automation.Remoting.Client
         protected object syncObject = new object();
         protected PrioritySendDataCollection dataToBeSent;
         // used to handle callbacks from the server..these are used to synchronize received callbacks
-        private Queue<CallbackNotificationInformation> callbackNotificationQueue;
-        private ReceiveDataCollection.OnDataAvailableCallback onDataAvailableCallback;
-        private bool isServicingCallbacks;
-        private bool suspendQueueServicing;
-        private bool isDebuggerSuspend;
+        private Queue<CallbackNotificationInformation> _callbackNotificationQueue;
+        private ReceiveDataCollection.OnDataAvailableCallback _onDataAvailableCallback;
+        private bool _isServicingCallbacks;
+        private bool _suspendQueueServicing;
+        private bool _isDebuggerSuspend;
 
         // this is used log crimson messages.
-        private Guid runspacePoolInstanceId;
 
         //keeps track of whether a receive request has been placed on transport
         protected bool receiveDataInitiated;
@@ -485,10 +440,10 @@ namespace System.Management.Automation.Remoting.Client
         protected BaseClientTransportManager(Guid runspaceId, PSRemotingCryptoHelper cryptoHelper)
             : base(cryptoHelper)
         {
-            runspacePoolInstanceId = runspaceId;
+            RunspacePoolInstanceId = runspaceId;
             dataToBeSent = new PrioritySendDataCollection();
-            onDataAvailableCallback = new ReceiveDataCollection.OnDataAvailableCallback(OnDataAvailableHandler);
-            callbackNotificationQueue = new Queue<CallbackNotificationInformation>();
+            _onDataAvailableCallback = new ReceiveDataCollection.OnDataAvailableCallback(OnDataAvailableHandler);
+            _callbackNotificationQueue = new Queue<CallbackNotificationInformation>();
         }
 
         #endregion
@@ -580,10 +535,7 @@ namespace System.Management.Automation.Remoting.Client
         /// <summary>
         /// Used to log crimson messages
         /// </summary>
-        internal Guid RunspacePoolInstanceId
-        {
-            get { return runspacePoolInstanceId; }
-        }
+        internal Guid RunspacePoolInstanceId { get; }
 
         /// <summary>
         /// Raise the Connect completed handler
@@ -606,7 +558,7 @@ namespace System.Management.Automation.Remoting.Client
         internal void RaiseReconnectCompleted()
         {
             ReconnectCompleted.SafeInvoke(this, EventArgs.Empty);
-        }        
+        }
 
         /// <summary>
         /// Raise the close completed handler
@@ -690,7 +642,7 @@ namespace System.Management.Automation.Remoting.Client
 
             try
             {
-                base.ProcessRawData(data, stream, onDataAvailableCallback);
+                base.ProcessRawData(data, stream, _onDataAvailableCallback);
             }
             catch (PSRemotingTransportException pte)
             {
@@ -748,7 +700,7 @@ namespace System.Management.Automation.Remoting.Client
                 return;
             }
 
-            lock (callbackNotificationQueue)
+            lock (_callbackNotificationQueue)
             {
                 if ((null != remoteObject) || (null != transportErrorArgs) || (null != privateData))
                 {
@@ -765,26 +717,26 @@ namespace System.Management.Automation.Remoting.Client
                     }
                     else
                     {
-                        callbackNotificationQueue.Enqueue(rcvdDataInfo);
+                        _callbackNotificationQueue.Enqueue(rcvdDataInfo);
                     }
                 }
 
-                if (suspendQueueServicing && isDebuggerSuspend)
+                if (_suspendQueueServicing && _isDebuggerSuspend)
                 {
                     // Remove debugger queue suspension if remoteObject requires user response.
-                    suspendQueueServicing = !CheckForInteractiveHostCall(remoteObject);
+                    _suspendQueueServicing = !CheckForInteractiveHostCall(remoteObject);
                 }
 
-                if (isServicingCallbacks || suspendQueueServicing)
+                if (_isServicingCallbacks || _suspendQueueServicing)
                 {
                     // a thread pool thread is already processing callbacks or
                     // the queue processing is suspended.
                     return;
                 }
 
-                if (callbackNotificationQueue.Count > 0)
+                if (_callbackNotificationQueue.Count > 0)
                 {
-                    isServicingCallbacks = true;
+                    _isServicingCallbacks = true;
 
                     // Start a thread pool thread to process callbacks.
 #if !CORECLR
@@ -850,7 +802,7 @@ namespace System.Management.Automation.Remoting.Client
         internal void ServicePendingCallbacks(object objectToProcess)
         {
             tracer.WriteLine("ServicePendingCallbacks thread is starting");
-            PSEtwLog.ReplaceActivityIdForCurrentThread(runspacePoolInstanceId,
+            PSEtwLog.ReplaceActivityIdForCurrentThread(RunspacePoolInstanceId,
                 PSEventId.OperationalTransferEventRunspacePool,
                 PSEventId.AnalyticTransferEventRunspacePool,
                 PSKeyword.Transport,
@@ -867,16 +819,16 @@ namespace System.Management.Automation.Remoting.Client
                     }
 
                     CallbackNotificationInformation rcvdDataInfo = null;
-                    lock (callbackNotificationQueue)
+                    lock (_callbackNotificationQueue)
                     {
                         // If queue is empty or if queue servicing is suspended 
                         // then break out of loop.
-                        if (callbackNotificationQueue.Count <= 0 || suspendQueueServicing)
+                        if (_callbackNotificationQueue.Count <= 0 || _suspendQueueServicing)
                         {
                             break;
                         }
 
-                        rcvdDataInfo = callbackNotificationQueue.Dequeue();
+                        rcvdDataInfo = _callbackNotificationQueue.Dequeue();
                     }
                     // Handle callback.
                     if (null != rcvdDataInfo)
@@ -914,10 +866,10 @@ namespace System.Management.Automation.Remoting.Client
             }
             finally
             {
-                lock (callbackNotificationQueue)
+                lock (_callbackNotificationQueue)
                 {
                     tracer.WriteLine("ServicePendingCallbacks thread is exiting");
-                    isServicingCallbacks = false;
+                    _isServicingCallbacks = false;
                     // check if any new runspace request has arrived..
                     EnqueueAndStartProcessingThread(null, null, null);
                 }
@@ -928,31 +880,31 @@ namespace System.Management.Automation.Remoting.Client
         {
             get
             {
-                lock (callbackNotificationQueue)
+                lock (_callbackNotificationQueue)
                 {
-                    return isServicingCallbacks;
+                    return _isServicingCallbacks;
                 }
             }
         }
 
         internal void SuspendQueue(bool debuggerSuspend = false)
         {
-            lock (callbackNotificationQueue)
+            lock (_callbackNotificationQueue)
             {
-                isDebuggerSuspend = debuggerSuspend;
-                suspendQueueServicing = true;
+                _isDebuggerSuspend = debuggerSuspend;
+                _suspendQueueServicing = true;
             }
         }
 
         internal void ResumeQueue()
         {
-            lock (callbackNotificationQueue)
+            lock (_callbackNotificationQueue)
             {
-                isDebuggerSuspend = false;
+                _isDebuggerSuspend = false;
 
-                if (suspendQueueServicing)
+                if (_suspendQueueServicing)
                 {
-                    suspendQueueServicing = false;
+                    _suspendQueueServicing = false;
 
                     // Process any items in queue.
                     EnqueueAndStartProcessingThread(null, null, null);
@@ -1024,7 +976,7 @@ namespace System.Management.Automation.Remoting.Client
         #endregion
 
         #region Clean up
-        
+
         /// <summary>
         /// Finalizer
         /// </summary>
@@ -1035,9 +987,9 @@ namespace System.Management.Automation.Remoting.Client
                 Dispose(false);
             }
             else
-            {                
+            {
                 // wait for the close to be completed and then release the resources.
-                this.CloseCompleted += delegate(object source, EventArgs args)
+                this.CloseCompleted += delegate (object source, EventArgs args)
                 {
                     Dispose(false);
                 };
@@ -1065,7 +1017,7 @@ namespace System.Management.Automation.Remoting.Client
             this.ReconnectCompleted = null;
 
             // let base dispose its resources.
-            base.Dispose(isDisposing);         
+            base.Dispose(isDisposing);
         }
 
         #endregion
@@ -1076,7 +1028,7 @@ namespace System.Management.Automation.Remoting.Client
         #region Constructors
 
         protected BaseClientSessionTransportManager(Guid runspaceId, PSRemotingCryptoHelper cryptoHelper)
-            :base(runspaceId, cryptoHelper)
+            : base(runspaceId, cryptoHelper)
         {
         }
 
@@ -1159,7 +1111,7 @@ namespace System.Management.Automation.Remoting.Client
     internal abstract class BaseClientCommandTransportManager : BaseClientTransportManager, IDisposable
     {
         #region Private / Protected Data
-        
+
         // pipeline in the form cmd1 | cmd2.. this is used by authz module for early validation.
         protected StringBuilder cmdText;
         protected SerializedDataStream serializedPipeline;
@@ -1177,7 +1129,7 @@ namespace System.Management.Automation.Remoting.Client
         #region Constructors
 
         protected BaseClientCommandTransportManager(ClientRemotePowerShell shell,
-            PSRemotingCryptoHelper cryptoHelper, 
+            PSRemotingCryptoHelper cryptoHelper,
             BaseClientSessionTransportManager sessnTM) : base(sessnTM.RunspacePoolInstanceId, cryptoHelper)
         {
             Fragmentor.FragmentSize = sessnTM.Fragmentor.FragmentSize;
@@ -1185,7 +1137,7 @@ namespace System.Management.Automation.Remoting.Client
             dataToBeSent.Fragmentor = base.Fragmentor;
             // used for Crimson logging.
             powershellInstanceId = shell.PowerShell.InstanceId;
-            
+
             cmdText = new StringBuilder();
             foreach (System.Management.Automation.Runspaces.Command cmd in shell.PowerShell.Commands.Commands)
             {
@@ -1237,7 +1189,7 @@ namespace System.Management.Automation.Remoting.Client
         #endregion
 
         #region Abstract / Virtual Methods
-        
+
         /// <summary>
         /// Reconnects a previously disconnected commandTM. Implemented by WSMan transport
         /// Note that there is not explicit disconnect on commandTM. It is implicity disconnected
@@ -1248,7 +1200,7 @@ namespace System.Management.Automation.Remoting.Client
         {
             throw new NotImplementedException();
         }
-        
+
         /// <summary>
         /// Used by powershell/pipeline to send a stop message to the server command
         /// </summary>
@@ -1271,19 +1223,19 @@ namespace System.Management.Automation.Remoting.Server
     {
         #region Private Data
 
-        private object syncObject = new object();
+        private object _syncObject = new object();
         // used to listen to data available events from serialized datastream.
-        private SerializedDataStream.OnDataAvailableCallback onDataAvailable;
+        private SerializedDataStream.OnDataAvailableCallback _onDataAvailable;
         // the following variable are used by onDataAvailableCallback.
-        private bool shouldFlushData;
-        private bool reportAsPending;
-        private Guid runpacePoolInstanceId;
-        private Guid powerShellInstanceId;
-        private RemotingDataType dataType;
-        private RemotingTargetInterface targetInterface;
+        private bool _shouldFlushData;
+        private bool _reportAsPending;
+        private Guid _runpacePoolInstanceId;
+        private Guid _powerShellInstanceId;
+        private RemotingDataType _dataType;
+        private RemotingTargetInterface _targetInterface;
         // End: the following variable are used by onDataAvailableCallback.
-        private Queue<Tuple<RemoteDataObject, bool, bool>> dataToBeSentQueue;
-        private bool isSerializing;
+        private Queue<Tuple<RemoteDataObject, bool, bool>> _dataToBeSentQueue;
+        private bool _isSerializing;
         #endregion
 
         #region Constructor
@@ -1292,7 +1244,7 @@ namespace System.Management.Automation.Remoting.Server
             : base(cryptoHelper)
         {
             base.Fragmentor.FragmentSize = fragmentSize;
-            onDataAvailable = new SerializedDataStream.OnDataAvailableCallback(OnDataAvailable);
+            _onDataAvailable = new SerializedDataStream.OnDataAvailableCallback(OnDataAvailable);
         }
 
         #endregion
@@ -1316,7 +1268,7 @@ namespace System.Management.Automation.Remoting.Server
         {
             // make sure only one data packet can be sent in its entirity at any 
             // given point of time using this transport manager.
-            lock (syncObject)
+            lock (_syncObject)
             {
                 // Win8: 491001 Icm -computername $env:COMPUTERNAME {Get-NetIpInterface} fails with Unexpected ObjectId
                 // This is because the output object has some extentded script properties. Getter of one of the
@@ -1344,40 +1296,39 @@ namespace System.Management.Automation.Remoting.Server
                 RemoteDataObject dataToBeSent = RemoteDataObject.CreateFrom(data.Destination, data.DataType,
                                                                             data.RunspacePoolId, data.PowerShellId,
                                                                             data.Data);
-                if (isSerializing)
+                if (_isSerializing)
                 {
-                    if (dataToBeSentQueue == null)
+                    if (_dataToBeSentQueue == null)
                     {
-                        dataToBeSentQueue = new Queue<Tuple<RemoteDataObject, bool, bool>>();
+                        _dataToBeSentQueue = new Queue<Tuple<RemoteDataObject, bool, bool>>();
                     }
 
-                    dataToBeSentQueue.Enqueue(new Tuple<RemoteDataObject, bool, bool>(dataToBeSent, flush, reportPending));
+                    _dataToBeSentQueue.Enqueue(new Tuple<RemoteDataObject, bool, bool>(dataToBeSent, flush, reportPending));
                     return;
                 }
 
-                isSerializing = true;
+                _isSerializing = true;
                 try
                 {
-
                     do
                     {
                         // tell stream to notify us whenever a fragment is available instead of writing data
                         // into internal buffers. This will save write + read + dispose.)
                         using (SerializedDataStream serializedData =
-                            new SerializedDataStream(Fragmentor.FragmentSize, onDataAvailable))
+                            new SerializedDataStream(Fragmentor.FragmentSize, _onDataAvailable))
                         {
-                            shouldFlushData = flush;
-                            reportAsPending = reportPending;
-                            runpacePoolInstanceId = dataToBeSent.RunspacePoolId;
-                            powerShellInstanceId = dataToBeSent.PowerShellId;
-                            dataType = dataToBeSent.DataType;
-                            targetInterface = dataToBeSent.TargetInterface;
+                            _shouldFlushData = flush;
+                            _reportAsPending = reportPending;
+                            _runpacePoolInstanceId = dataToBeSent.RunspacePoolId;
+                            _powerShellInstanceId = dataToBeSent.PowerShellId;
+                            _dataType = dataToBeSent.DataType;
+                            _targetInterface = dataToBeSent.TargetInterface;
                             Fragmentor.Fragment<object>(dataToBeSent, serializedData);
                         }
 
-                        if ((dataToBeSentQueue != null) && (dataToBeSentQueue.Count > 0))
+                        if ((_dataToBeSentQueue != null) && (_dataToBeSentQueue.Count > 0))
                         {
-                            Tuple<RemoteDataObject, bool, bool> dataToBeSentQueueItem =  dataToBeSentQueue.Dequeue();
+                            Tuple<RemoteDataObject, bool, bool> dataToBeSentQueueItem = _dataToBeSentQueue.Dequeue();
                             dataToBeSent = dataToBeSentQueueItem.Item1;
                             flush = dataToBeSentQueueItem.Item2;
                             reportPending = dataToBeSentQueueItem.Item3;
@@ -1386,12 +1337,11 @@ namespace System.Management.Automation.Remoting.Server
                         {
                             dataToBeSent = null;
                         }
-
                     } while (dataToBeSent != null);
                 }
                 finally
                 {
-                    isSerializing = false;
+                    _isSerializing = false;
                 }
             }
         }
@@ -1402,13 +1352,13 @@ namespace System.Management.Automation.Remoting.Server
             // log to crimson log.
             PSEtwLog.LogAnalyticInformational(PSEventId.ServerSendData, PSOpcode.Send, PSTask.None,
                 PSKeyword.Transport | PSKeyword.UseAlwaysAnalytic,
-                runpacePoolInstanceId.ToString(),
-                powerShellInstanceId.ToString(),
+                _runpacePoolInstanceId.ToString(),
+                _powerShellInstanceId.ToString(),
                 dataToSend.Length.ToString(CultureInfo.InvariantCulture),
-                (UInt32)dataType,
-                (UInt32)targetInterface);
+                (UInt32)_dataType,
+                (UInt32)_targetInterface);
 
-            SendDataToClient(dataToSend, (isEndFragment & shouldFlushData) ? true : false, reportAsPending, isEndFragment);
+            SendDataToClient(dataToSend, (isEndFragment & _shouldFlushData) ? true : false, _reportAsPending, isEndFragment);
         }
 
         /// <summary>
@@ -1447,7 +1397,7 @@ namespace System.Management.Automation.Remoting.Server
             // Use thread-pool thread to raise the error handler..see explanation
             // in the method summary
             ThreadPool.QueueUserWorkItem(new WaitCallback(
-                delegate(object state)
+                delegate (object state)
                 {
                     TransportErrorOccuredEventArgs eventArgs = new TransportErrorOccuredEventArgs(e,
                         TransportMethodEnum.Unknown);

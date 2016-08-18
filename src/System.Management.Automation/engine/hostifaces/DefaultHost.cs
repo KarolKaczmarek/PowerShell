@@ -4,24 +4,18 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 
 using System;
 using System.Globalization;
-using System.Diagnostics;
 using System.Management.Automation;
 using System.Management.Automation.Host;
-using System.Reflection;
-
 using Dbg = System.Diagnostics;
 
 namespace Microsoft.PowerShell
 {
-
     /// <summary>
     /// This is the default host implementing PSHost offering minimal host capabilities.
     /// Runspace is the primary user of this class.
     /// </summary>
 
-    internal class DefaultHost
-        :
-        PSHost
+    internal class DefaultHost : PSHost
     {
         #region ctor
 
@@ -34,123 +28,38 @@ namespace Microsoft.PowerShell
 
         internal DefaultHost(CultureInfo currentCulture, CultureInfo currentUICulture)
         {
-            this.currentCulture = currentCulture;
-            this.currentUICulture = currentUICulture;
+            CurrentCulture = currentCulture;
+            CurrentUICulture = currentUICulture;
         }
 
         #endregion ctor
 
         #region properties
 
-        /// <summary>
-        /// 
-        /// See base class
-        /// 
-        /// </summary>
-        /// <value></value>
-        /// <exception/>
+        /// <summary>See base class</summary>
+        public override string Name { get { return "Default Host"; } }
 
-        public override
-        string
-        Name
-        {
-            get
-            {
-                return "Default Host";
-            }
-        }
+        /// <summary>See base class</summary>
+        public override Version Version { get; } = PSVersionInfo.PSVersion;
+
+        /// <summary>See base class</summary>
+        public override Guid InstanceId { get; } = Guid.NewGuid();
 
         /// <summary>
-        /// 
-        /// See base class
-        /// 
-        /// </summary>
-        /// <value></value>
-        /// <exception/>
-
-        public override
-        System.Version
-        Version
-        {
-            get
-            {
-                return ver;
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// See base class
-        /// 
-        /// </summary>
-        /// <value></value>
-        /// <exception/>
-
-        public override
-        System.Guid
-        InstanceId
-        {
-            get
-            {
-                return id;
-            }
-        }
-
-        
-        /// <summary>
-        /// 
         /// See base class
         /// This property is not supported
-        /// 
         /// </summary>
-        /// <value></value>
-        /// <exception/>
-
-        public override
-        PSHostUserInterface
-        UI
-        {
-            get
-            {
-                return null;
-            }
-        }
+        public override PSHostUserInterface UI { get { return null; } }
 
         /// <summary>
-        /// 
         /// See base class
-        /// 
         /// </summary>
-        /// <value></value>
-        /// <exception/>
-
-        public override
-        CultureInfo
-        CurrentCulture
-        {
-            get
-            {
-                return currentCulture;
-            }
-        }
+        public override CultureInfo CurrentCulture { get; } = null;
 
         /// <summary>
-        /// 
         /// See base class
-        /// 
         /// </summary>
-        /// <value></value>
-        /// <exception/>
-
-        public override
-        CultureInfo
-        CurrentUICulture
-        {
-            get
-            {
-                return currentUICulture;
-            }
-        }
+        public override CultureInfo CurrentUICulture { get; } = null;
 
         #endregion properties
 
@@ -242,14 +151,7 @@ namespace Microsoft.PowerShell
 
         #region private fields
 
-        private CultureInfo currentCulture = null;
-        private CultureInfo currentUICulture = null;
-        private Guid id = Guid.NewGuid();
-        private Version ver = PSVersionInfo.PSVersion;
-
         #endregion private fields
-
     }
-
 }
 

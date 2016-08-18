@@ -27,7 +27,7 @@ namespace System.Management.Automation
     /// Command Help information are stored in 'help.xml' files. Location of these files
     /// can be found from through the engine execution context.
     /// </remarks>
-    internal class CommandHelpProvider: HelpProviderWithCache
+    internal class CommandHelpProvider : HelpProviderWithCache
     {
         /// <summary>
         /// Constructor for CommandHelpProvider
@@ -42,16 +42,16 @@ namespace System.Management.Automation
         /// </summary>
         static CommandHelpProvider()
         {
-            engineModuleHelpFileCache.Add("Microsoft.PowerShell.Diagnostics", "Microsoft.PowerShell.Commands.Diagnostics.dll-Help.xml");
-            engineModuleHelpFileCache.Add("Microsoft.PowerShell.Core", "System.Management.Automation.dll-Help.xml");
-            engineModuleHelpFileCache.Add("Microsoft.PowerShell.Utility", "Microsoft.PowerShell.Commands.Utility.dll-Help.xml");
-            engineModuleHelpFileCache.Add("Microsoft.PowerShell.Host", "Microsoft.PowerShell.ConsoleHost.dll-Help.xml");
-            engineModuleHelpFileCache.Add("Microsoft.PowerShell.Management", "Microsoft.PowerShell.Commands.Management.dll-Help.xml");
-            engineModuleHelpFileCache.Add("Microsoft.PowerShell.Security", "Microsoft.PowerShell.Security.dll-Help.xml");
-            engineModuleHelpFileCache.Add("Microsoft.WSMan.Management", "Microsoft.Wsman.Management.dll-Help.xml");
+            s_engineModuleHelpFileCache.Add("Microsoft.PowerShell.Diagnostics", "Microsoft.PowerShell.Commands.Diagnostics.dll-Help.xml");
+            s_engineModuleHelpFileCache.Add("Microsoft.PowerShell.Core", "System.Management.Automation.dll-Help.xml");
+            s_engineModuleHelpFileCache.Add("Microsoft.PowerShell.Utility", "Microsoft.PowerShell.Commands.Utility.dll-Help.xml");
+            s_engineModuleHelpFileCache.Add("Microsoft.PowerShell.Host", "Microsoft.PowerShell.ConsoleHost.dll-Help.xml");
+            s_engineModuleHelpFileCache.Add("Microsoft.PowerShell.Management", "Microsoft.PowerShell.Commands.Management.dll-Help.xml");
+            s_engineModuleHelpFileCache.Add("Microsoft.PowerShell.Security", "Microsoft.PowerShell.Security.dll-Help.xml");
+            s_engineModuleHelpFileCache.Add("Microsoft.WSMan.Management", "Microsoft.Wsman.Management.dll-Help.xml");
         }
 
-        private static Dictionary<string, string> engineModuleHelpFileCache = new Dictionary<string, string>();
+        private static Dictionary<string, string> s_engineModuleHelpFileCache = new Dictionary<string, string>();
 
         private readonly ExecutionContext _context;
 
@@ -61,7 +61,7 @@ namespace System.Management.Automation
         /// Name of this provider
         /// </summary>
         /// <value>Name of this provider</value>
-        override internal string Name
+        internal override string Name
         {
             get
             {
@@ -73,11 +73,11 @@ namespace System.Management.Automation
         /// Help category for this provider, which is a constant: HelpCategory.Command.
         /// </summary>
         /// <value>Help category for this provider</value>
-        override internal HelpCategory HelpCategory
+        internal override HelpCategory HelpCategory
         {
             get
             {
-                return 
+                return
                     HelpCategory.Alias |
                     HelpCategory.Cmdlet;
             }
@@ -111,23 +111,23 @@ namespace System.Management.Automation
                     testWithoutPrefix = true;
                     cmdNameWithoutPrefix = Microsoft.PowerShell.Commands.ModuleCmdletBase.RemovePrefixFromCommandName(commandInfo.Name, commandInfo.Prefix);
                 }
-                
+
                 if (commandInfo.Module.NestedModules != null)
                 {
                     foreach (PSModuleInfo nestedModule in commandInfo.Module.NestedModules)
                     {
-                        if ( cmdletInfo != null &&
-                             ( nestedModule.ExportedCmdlets.ContainsKey(commandInfo.Name) ||
-                               ( testWithoutPrefix && nestedModule.ExportedCmdlets.ContainsKey(cmdNameWithoutPrefix) ) ) )
+                        if (cmdletInfo != null &&
+                             (nestedModule.ExportedCmdlets.ContainsKey(commandInfo.Name) ||
+                               (testWithoutPrefix && nestedModule.ExportedCmdlets.ContainsKey(cmdNameWithoutPrefix))))
                         {
                             nestedModulePath = nestedModule.Path;
                             break;
                         }
-                        else if ( scriptCommandInfo != null &&
-                                  ( nestedModule.ExportedFunctions.ContainsKey(commandInfo.Name) ||
-                                    nestedModule.ExportedWorkflows.ContainsKey(commandInfo.Name) || 
-                                    ( testWithoutPrefix && nestedModule.ExportedFunctions.ContainsKey(cmdNameWithoutPrefix) ) ||
-                                    ( testWithoutPrefix && nestedModule.ExportedWorkflows.ContainsKey(cmdNameWithoutPrefix) ) ) )
+                        else if (scriptCommandInfo != null &&
+                                  (nestedModule.ExportedFunctions.ContainsKey(commandInfo.Name) ||
+                                    nestedModule.ExportedWorkflows.ContainsKey(commandInfo.Name) ||
+                                    (testWithoutPrefix && nestedModule.ExportedFunctions.ContainsKey(cmdNameWithoutPrefix)) ||
+                                    (testWithoutPrefix && nestedModule.ExportedWorkflows.ContainsKey(cmdNameWithoutPrefix))))
                         {
                             nestedModulePath = nestedModule.Path;
                             break;
@@ -265,7 +265,7 @@ namespace System.Management.Automation
                     // want to download the content from the remote machine. Reason: In Exchange scenario there
                     // are ~700 proxy commands, downloading help for all the commands and searching in that
                     // content takes a lot of time (in the order of 30 minutes) for their scenarios.
-                    result = sb.GetHelpInfo(this._context, commandInfo, searchOnlyContent, HelpSystem.ScriptBlockTokenCache,
+                    result = sb.GetHelpInfo(_context, commandInfo, searchOnlyContent, HelpSystem.ScriptBlockTokenCache,
                         out helpFile, out helpUriFromDotLink);
 
                     if (!String.IsNullOrEmpty(helpUriFromDotLink))
@@ -410,7 +410,7 @@ namespace System.Management.Automation
         /// </remarks>
         /// <param name="helpRequest">help request object</param>
         /// <returns></returns>
-        override internal IEnumerable<HelpInfo> ExactMatchHelp(HelpRequest helpRequest)
+        internal override IEnumerable<HelpInfo> ExactMatchHelp(HelpRequest helpRequest)
         {
             int countHelpInfosFound = 0;
             string target = helpRequest.Target;
@@ -459,7 +459,7 @@ namespace System.Management.Automation
             }
         }
 
-        static private string GetCmdletAssemblyPath(CmdletInfo cmdletInfo)
+        private static string GetCmdletAssemblyPath(CmdletInfo cmdletInfo)
         {
             if (cmdletInfo == null)
                 return null;
@@ -529,7 +529,7 @@ namespace System.Management.Automation
             // like "get-command -syntax"
             if (String.IsNullOrEmpty(location))
             {
-                tracer.WriteLine("Unable to load file {0}", helpFileToLoad);
+                s_tracer.WriteLine("Unable to load file {0}", helpFileToLoad);
             }
 
             return location;
@@ -556,7 +556,7 @@ namespace System.Management.Automation
                 {
                     if (InitialSessionState.IsEngineModule(cmdletInfo.Module.Name))
                     {
-                        return System.IO.Path.Combine(cmdletInfo.Module.ModuleBase, CultureInfo.CurrentCulture.Name, engineModuleHelpFileCache[cmdletInfo.Module.Name]);
+                        return System.IO.Path.Combine(cmdletInfo.Module.ModuleBase, CultureInfo.CurrentCulture.Name, s_engineModuleHelpFileCache[cmdletInfo.Module.Name]);
                     }
                 }
 
@@ -640,7 +640,7 @@ namespace System.Management.Automation
             {
                 e = invalidOperationException;
             }
-            
+
             if (reportErrors && (e != null))
             {
                 ReportHelpFileError(e, commandName, helpFile);
@@ -684,7 +684,7 @@ namespace System.Management.Automation
 
             if (helpItemsNode == null)
             {
-                tracer.WriteLine("Unable to find 'helpItems' element in file {0}", helpFile);
+                s_tracer.WriteLine("Unable to find 'helpItems' element in file {0}", helpFile);
                 return;
             }
 
@@ -836,7 +836,6 @@ namespace System.Management.Automation
                         if (newMamlHelpInfo.FullHelp.Properties["Details"] != null &&
                             newMamlHelpInfo.FullHelp.Properties["Details"].Value != null)
                         {
-
                             PSObject commandDetails = PSObject.AsPSObject(newMamlHelpInfo.FullHelp.Properties["Details"].Value);
                             if (commandDetails.Properties["Noun"] != null)
                             {
@@ -912,7 +911,7 @@ namespace System.Management.Automation
                 }
             }
 
-            return result;               
+            return result;
         }
 
         /// <summary>
@@ -939,7 +938,7 @@ namespace System.Management.Automation
                 helpInfo.FullHelp.TypeNames.Insert(1, string.Format(CultureInfo.InvariantCulture,
                     "MamlCommandHelpInfo#{0}", mshSnapInId));
             }
-            
+
             AddCache(key, helpInfo);
         }
 
@@ -975,7 +974,7 @@ namespace System.Management.Automation
             }
 
             return false;
-        }        
+        }
 
         /// <summary>
         /// Search help for a specific target. 
@@ -986,7 +985,7 @@ namespace System.Management.Automation
         /// Otherwise, seraches for pattern in the cmdlet names.
         /// </param>
         /// <returns></returns>
-        override internal IEnumerable<HelpInfo> SearchHelp(HelpRequest helpRequest, bool searchOnlyContent)
+        internal override IEnumerable<HelpInfo> SearchHelp(HelpRequest helpRequest, bool searchOnlyContent)
         {
             string target = helpRequest.Target;
             Collection<string> patternList = new Collection<string>();
@@ -1014,7 +1013,6 @@ namespace System.Management.Automation
                 else
                 {
                     patternList.Add(target);
-
                 }
             }
             else
@@ -1049,7 +1047,7 @@ namespace System.Management.Automation
 
                     HelpInfo helpInfo = GetHelpInfo(current, !decoratedSearch, searchOnlyContent);
                     string helpName = GetHelpName(current);
-                    
+
                     if (helpInfo != null && !String.IsNullOrEmpty(helpName))
                     {
                         if (!SessionState.IsVisible(helpRequest.CommandOrigin, current))
@@ -1146,7 +1144,7 @@ namespace System.Management.Automation
         /// <param name="helpRequest"></param>
         /// <param name="commandInfo"></param>
         /// <returns></returns>
-        static private bool Match(HelpInfo helpInfo, HelpRequest helpRequest, CommandInfo commandInfo)
+        private static bool Match(HelpInfo helpInfo, HelpRequest helpRequest, CommandInfo commandInfo)
         {
             if (helpRequest == null)
                 return true;
@@ -1177,12 +1175,12 @@ namespace System.Management.Automation
             return true;
         }
 
-        static private bool Match(string target, string pattern)
+        private static bool Match(string target, string pattern)
         {
-            if(String.IsNullOrEmpty(pattern))
+            if (String.IsNullOrEmpty(pattern))
                 return true;
 
-            if(String.IsNullOrEmpty(target))
+            if (String.IsNullOrEmpty(target))
                 target = "";
 
             WildcardPattern matcher = WildcardPattern.Get(pattern, WildcardOptions.IgnoreCase);
@@ -1201,7 +1199,7 @@ namespace System.Management.Automation
         /// present in <paramref name="patterns"/>
         /// false otherwise.
         /// </returns>
-        static private bool Match(string target, ICollection<string> patterns)
+        private static bool Match(string target, ICollection<string> patterns)
         {
             // patterns should never be null as shell never accepts
             // empty inputs. Keeping this check as a safe measure.
@@ -1210,7 +1208,7 @@ namespace System.Management.Automation
 
             foreach (string pattern in patterns)
             {
-                if ( Match(target, pattern) )
+                if (Match(target, pattern))
                 {
                     // we have a match so return true
                     return true;
@@ -1228,7 +1226,7 @@ namespace System.Management.Automation
         /// <param name="helpInfo">HelpInfo that is forwarded over</param>
         /// <param name="helpRequest">Help request object</param>        
         /// <returns>The result helpInfo objects after processing</returns>
-        override internal IEnumerable<HelpInfo> ProcessForwardedHelp(HelpInfo helpInfo, HelpRequest helpRequest)
+        internal override IEnumerable<HelpInfo> ProcessForwardedHelp(HelpInfo helpInfo, HelpRequest helpRequest)
         {
             HelpCategory categoriesHandled = (HelpCategory.Alias
                 | HelpCategory.ExternalScript | HelpCategory.Filter | HelpCategory.Function | HelpCategory.ScriptCommand | HelpCategory.Workflow);
@@ -1250,7 +1248,7 @@ namespace System.Management.Automation
                 {
                     try
                     {
-                        CommandInfo targetCommand = this._context.CommandDiscovery.LookupCommandInfo(commandHelpRequest.Target);
+                        CommandInfo targetCommand = _context.CommandDiscovery.LookupCommandInfo(commandHelpRequest.Target);
                         commandHelpRequest.HelpCategory = targetCommand.HelpCategory;
                     }
                     catch (CommandNotFoundException)
@@ -1276,7 +1274,7 @@ namespace System.Management.Automation
         /// This will reset the help cache. Normally this corresponds to a 
         /// help culture change. 
         /// </summary>
-        override internal void Reset()
+        internal override void Reset()
         {
             base.Reset();
 
@@ -1296,7 +1294,7 @@ namespace System.Management.Automation
         internal virtual CommandSearcher GetCommandSearcherForExactMatch(string commandName, ExecutionContext context)
         {
             CommandSearcher searcher = new CommandSearcher(
-                commandName, 
+                commandName,
                 SearchResolutionOptions.None,
                 CommandTypes.Cmdlet,
                 context);
@@ -1328,7 +1326,7 @@ namespace System.Management.Automation
         #region tracer
 
         [TraceSource("CommandHelpProvider", "CommandHelpProvider")]
-        static private readonly PSTraceSource tracer = PSTraceSource.GetTracer("CommandHelpProvider", "CommandHelpProvider");
+        private static readonly PSTraceSource s_tracer = PSTraceSource.GetTracer("CommandHelpProvider", "CommandHelpProvider");
 
         #endregion tracer
     }
@@ -1346,15 +1344,7 @@ namespace System.Management.Automation
         {
         }
 
-        private readonly Dictionary<String, String> _properties = new Dictionary<String, String>(StringComparer.OrdinalIgnoreCase);
-
-        internal Dictionary<String, String> Properties
-        {
-            get
-            {
-                return _properties;
-            }
-        }
+        internal Dictionary<String, String> Properties { get; } = new Dictionary<String, String>(StringComparer.OrdinalIgnoreCase);
 
         private string _name = null;
 
@@ -1366,9 +1356,9 @@ namespace System.Management.Automation
             }
         }
 
-        static internal UserDefinedHelpData Load(XmlNode dataNode)
+        internal static UserDefinedHelpData Load(XmlNode dataNode)
         {
-            if(dataNode == null)
+            if (dataNode == null)
                 return null;
 
             UserDefinedHelpData userDefinedHelpData = new UserDefinedHelpData();

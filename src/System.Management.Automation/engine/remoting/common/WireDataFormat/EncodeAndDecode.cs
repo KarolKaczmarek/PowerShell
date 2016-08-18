@@ -16,7 +16,6 @@ using Microsoft.PowerShell;
 using Microsoft.PowerShell.Commands;
 using Dbg = System.Management.Automation.Diagnostics;
 using System.Reflection;
-using System.Xml.Serialization;
 
 namespace System.Management.Automation
 {
@@ -27,7 +26,7 @@ namespace System.Management.Automation
     /// </summary>
     public class RemotingEncodingException : RuntimeException
     {
-        #region Constructors
+    #region Constructors
 
         /// <summary>
         /// 
@@ -67,7 +66,7 @@ namespace System.Management.Automation
         {
         }
 
-        #endregion Constructors
+    #endregion Constructors
     }
 
 #endif // NOT_USED
@@ -373,8 +372,8 @@ namespace System.Management.Automation
 
         internal const string ObjectType = "T";
         internal const string ObjectValue = "V";
-        
-        #endregion 
+
+        #endregion
 
         #region Command discovery pipeline
 
@@ -441,14 +440,14 @@ namespace System.Management.Automation
         /// <summary>
         /// Properties used for serialization of PSEventArgs
         /// </summary>
-        internal const string PSEventArgsComputerName     = "PSEventArgs.ComputerName";
-        internal const string PSEventArgsRunspaceId       = "PSEventArgs.RunspaceId";
-        internal const string PSEventArgsEventIdentifier  = "PSEventArgs.EventIdentifier";
+        internal const string PSEventArgsComputerName = "PSEventArgs.ComputerName";
+        internal const string PSEventArgsRunspaceId = "PSEventArgs.RunspaceId";
+        internal const string PSEventArgsEventIdentifier = "PSEventArgs.EventIdentifier";
         internal const string PSEventArgsSourceIdentifier = "PSEventArgs.SourceIdentifier";
-        internal const string PSEventArgsTimeGenerated    = "PSEventArgs.TimeGenerated";
-        internal const string PSEventArgsSender           = "PSEventArgs.Sender";
-        internal const string PSEventArgsSourceArgs       = "PSEventArgs.SourceArgs";
-        internal const string PSEventArgsMessageData      = "PSEventArgs.MessageData";
+        internal const string PSEventArgsTimeGenerated = "PSEventArgs.TimeGenerated";
+        internal const string PSEventArgsSender = "PSEventArgs.Sender";
+        internal const string PSEventArgsSourceArgs = "PSEventArgs.SourceArgs";
+        internal const string PSEventArgsMessageData = "PSEventArgs.MessageData";
 
         #endregion PSEventArgs
 
@@ -490,7 +489,7 @@ namespace System.Management.Automation
         InvalidDestination = 0x0,
         Client = 0x1,
         Server = 0x2,
-        Listener = 0x4,       
+        Listener = 0x4,
     }
 
     /// <summary>
@@ -572,7 +571,7 @@ namespace System.Management.Automation
         RemoteHostCallUsingPowerShellHost = 0x00041100,
         RemotePowerShellHostResponseData = 0x00041101,
     }
-    
+
     /// <summary>
     /// Converts C# types to PSObject properties for embedding in PSObjects transported across the wire.
     /// </summary>
@@ -581,7 +580,7 @@ namespace System.Management.Automation
         #region NotePropertyHelpers
 
         internal delegate T ValueGetterDelegate<T>();
-        
+
         internal static void AddNoteProperty<T>(PSObject pso, string propertyName, ValueGetterDelegate<T> valueGetter)
         {
             T value = default(T);
@@ -602,7 +601,6 @@ namespace System.Management.Automation
                     valueGetter.Target == null ? string.Empty : valueGetter.Target.GetType().FullName,
                     e.ToString(),
                     e.InnerException == null ? string.Empty : e.InnerException.ToString());
-                
             }
 
             try
@@ -671,9 +669,9 @@ namespace System.Management.Automation
         ///
         internal static RemoteDataObject GenerateCreateRunspacePool(
             Guid clientRunspacePoolId,
-            int minRunspaces, 
-            int maxRunspaces, 
-            RemoteRunspacePoolInternal runspacePool, 
+            int minRunspaces,
+            int maxRunspaces,
+            RemoteRunspacePoolInternal runspacePool,
             PSHost host,
             PSPrimitiveDictionary applicationArguments)
         {
@@ -755,7 +753,6 @@ namespace System.Management.Automation
                                             Guid.Empty,
                                             string.Empty);
             }
-
         }
 
         /// <summary>
@@ -856,7 +853,7 @@ namespace System.Management.Automation
                                                Guid.Empty,
                                                dataAsPSObject);
         }
-       
+
         /// <summary>
         /// This method generates a Remoting data structure handler message for 
         /// that contains a repsonse to SetMaxRunspaces or SetMinRunspaces
@@ -993,7 +990,7 @@ namespace System.Management.Automation
                                                Guid.Empty,
                                                dataAsPSObject);
         }
-                           
+
         /// <summary>
         /// This methods generates a Remoting data structure handler message for
         /// creating a command discovery pipeline on the server
@@ -1100,7 +1097,7 @@ namespace System.Management.Automation
             PSInvocationSettings settings = shell.Settings;
 
             PSObject dataAsPSObject = CreateEmptyPSObject();
-            Guid clientRunspacePoolId = Guid.Empty;            
+            Guid clientRunspacePoolId = Guid.Empty;
             HostInfo hostInfo;
             PSNoteProperty hostInfoProperty;
 
@@ -1170,7 +1167,7 @@ namespace System.Management.Automation
         /// |   |    Pool   |        |         |            | data          |           Dictionary|
         /// --------------------------------------------------------------------------------------
         internal static RemoteDataObject GenerateApplicationPrivateData(
-                                    Guid clientRunspacePoolId, 
+                                    Guid clientRunspacePoolId,
                                     PSPrimitiveDictionary applicationPrivateData)
         {
             PSObject dataAsPSObject = CreateEmptyPSObject();
@@ -1199,15 +1196,15 @@ namespace System.Management.Automation
         /// |   |    Pool   |        |         |            | StateInfo     | Info                |
         /// --------------------------------------------------------------------------------------
         internal static RemoteDataObject GenerateRunspacePoolStateInfo(
-                                    Guid clientRunspacePoolId, 
+                                    Guid clientRunspacePoolId,
                                     RunspacePoolStateInfo stateInfo)
         {
             // BUGBUG: This object creation needs to be relooked
             PSObject dataAsPSObject = CreateEmptyPSObject();
 
             //Add State Property
-            PSNoteProperty stateProperty = 
-                        new PSNoteProperty(RemoteDataNameStrings.RunspaceState, 
+            PSNoteProperty stateProperty =
+                        new PSNoteProperty(RemoteDataNameStrings.RunspaceState,
                             (int)(stateInfo.State));
             dataAsPSObject.Properties.Add(stateProperty);
 
@@ -1302,7 +1299,7 @@ namespace System.Management.Automation
         #endregion RunspacePool related
 
         #region PowerShell related
-      
+
         /// <summary>
         /// This method creates a remoting data structure handler message for sending a powershell
         /// input data from the client to the server
@@ -1524,7 +1521,7 @@ namespace System.Management.Automation
         {
             //Encode Pipeline StateInfo as PSObject
             PSObject dataAsPSObject = CreateEmptyPSObject();
-           
+
             //Convert the state to int and add as property
             PSNoteProperty stateProperty = new PSNoteProperty(
                 RemoteDataNameStrings.PipelineState, (int)(stateInfo.State));
@@ -1587,12 +1584,9 @@ namespace System.Management.Automation
         private static PSNoteProperty GetExceptionProperty(Exception exception, string errorId, ErrorCategory category)
         {
             Dbg.Assert(exception != null, "Caller should validate the data");
-            
-            ErrorRecord er = GetErrorRecordFromException(exception);
-            if (er == null)
-            {
-                er = new ErrorRecord(exception, errorId, category, null);
-            }
+
+            ErrorRecord er = GetErrorRecordFromException(exception) ??
+                             new ErrorRecord(exception, errorId, category, null);
             return new PSNoteProperty(RemoteDataNameStrings.ExceptionAsErrorRecord, er);
         }
 
@@ -1615,13 +1609,13 @@ namespace System.Management.Automation
         /// | / |           |        |         |            |   capability  |                     |
         /// | S |           |        |         |            |               |                     |
         /// --------------------------------------------------------------------------------------
-        internal static RemoteDataObject GenerateClientSessionCapability(RemoteSessionCapability capability, 
+        internal static RemoteDataObject GenerateClientSessionCapability(RemoteSessionCapability capability,
                 Guid runspacePoolId)
         {
             PSObject temp = GenerateSessionCapability(capability);
             temp.Properties.Add(
                 new PSNoteProperty(RemoteDataNameStrings.TimeZone, RemoteSessionCapability.GetCurrentTimeZoneInByteFormat()));
-            return RemoteDataObject.CreateFrom(capability.RemotingDestination, 
+            return RemoteDataObject.CreateFrom(capability.RemotingDestination,
                 RemotingDataType.SessionCapability, runspacePoolId, Guid.Empty, temp);
         }
 
@@ -1646,7 +1640,6 @@ namespace System.Management.Automation
         }
 
         #endregion Session related
-        
     }
 
     /// <summary>
@@ -1710,7 +1703,7 @@ namespace System.Management.Automation
             }
             else if (propertyValue == null)
             {
-                TypeInfo typeInfo = typeof (T).GetTypeInfo();
+                TypeInfo typeInfo = typeof(T).GetTypeInfo();
 
                 if (!typeInfo.IsValueType)
                 {
@@ -1897,7 +1890,6 @@ namespace System.Management.Automation
             }
 
             return GetPropertyValue<String>(dataAsPSObject, RemoteDataNameStrings.PublicKey);
-
         }
 
         /// <summary>
@@ -1942,12 +1934,12 @@ namespace System.Management.Automation
             }
 
             PSEventArgs eventArgs = new PSEventArgs(
-                computerName, 
-                runspaceId, 
-                eventIdentifier, 
-                sourceIdentifier, 
-                sender, 
-                sourceArgs.ToArray(), 
+                computerName,
+                runspaceId,
+                eventIdentifier,
+                sourceIdentifier,
+                sender,
+                sourceArgs.ToArray(),
                 messageData == null ? null : PSObject.AsPSObject(messageData));
 
             eventArgs.TimeGenerated = GetPropertyValue<DateTime>(dataAsPSObject, RemoteDataNameStrings.PSEventArgsTimeGenerated);
@@ -2017,8 +2009,8 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentNullException("dataAsPSObject");
             }
 
-            int maxRS =  GetPropertyValue<Int32>(dataAsPSObject, RemoteDataNameStrings.MaxRunspaces);
-            int minRS =  GetPropertyValue<Int32>(dataAsPSObject, RemoteDataNameStrings.MinRunspaces);
+            int maxRS = GetPropertyValue<Int32>(dataAsPSObject, RemoteDataNameStrings.MaxRunspaces);
+            int minRS = GetPropertyValue<Int32>(dataAsPSObject, RemoteDataNameStrings.MinRunspaces);
 
             return new RunspacePoolInitInfo(minRS, maxRS);
         }
@@ -2081,7 +2073,7 @@ namespace System.Management.Automation
         internal static Exception GetExceptionFromSerializedErrorRecord(object serializedErrorRecord)
         {
             ErrorRecord er = ErrorRecord.FromPSObjectForRemoting(PSObject.AsPSObject(serializedErrorRecord));
-           
+
             if (er == null)
             {
                 throw new PSRemotingDataStructureException(RemotingErrorIdStrings.DecodingErrorForErrorRecord);
@@ -2091,7 +2083,7 @@ namespace System.Management.Automation
                 return er.Exception;
             }
         }
-        
+
         /// <summary>
         /// Gets the output from the message
         /// </summary>
@@ -2265,8 +2257,8 @@ namespace System.Management.Automation
             }
 
             ModuleSpecification[] fullyQualifiedName = null;
-            if(null != DeserializingTypeConverter.GetPropertyValue<PSObject>(dataAsPSObject, 
-                                                                             RemoteDataNameStrings.DiscoveryFullyQualifiedModule, 
+            if (null != DeserializingTypeConverter.GetPropertyValue<PSObject>(dataAsPSObject,
+                                                                             RemoteDataNameStrings.DiscoveryFullyQualifiedModule,
                                                                              DeserializingTypeConverter.RehydrationFlags.NullValueOk | DeserializingTypeConverter.RehydrationFlags.MissingPropertyOk))
             {
                 IEnumerable<ModuleSpecification> tmp = EnumerateListProperty<ModuleSpecification>(dataAsPSObject, RemoteDataNameStrings.DiscoveryFullyQualifiedModule);
@@ -2294,7 +2286,7 @@ namespace System.Management.Automation
             }
             else
             {
-                powerShell.AddParameter("Module", module);                
+                powerShell.AddParameter("Module", module);
             }
             powerShell.AddParameter("ArgumentList", argumentList);
             return powerShell;
@@ -2325,7 +2317,7 @@ namespace System.Management.Automation
         internal static bool GetAddToHistory(object data)
         {
             PSObject dataAsPSObject = PSObject.AsPSObject(data);
-            
+
             if (dataAsPSObject == null)
             {
                 throw new PSRemotingDataStructureException(RemotingErrorIdStrings.CantCastRemotingDataToPSObject, data.GetType().FullName);
@@ -2393,11 +2385,11 @@ namespace System.Management.Automation
             Version psVersion = GetPropertyValue<Version>(dataAsPSObject, RemoteDataNameStrings.PSVersion);
             Version serializationVersion = GetPropertyValue<Version>(dataAsPSObject,
                 RemoteDataNameStrings.SerializationVersion);
-            
+
             RemoteSessionCapability result = new RemoteSessionCapability(
                 RemotingDestination.InvalidDestination,
                 protocolVersion, psVersion, serializationVersion);
-            
+
             if (dataAsPSObject.Properties[RemoteDataNameStrings.TimeZone] != null)
             {
                 // Binary deserialization of timezone info via BinaryFormatter is unsafe,
@@ -2424,7 +2416,7 @@ namespace System.Management.Automation
         /// </summary>
         /// <param name="runspace">runspace instance</param>
         /// <returns>true if batch invocation is supported, false if not</returns>
-        static internal bool ServerSupportsBatchInvocation(Runspace runspace)
+        internal static bool ServerSupportsBatchInvocation(Runspace runspace)
         {
             if (runspace == null || runspace.RunspaceStateInfo.State == RunspaceState.BeforeOpen)
             {

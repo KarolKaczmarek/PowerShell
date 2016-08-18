@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -50,7 +51,7 @@ namespace System.Management.Automation
     /// <summary>
     /// This class represents the compiled metadata for a command type.
     /// </summary>
-    [DebuggerDisplay("CommandName = {_commandName}; Type = {CommandType}")]
+    [DebuggerDisplay("CommandName = {Name}; Type = {CommandType}")]
     public sealed class CommandMetadata
     {
         #region Public Constructor
@@ -172,48 +173,48 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentNullException("other");
             }
 
-            this._commandName = other._commandName;
-            this._confirmImpact = other._confirmImpact;
-            this._defaultParameterSetFlag = other._defaultParameterSetFlag;
-            this._defaultParameterSetName = other._defaultParameterSetName;
-            this._implementsDynamicParameters = other._implementsDynamicParameters;
-            this._supportsShouldProcess = other._supportsShouldProcess;
-            this._supportsPaging = other._supportsPaging;
-            this._supportsTransactions = other._supportsTransactions;
+            Name = other.Name;
+            ConfirmImpact = other.ConfirmImpact;
+            _defaultParameterSetFlag = other._defaultParameterSetFlag;
+            _defaultParameterSetName = other._defaultParameterSetName;
+            _implementsDynamicParameters = other._implementsDynamicParameters;
+            SupportsShouldProcess = other.SupportsShouldProcess;
+            SupportsPaging = other.SupportsPaging;
+            SupportsTransactions = other.SupportsTransactions;
             this.CommandType = other.CommandType;
-            this._wrappedAnyCmdlet = other._wrappedAnyCmdlet;
-            this._wrappedCommand = other._wrappedCommand;
-            this._wrappedCommandType = other._wrappedCommandType;
+            _wrappedAnyCmdlet = other._wrappedAnyCmdlet;
+            _wrappedCommand = other._wrappedCommand;
+            _wrappedCommandType = other._wrappedCommandType;
 
-            this._parameters = new Dictionary<string, ParameterMetadata>(other.Parameters.Count, StringComparer.OrdinalIgnoreCase);
-            
+            _parameters = new Dictionary<string, ParameterMetadata>(other.Parameters.Count, StringComparer.OrdinalIgnoreCase);
+
             // deep copy
             if (other.Parameters != null)
             {
                 foreach (KeyValuePair<string, ParameterMetadata> entry in other.Parameters)
                 {
-                    this._parameters.Add(entry.Key, new ParameterMetadata(entry.Value));
+                    _parameters.Add(entry.Key, new ParameterMetadata(entry.Value));
                 }
             }
 
             // deep copy of the collection, collection items (Attributes) copied by reference
             if (other._otherAttributes == null)
             {
-                this._otherAttributes = null;
+                _otherAttributes = null;
             }
             else
             {
-                this._otherAttributes = new Collection<Attribute>(new List<Attribute>(other._otherAttributes.Count));
+                _otherAttributes = new Collection<Attribute>(new List<Attribute>(other._otherAttributes.Count));
                 foreach (Attribute attribute in other._otherAttributes)
                 {
-                    this._otherAttributes.Add(attribute);
+                    _otherAttributes.Add(attribute);
                 }
             }
 
             // not copying those fields/members as they are untouched (and left set to null) 
             // by public constructors, so we can't rely on those fields/members to be set
             // when CommandMetadata comes from a user
-            this.staticCommandParameterMetadata = null;
+            _staticCommandParameterMetadata = null;
         }
 
         /// <summary>
@@ -231,36 +232,36 @@ namespace System.Management.Automation
             bool positionalBinding,
             Dictionary<string, ParameterMetadata> parameters)
         {
-            this._commandName = this._wrappedCommand = name;
-            this._wrappedCommandType = commandType;
-            this._wrappedAnyCmdlet = isProxyForCmdlet;
-            this._defaultParameterSetName = defaultParameterSetName;
-            this._supportsShouldProcess = supportsShouldProcess;
-            this._supportsPaging = supportsPaging;
-            this._confirmImpact = confirmImpact;
-            this._supportsTransactions = supportsTransactions;
-            this._positionalBinding = positionalBinding;
+            Name = _wrappedCommand = name;
+            _wrappedCommandType = commandType;
+            _wrappedAnyCmdlet = isProxyForCmdlet;
+            _defaultParameterSetName = defaultParameterSetName;
+            SupportsShouldProcess = supportsShouldProcess;
+            SupportsPaging = supportsPaging;
+            ConfirmImpact = confirmImpact;
+            SupportsTransactions = supportsTransactions;
+            PositionalBinding = positionalBinding;
             this.Parameters = parameters;
         }
 
-        void Init(string name, string fullyQualifiedName, Type commandType, bool shouldGenerateCommonParameters)
+        private void Init(string name, string fullyQualifiedName, Type commandType, bool shouldGenerateCommonParameters)
         {
-            this._commandName = name;
+            Name = name;
             this.CommandType = commandType;
 
             if (commandType != null)
             {
                 ConstructCmdletMetadataUsingReflection();
-                this._shouldGenerateCommonParameters = shouldGenerateCommonParameters;
+                _shouldGenerateCommonParameters = shouldGenerateCommonParameters;
             }
 
             // Use fully qualified name if available.
-            _wrappedCommand = !string.IsNullOrEmpty(fullyQualifiedName) ? fullyQualifiedName : _commandName;
+            _wrappedCommand = !string.IsNullOrEmpty(fullyQualifiedName) ? fullyQualifiedName : Name;
             _wrappedCommandType = CommandTypes.Cmdlet;
-            _wrappedAnyCmdlet = true;            
+            _wrappedAnyCmdlet = true;
         }
 
-        void Init(ScriptBlock scriptBlock, string name, bool shouldGenerateCommonParameters)
+        private void Init(ScriptBlock scriptBlock, string name, bool shouldGenerateCommonParameters)
         {
             if (scriptBlock.UsesCmdletBinding)
             {
@@ -282,10 +283,10 @@ namespace System.Management.Automation
                 _defaultParameterSetName = null;
             }
 
-            _obsolete = scriptBlock.ObsoleteAttribute;
+            Obsolete = scriptBlock.ObsoleteAttribute;
             _scriptBlock = scriptBlock;
-            _wrappedCommand = _commandName = name;
-            this._shouldGenerateCommonParameters = shouldGenerateCommonParameters;
+            _wrappedCommand = Name = name;
+            _shouldGenerateCommonParameters = shouldGenerateCommonParameters;
         }
 
         #endregion
@@ -338,21 +339,21 @@ namespace System.Management.Automation
             }
 
             CommandMetadata result = null;
-            
+
             if ((context != null) && (cmdletType != null))
             {
                 string cmdletTypeName = cmdletType.AssemblyQualifiedName;
-                CommandMetadataCache.TryGetValue(cmdletTypeName, out result);
+                s_commandMetadataCache.TryGetValue(cmdletTypeName, out result);
             }
 
-            if(result == null)
+            if (result == null)
             {
                 result = new CommandMetadata(commandName, cmdletType, context);
 
                 if ((context != null) && (cmdletType != null))
                 {
                     string cmdletTypeName = cmdletType.AssemblyQualifiedName;
-                    CommandMetadataCache.TryAdd(cmdletTypeName, result);
+                    s_commandMetadataCache.TryAdd(cmdletTypeName, result);
                 }
             }
 
@@ -398,16 +399,16 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentException("commandName");
             }
 
-            this._commandName = commandName;
+            Name = commandName;
             this.CommandType = cmdletType;
 
             if (cmdletType != null)
             {
                 InternalParameterMetadata parameterMetadata = InternalParameterMetadata.Get(cmdletType, context, false);
                 ConstructCmdletMetadataUsingReflection();
-                this.staticCommandParameterMetadata = MergeParameterMetadata(context, parameterMetadata, true);
-                this._defaultParameterSetFlag = this.staticCommandParameterMetadata.GenerateParameterSetMappingFromMetadata(_defaultParameterSetName);
-                this.staticCommandParameterMetadata.MakeReadOnly();
+                _staticCommandParameterMetadata = MergeParameterMetadata(context, parameterMetadata, true);
+                _defaultParameterSetFlag = _staticCommandParameterMetadata.GenerateParameterSetMappingFromMetadata(_defaultParameterSetName);
+                _staticCommandParameterMetadata.MakeReadOnly();
             }
         }
 
@@ -453,20 +454,20 @@ namespace System.Management.Automation
                 _defaultParameterSetName = null;
             }
 
-            this._obsolete = scriptblock.ObsoleteAttribute;
-            this._commandName = commandName;
+            Obsolete = scriptblock.ObsoleteAttribute;
+            Name = commandName;
             this.CommandType = typeof(PSScriptCmdlet);
 
             if (scriptblock.HasDynamicParameters)
             {
-                this._implementsDynamicParameters = true;
+                _implementsDynamicParameters = true;
             }
 
             InternalParameterMetadata parameterMetadata = InternalParameterMetadata.Get(scriptblock.RuntimeDefinedParameters, false,
                                                                                         scriptblock.UsesCmdletBinding);
-            this.staticCommandParameterMetadata = MergeParameterMetadata(context, parameterMetadata, scriptblock.UsesCmdletBinding);
-            this._defaultParameterSetFlag = this.staticCommandParameterMetadata.GenerateParameterSetMappingFromMetadata(_defaultParameterSetName);
-            this.staticCommandParameterMetadata.MakeReadOnly();
+            _staticCommandParameterMetadata = MergeParameterMetadata(context, parameterMetadata, scriptblock.UsesCmdletBinding);
+            _defaultParameterSetFlag = _staticCommandParameterMetadata.GenerateParameterSetMappingFromMetadata(_defaultParameterSetName);
+            _staticCommandParameterMetadata.MakeReadOnly();
         }
 
         #endregion ctor
@@ -476,20 +477,7 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the name of the command this metadata represents
         /// </summary>
-        public string Name
-        {
-            get
-            {
-                return _commandName;
-            }
-
-            set
-            {
-                // TODO: can value be null here
-                _commandName = value;
-            }
-        }
-        private string _commandName = String.Empty;
+        public string Name { get; set; } = String.Empty;
 
         /// <summary>
         /// The Type which this CommandMetadata represents.
@@ -504,10 +492,7 @@ namespace System.Management.Automation
         /// </summary>
         public string DefaultParameterSetName
         {
-            get
-            {
-                return _defaultParameterSetName;
-            }
+            get { return _defaultParameterSetName; }
             set
             {
                 if (string.IsNullOrEmpty(value))
@@ -524,58 +509,32 @@ namespace System.Management.Automation
         /// True if the cmdlet declared that it supports ShouldProcess, false otherwise.
         /// </summary>
         /// <value></value>
-        public bool SupportsShouldProcess
-        {
-            get { return _supportsShouldProcess; }
-            set { _supportsShouldProcess = value; }
-        }
-        private bool _supportsShouldProcess;
+        public bool SupportsShouldProcess { get; set; }
 
         /// <summary>
         /// True if the cmdlet declared that it supports Paging, false otherwise.
         /// </summary>
         /// <value></value>
-        public bool SupportsPaging
-        {
-            get { return _supportsPaging; }
-            set { _supportsPaging = value; }
-        }
-        private bool _supportsPaging;
+        public bool SupportsPaging { get; set; }
 
         /// <summary>
         /// When true, the command will auto-generate appropriate parameter metadata to support positional
         /// parameters if the script hasn't already specified multiple parameter sets or specified positions
         /// explicitly via the <see cref="ParameterAttribute"/>.
         /// </summary>
-        public bool PositionalBinding
-        {
-            get { return _positionalBinding; }
-            set { _positionalBinding = value; }
-        }
-        private bool _positionalBinding = true;
+        public bool PositionalBinding { get; set; } = true;
 
         /// <summary>
         /// True if the cmdlet declared that it supports transactions, false otherwise.
         /// </summary>
         /// <value></value>
-        public bool SupportsTransactions
-        {
-            get { return _supportsTransactions; }
-            set { _supportsTransactions = value; }
-        }
-        private bool _supportsTransactions;
+        public bool SupportsTransactions { get; set; }
 
         /// <summary>
         /// Related link URI for Get-Help -Online
         /// </summary>
         [SuppressMessage("Microsoft.Design", "CA1056:UriPropertiesShouldNotBeStrings")]
-        public string HelpUri
-        {
-            get { return _helpUri; }
-            set { _helpUri = value; }
-
-        }
-        private string _helpUri = String.Empty;
+        public string HelpUri { get; set; } = String.Empty;
 
         /// <summary>
         /// The remoting capabilities of this cmdlet, when exposed in a context
@@ -595,7 +554,6 @@ namespace System.Management.Automation
                 return _remotingCapability;
             }
             set { _remotingCapability = value; }
-
         }
         private RemotingCapability _remotingCapability = RemotingCapability.PowerShell;
 
@@ -606,12 +564,7 @@ namespace System.Management.Automation
         /// SupportsShouldProcess is specified.
         /// </summary>
         /// <value></value>
-        public ConfirmImpact ConfirmImpact
-        {
-            get { return _confirmImpact; }
-            set { _confirmImpact = value; }
-        }
-        private ConfirmImpact _confirmImpact = ConfirmImpact.Medium;
+        public ConfirmImpact ConfirmImpact { get; set; } = ConfirmImpact.Medium;
 
         /// <summary>
         /// Gets the parameter data for this command
@@ -623,7 +576,7 @@ namespace System.Management.Automation
                 if (_parameters == null)
                 {
                     // Return parameters for a script block
-                    if (this._scriptBlock != null)
+                    if (_scriptBlock != null)
                     {
                         InternalParameterMetadata parameterMetadata = InternalParameterMetadata.Get(_scriptBlock.RuntimeDefinedParameters, false,
                                                                             _scriptBlock.UsesCmdletBinding);
@@ -659,12 +612,7 @@ namespace System.Management.Automation
         /// Gets or sets the obsolete attribute on the command
         /// </summary>
         /// <value></value>
-        internal ObsoleteAttribute Obsolete
-        {
-            get { return _obsolete; }
-            set { _obsolete = value; }
-        }
-        private ObsoleteAttribute _obsolete;
+        internal ObsoleteAttribute Obsolete { get; set; }
 
         #endregion
 
@@ -679,10 +627,10 @@ namespace System.Management.Automation
         {
             get
             {
-                return staticCommandParameterMetadata;
+                return _staticCommandParameterMetadata;
             }
         }
-        private readonly MergedCommandParameterMetadata staticCommandParameterMetadata;
+        private readonly MergedCommandParameterMetadata _staticCommandParameterMetadata;
 
         /// <summary>
         /// True if the cmdlet implements dynamic parameters, or false otherwise
@@ -727,7 +675,7 @@ namespace System.Management.Automation
         {
             get
             {
-                return this._wrappedCommandType;
+                return _wrappedCommandType;
             }
         }
 
@@ -773,7 +721,7 @@ namespace System.Management.Automation
                 }
                 else if (attribute is ObsoleteAttribute)
                 {
-                    _obsolete = (ObsoleteAttribute)attribute;
+                    Obsolete = (ObsoleteAttribute)attribute;
                 }
                 else
                 {
@@ -809,19 +757,19 @@ namespace System.Management.Automation
             _defaultParameterSetName = attribute.DefaultParameterSetName;
 
             // Check to see if the cmdlet supports ShouldProcess
-            _supportsShouldProcess = attribute.SupportsShouldProcess;
+            SupportsShouldProcess = attribute.SupportsShouldProcess;
 
             // Determine the cmdlet's impact confirmation
-            _confirmImpact = attribute.ConfirmImpact;
+            ConfirmImpact = attribute.ConfirmImpact;
 
             // Check to see if the cmdlet supports paging
-            _supportsPaging = attribute.SupportsPaging;
+            SupportsPaging = attribute.SupportsPaging;
 
             // Check to see if the cmdlet supports transactions
-            _supportsTransactions = attribute.SupportsTransactions;
+            SupportsTransactions = attribute.SupportsTransactions;
 
             // Grab related link
-            _helpUri = attribute.HelpUri;
+            HelpUri = attribute.HelpUri;
 
             // Remoting support
             _remotingCapability = attribute.RemotingCapability;
@@ -921,7 +869,7 @@ namespace System.Management.Automation
 .ForwardHelpTargetName {0}
 .ForwardHelpCategory {1}
 ",
-                    this._wrappedCommand, this._wrappedCommandType);
+                    _wrappedCommand, _wrappedCommandType);
             }
 
             string dynamicParamblock = String.Empty;
@@ -977,25 +925,25 @@ end
                     separator = ", ";
                 }
 
-                if (_supportsShouldProcess)
+                if (SupportsShouldProcess)
                 {
                     decl.Append(separator);
                     decl.Append("SupportsShouldProcess=$true");
                     separator = ", ";
                     decl.Append(separator);
                     decl.Append("ConfirmImpact='");
-                    decl.Append(_confirmImpact);
+                    decl.Append(ConfirmImpact);
                     decl.Append("'");
                 }
 
-                if (_supportsPaging)
+                if (SupportsPaging)
                 {
                     decl.Append(separator);
                     decl.Append("SupportsPaging=$true");
                     separator = ", ";
                 }
 
-                if (_supportsTransactions)
+                if (SupportsTransactions)
                 {
                     decl.Append(separator);
                     decl.Append("SupportsTransactions=$true");
@@ -1009,11 +957,11 @@ end
                     separator = ", ";
                 }
 
-                if (!string.IsNullOrEmpty(_helpUri))
+                if (!string.IsNullOrEmpty(HelpUri))
                 {
                     decl.Append(separator);
                     decl.Append("HelpUri='");
-                    decl.Append(CodeGeneration.EscapeSingleQuotedStringContent(_helpUri));
+                    decl.Append(CodeGeneration.EscapeSingleQuotedStringContent(HelpUri));
                     decl.Append("'");
                     separator = ", ";
                 }
@@ -1185,7 +1133,7 @@ end
 
         internal const string isSafeNameOrIdentifierRegex = @"^[-._:\\\p{Ll}\p{Lu}\p{Lt}\p{Lo}\p{Nd}\p{Lm}]{1,100}$";
 
-        static private CommandMetadata GetRestrictedCmdlet(string cmdletName, string defaultParameterSet, string helpUri, params ParameterMetadata[] parameters)
+        private static CommandMetadata GetRestrictedCmdlet(string cmdletName, string defaultParameterSet, string helpUri, params ParameterMetadata[] parameters)
         {
             Dictionary<string, ParameterMetadata> parametersDictionary = new Dictionary<string, ParameterMetadata>(StringComparer.OrdinalIgnoreCase);
             foreach (ParameterMetadata parameter in parameters)
@@ -1219,7 +1167,7 @@ end
             return metadata;
         }
 
-        static private CommandMetadata GetRestrictedGetCommand()
+        private static CommandMetadata GetRestrictedGetCommand()
         {
             // remote Get-Command called by Import/Export-PSSession to get metadata for remote commands that user wants to import
 
@@ -1254,18 +1202,18 @@ end
             ParameterMetadata showCommandInfo = new ParameterMetadata("ShowCommandInfo", typeof(SwitchParameter));
 
             return GetRestrictedCmdlet(
-                "Get-Command", 
+                "Get-Command",
                 null, // defaultParameterSet 
                 "http://go.microsoft.com/fwlink/?LinkID=113309", // helpUri
-                nameParameter, 
-                moduleParameter, 
-                argumentListParameter, 
+                nameParameter,
+                moduleParameter,
+                argumentListParameter,
                 commandTypeParameter,
                 listImportedParameter,
                 showCommandInfo);
         }
 
-        static private CommandMetadata GetRestrictedGetFormatData()
+        private static CommandMetadata GetRestrictedGetFormatData()
         {
             // remote Get-FormatData called by Import/Export-PSSession to get F&O metadata from remote session
 
@@ -1278,7 +1226,7 @@ end
             return GetRestrictedCmdlet("Get-FormatData", null, "http://go.microsoft.com/fwlink/?LinkID=144303", typeNameParameter);
         }
 
-        static private CommandMetadata GetRestrictedGetHelp()
+        private static CommandMetadata GetRestrictedGetHelp()
         {
             // remote Get-Help is called when help for implicit remoting proxy tries to fetch help content for a remote command
 
@@ -1297,7 +1245,7 @@ end
             return GetRestrictedCmdlet("Get-Help", null, "http://go.microsoft.com/fwlink/?LinkID=113316", nameParameter, categoryParameter);
         }
 
-        static private CommandMetadata GetRestrictedSelectObject()
+        private static CommandMetadata GetRestrictedSelectObject()
         {
             // remote Select-Object is called by Import/Export-PSSession to 
             // 1) restrict what properties are serialized
@@ -1323,7 +1271,7 @@ end
             return GetRestrictedCmdlet("Select-Object", null, "http://go.microsoft.com/fwlink/?LinkID=113387", propertyParameter, inputParameter);
         }
 
-        static private CommandMetadata GetRestrictedMeasureObject()
+        private static CommandMetadata GetRestrictedMeasureObject()
         {
             // remote Measure-Object is called by Import/Export-PSSession to measure how many objects
             // it is going to receive and to display a nice progress bar
@@ -1340,7 +1288,7 @@ end
             return GetRestrictedCmdlet("Measure-Object", null, "http://go.microsoft.com/fwlink/?LinkID=113349", inputParameter);
         }
 
-        static private CommandMetadata GetRestrictedOutDefault()
+        private static CommandMetadata GetRestrictedOutDefault()
         {
             // remote Out-Default is called by interactive remoting (without any parameters, only using pipelines to pass data)
 
@@ -1356,7 +1304,7 @@ end
             return GetRestrictedCmdlet("Out-Default", null, "http://go.microsoft.com/fwlink/?LinkID=113362", inputParameter);
         }
 
-        static private CommandMetadata GetRestrictedExitPSSession()
+        private static CommandMetadata GetRestrictedExitPSSession()
         {
             // remote Exit-PSSession is not called by PowerShell, but is needed so that users
             // can exit an interactive remoting session
@@ -1381,7 +1329,7 @@ end
         /// </summary>
         /// <returns></returns>
         /// <seealso cref="System.Management.Automation.Runspaces.InitialSessionState.CreateRestricted(SessionCapabilities)"/>
-        static public Dictionary<string, CommandMetadata> GetRestrictedCommands(SessionCapabilities sessionCapabilities)
+        public static Dictionary<string, CommandMetadata> GetRestrictedCommands(SessionCapabilities sessionCapabilities)
         {
             List<CommandMetadata> restrictedCommands = new List<CommandMetadata>();
 
@@ -1409,7 +1357,7 @@ end
             return result;
         }
 
-        static private Collection<CommandMetadata> GetRestrictedRemotingCommands()
+        private static Collection<CommandMetadata> GetRestrictedRemotingCommands()
         {
             Collection<CommandMetadata> remotingCommands = new Collection<CommandMetadata>
                                                            {
@@ -1426,7 +1374,7 @@ end
         }
 
 #if !CORECLR    // Not referenced on CSS
-        static private Collection<CommandMetadata> GetRestrictedJobCommands()
+        private static Collection<CommandMetadata> GetRestrictedJobCommands()
         {
             // all the job cmdlets take a Name parameter. This needs to be 
             // restricted to safenames in order to allow only valid wildcards
@@ -1586,7 +1534,7 @@ end
             CommandMetadata removeJob = GetRestrictedCmdlet("Remove-Job", JobCmdletBase.SessionIdParameterSet, "http://go.microsoft.com/fwlink/?LinkID=113377",
                                                             nameParameter, instanceIdParameter,
                                                             idParameter, stateParameter, filterParameter, jobParameter, forceParameter);
-            
+
             restrictedJobCommands.Add(removeJob);
 
             // Suspend-Job cmdlet
@@ -1612,7 +1560,7 @@ end
         /// The command metadata cache. This is separate from the parameterMetadata cache
         /// because it is specific to cmdlets.
         /// </summary>
-        private static System.Collections.Concurrent.ConcurrentDictionary<string, CommandMetadata> CommandMetadataCache =
+        private static System.Collections.Concurrent.ConcurrentDictionary<string, CommandMetadata> s_commandMetadataCache =
             new System.Collections.Concurrent.ConcurrentDictionary<string, CommandMetadata>(StringComparer.OrdinalIgnoreCase);
 
         #endregion

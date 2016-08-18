@@ -23,7 +23,6 @@ using System.Management.Automation.Language;
 using Parser = System.Management.Automation.Language.Parser;
 using ScriptBlock = System.Management.Automation.ScriptBlock;
 using Token = System.Management.Automation.Language.Token;
-using System.Collections.ObjectModel;
 using Microsoft.PowerShell.Telemetry.Internal;
 
 #if CORECLR
@@ -53,7 +52,7 @@ namespace Microsoft.PowerShell.Commands
         private const string ParameterSet_ViaPsrpSession = "PSSession";
         private const string ParameterSet_ViaCimSession = "CimSession";
         private const string ParameterSet_FQName_ViaPsrpSession = "FullyQualifiedNameAndPSSession";
-        
+
         /// <summary>
         /// This parameter specifies whether to import to the current session state
         /// or to the global / top-level session state
@@ -83,12 +82,7 @@ namespace Microsoft.PowerShell.Commands
         [Parameter(ParameterSetName = ParameterSet_ViaPsrpSession, Mandatory = true, ValueFromPipeline = true, Position = 0)]
         [Parameter(ParameterSetName = ParameterSet_ViaCimSession, Mandatory = true, ValueFromPipeline = true, Position = 0)]
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays", Justification = "Cmdlets use arrays for parameters.")]
-        public string[] Name
-        {
-            set { _name = value; }
-            get { return _name; }
-        }
-        private string[] _name = Utils.EmptyArray<string>();
+        public string[] Name { set; get; } = Utils.EmptyArray<string>();
 
         /// <summary>
         /// This parameter specifies the current pipeline object 
@@ -295,12 +289,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         [Parameter(ParameterSetName = ParameterSet_ModuleInfo, Mandatory = true, ValueFromPipeline = true, Position = 0)]
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays", Justification = "Cmdlets use arrays for parameters.")]
-        public PSModuleInfo[] ModuleInfo
-        {
-            set { _moduleInfo = value; }
-            get { return _moduleInfo; }
-        }
-        private PSModuleInfo[] _moduleInfo = Utils.EmptyArray<PSModuleInfo>();
+        public PSModuleInfo[] ModuleInfo { set; get; } = Utils.EmptyArray<PSModuleInfo>();
 
         /// <summary>
         /// The arguments to pass to the module script.
@@ -335,9 +324,9 @@ namespace Microsoft.PowerShell.Commands
         /// Imports a command to the scope specified
         /// </summary>
         [Parameter]
-        [ValidateSet("Local","Global")]
-        public String Scope 
-        { 
+        [ValidateSet("Local", "Global")]
+        public String Scope
+        {
             get { return _scope; }
             set
             {
@@ -491,7 +480,6 @@ namespace Microsoft.PowerShell.Commands
             {
                 foreach (KeyValuePair<string, PSModuleInfo> pair in Context.Modules.ModuleTable)
                 {
-
                     // if the module in the moduleTable is an assembly module without path, the moduleName is the key.
                     string moduleName = "dynamic_code_module_" + suppliedAssembly;
                     if (pair.Value.Path == "")
@@ -510,7 +498,7 @@ namespace Microsoft.PowerShell.Commands
                             continue;
                         }
                     }
-                    
+
                     if (pair.Value.Path.Equals(suppliedAssembly.Location, StringComparison.OrdinalIgnoreCase))
                     {
                         moduleLoaded = true;
@@ -560,7 +548,7 @@ namespace Microsoft.PowerShell.Commands
 
                 // See if we can use the cached path for the file. If a version number has been specified, then
                 // we won't look in the cache
-                if (this.MinimumVersion == null && this.MaximumVersion == null && this.RequiredVersion == null && PSModuleInfo.UseAppDomainLevelModuleCache && ! this.BaseForce)
+                if (this.MinimumVersion == null && this.MaximumVersion == null && this.RequiredVersion == null && PSModuleInfo.UseAppDomainLevelModuleCache && !this.BaseForce)
                 {
                     // See if the name is in the appdomain-level module path name cache...
                     cachedPath = PSModuleInfo.ResolveUsingAppDomainLevelModuleCache(name);
@@ -597,10 +585,10 @@ namespace Microsoft.PowerShell.Commands
                     PSModuleInfo module;
                     if (!BaseForce && Context.Modules.ModuleTable.TryGetValue(rootedPath, out module))
                     {
-                        if (RequiredVersion == null 
-                            || module.Version.Equals(RequiredVersion) 
-                            || (BaseMinimumVersion == null && BaseMaximumVersion == null) 
-                            || module.ModuleType != ModuleType.Manifest 
+                        if (RequiredVersion == null
+                            || module.Version.Equals(RequiredVersion)
+                            || (BaseMinimumVersion == null && BaseMaximumVersion == null)
+                            || module.ModuleType != ModuleType.Manifest
                             || (BaseMinimumVersion == null && BaseMaximumVersion != null && module.Version <= BaseMaximumVersion)
                             || (BaseMinimumVersion != null && BaseMaximumVersion == null && module.Version >= BaseMinimumVersion)
                             || (BaseMinimumVersion != null && BaseMaximumVersion != null && module.Version >= BaseMinimumVersion && module.Version <= BaseMaximumVersion))
@@ -647,7 +635,6 @@ namespace Microsoft.PowerShell.Commands
                             foundModule = LoadModule(rootedPath, null, this.BasePrefix, null, ref importModuleOptions,
                                                      ManifestProcessingFlags.LoadElements | ManifestProcessingFlags.WriteErrors | ManifestProcessingFlags.NullOnFirstError,
                                                      out found);
-
                         }
                         else if (Directory.Exists(rootedPath))
                         {
@@ -677,7 +664,7 @@ namespace Microsoft.PowerShell.Commands
                     if (InitialSessionState.IsEngineModule(name))
                     {
                         PSSnapInInfo snapin = ModuleCmdletBase.GetEngineSnapIn(Context, name);
-                        
+
                         // Return the command if we found a module
                         if (snapin != null)
                         {
@@ -805,13 +792,13 @@ namespace Microsoft.PowerShell.Commands
                     remotelyImportedModules.AddRange(tmp);
                 }
             }
-            
+
             return remotelyImportedModules;
         }
 
         private IList<PSModuleInfo> ImportModule_RemotelyViaPsrpSession(
-            ImportModuleOptions importModuleOptions, 
-            string moduleName, 
+            ImportModuleOptions importModuleOptions,
+            string moduleName,
             ModuleSpecification fullyQualifiedName,
             PSSession psSession)
         {
@@ -873,9 +860,9 @@ namespace Microsoft.PowerShell.Commands
                 PSPropertyInfo nameProperty = remotelyImportedModule.Properties["Name"];
                 if (nameProperty != null)
                 {
-                    string remoteModuleName = (string) LanguagePrimitives.ConvertTo(
+                    string remoteModuleName = (string)LanguagePrimitives.ConvertTo(
                         nameProperty.Value,
-                        typeof (string),
+                        typeof(string),
                         CultureInfo.InvariantCulture);
 
                     PSPropertyInfo helpInfoProperty = remotelyImportedModule.Properties["HelpInfoUri"];
@@ -937,15 +924,15 @@ namespace Microsoft.PowerShell.Commands
         }
 
         private PSModuleInfo ImportModule_RemotelyViaPsrpSession_SinglePreimportedModule(
-            ImportModuleOptions importModuleOptions, 
+            ImportModuleOptions importModuleOptions,
             string remoteModuleName,
             Version remoteModuleVersion,
             PSSession psSession)
         {
             string temporaryModulePath = RemoteDiscoveryHelper.GetModulePath(
-                remoteModuleName, 
-                remoteModuleVersion, 
-                psSession.ComputerName, 
+                remoteModuleName,
+                remoteModuleVersion,
+                psSession.ComputerName,
                 this.Context.CurrentRunspace);
             string wildcardEscapedPath = WildcardPattern.Escape(temporaryModulePath);
             try
@@ -1004,7 +991,7 @@ namespace Microsoft.PowerShell.Commands
                 object[] oldArgumentList = this.ArgumentList;
                 try
                 {
-                    this.ArgumentList = new object[] {psSession};
+                    this.ArgumentList = new object[] { psSession };
                     ImportModule_LocallyViaName(importModuleOptions, wildcardEscapedPsd1Path);
                 }
                 finally
@@ -1089,8 +1076,8 @@ namespace Microsoft.PowerShell.Commands
                 return true;
             }
             Hashtable manifestData = RemoteDiscoveryHelper.ConvertCimModuleFileToManifestHashtable(
-                    mainManifestFile, 
-                    temporaryModuleManifestPath, 
+                    mainManifestFile,
+                    temporaryModuleManifestPath,
                     this,
                     ref containedErrors);
 
@@ -1153,21 +1140,21 @@ namespace Microsoft.PowerShell.Commands
         }
 
         private void ImportModule_RemotelyViaCimSession(
-            ImportModuleOptions importModuleOptions, 
-            string[] moduleNames, 
-            CimSession cimSession, 
-            Uri resourceUri, 
+            ImportModuleOptions importModuleOptions,
+            string[] moduleNames,
+            CimSession cimSession,
+            Uri resourceUri,
             string cimNamespace)
         {
             //
             // find all remote PS-CIM modules
             //
             IEnumerable<RemoteDiscoveryHelper.CimModule> remoteModules = RemoteDiscoveryHelper.GetCimModules(
-                cimSession, 
+                cimSession,
                 resourceUri,
                 cimNamespace,
-                moduleNames, 
-                false /* onlyManifests */, 
+                moduleNames,
+                false /* onlyManifests */,
                 this,
                 this.CancellationToken).ToList();
 
@@ -1235,7 +1222,7 @@ namespace Microsoft.PowerShell.Commands
             {
                 return false;
             }
-            
+
             List<string> goodEntries;
             if (!this.GetListOfStringsFromData(manifestData, null, goodKey, 0, out goodEntries))
             {
@@ -1277,7 +1264,7 @@ namespace Microsoft.PowerShell.Commands
         }
 
         private IEnumerable<string> CreateCimModuleFiles(
-            RemoteDiscoveryHelper.CimModule remoteCimModule, 
+            RemoteDiscoveryHelper.CimModule remoteCimModule,
             RemoteDiscoveryHelper.CimFileCode fileCode,
             Func<RemoteDiscoveryHelper.CimModuleFile, bool> filesFilter,
             string temporaryModuleDirectory)
@@ -1327,8 +1314,8 @@ namespace Microsoft.PowerShell.Commands
         }
 
         private PSModuleInfo ImportModule_RemotelyViaCimModuleData(
-            ImportModuleOptions importModuleOptions, 
-            RemoteDiscoveryHelper.CimModule remoteCimModule, 
+            ImportModuleOptions importModuleOptions,
+            RemoteDiscoveryHelper.CimModule remoteCimModule,
             CimSession cimSession)
         {
             try
@@ -1350,9 +1337,9 @@ namespace Microsoft.PowerShell.Commands
                 // read the original manifest
                 //
                 string temporaryModuleDirectory = RemoteDiscoveryHelper.GetModulePath(
-                    remoteCimModule.ModuleName, 
-                    null, 
-                    cimSession.ComputerName, 
+                    remoteCimModule.ModuleName,
+                    null,
+                    cimSession.ComputerName,
                     this.Context.CurrentRunspace);
                 string temporaryModuleManifestPath = Path.Combine(
                     temporaryModuleDirectory,
@@ -1366,10 +1353,10 @@ namespace Microsoft.PowerShell.Commands
                     ParseError[] parseErrors;
                     scriptBlockAst = Parser.ParseInput(
                         remoteCimModule.MainManifest.FileData,
-                        temporaryModuleManifestPath, 
-                        out throwAwayTokens, 
+                        temporaryModuleManifestPath,
+                        out throwAwayTokens,
                         out parseErrors);
-                    if ((scriptBlockAst == null) || 
+                    if ((scriptBlockAst == null) ||
                         (parseErrors != null && parseErrors.Length > 0))
                     {
                         throw new ParseException(parseErrors);
@@ -1401,9 +1388,9 @@ namespace Microsoft.PowerShell.Commands
                     moduleVersion = null;
                 }
                 temporaryModuleDirectory = RemoteDiscoveryHelper.GetModulePath(
-                    remoteCimModule.ModuleName, 
-                    moduleVersion, 
-                    cimSession.ComputerName, 
+                    remoteCimModule.ModuleName,
+                    moduleVersion,
+                    cimSession.ComputerName,
                     this.Context.CurrentRunspace);
                 temporaryModuleManifestPath = Path.Combine(
                     temporaryModuleDirectory,
@@ -1431,7 +1418,7 @@ namespace Microsoft.PowerShell.Commands
                         temporaryModuleDirectory);
                     IEnumerable<string> nestedModules = CreateCimModuleFiles(
                         remoteCimModule,
-                        RemoteDiscoveryHelper.CimFileCode.CmdletizationV1, 
+                        RemoteDiscoveryHelper.CimFileCode.CmdletizationV1,
                         IsCmdletizationFile,
                         temporaryModuleDirectory);
                     data = RemoteDiscoveryHelper.RewriteManifest(
@@ -1530,7 +1517,7 @@ namespace Microsoft.PowerShell.Commands
                         ";
                     ScriptBlock onRemoveScriptBlock = this.Context.Engine.ParseScriptBlock(onRemoveScriptBody, false);
                     onRemoveScriptBlock = onRemoveScriptBlock.GetNewClosure();
-                        // create a separate scope for variables set below
+                    // create a separate scope for variables set below
                     onRemoveScriptBlock.Module.SessionState.PSVariable.Set("temporaryModulePath", temporaryModuleDirectory);
                     onRemoveScriptBlock.Module.SessionState.PSVariable.Set("previousOnRemoveScript", moduleInfo.OnRemove);
                     moduleInfo.OnRemove = onRemoveScriptBlock;
@@ -1539,8 +1526,8 @@ namespace Microsoft.PowerShell.Commands
                     // Some procesing common for local and remote modules
                     //
                     AddModuleToModuleTables(
-                        this.Context, 
-                        this.TargetSessionState.Internal, 
+                        this.Context,
+                        this.TargetSessionState.Internal,
                         moduleInfo);
                     if (BasePassThru)
                     {
@@ -1570,7 +1557,7 @@ namespace Microsoft.PowerShell.Commands
             }
             catch (Exception e)
             {
-                ErrorRecord errorRecord = RemoteDiscoveryHelper.GetErrorRecordForProcessingOfCimModule(e, remoteCimModule. ModuleName);
+                ErrorRecord errorRecord = RemoteDiscoveryHelper.GetErrorRecordForProcessingOfCimModule(e, remoteCimModule.ModuleName);
                 this.WriteError(errorRecord);
                 return null;
             }
@@ -1587,7 +1574,7 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return this._cancellationTokenSource.Token;
+                return _cancellationTokenSource.Token;
             }
         }
 
@@ -1599,7 +1586,7 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         protected override void StopProcessing()
         {
-            this._cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Cancel();
         }
 
         #endregion
@@ -1627,7 +1614,7 @@ namespace Microsoft.PowerShell.Commands
 
             if (disposing)
             {
-                this._cancellationTokenSource.Dispose();
+                _cancellationTokenSource.Dispose();
             }
 
             _disposed = true;
@@ -1673,7 +1660,7 @@ namespace Microsoft.PowerShell.Commands
         /// </remarks>
         protected override void ProcessRecord()
         {
-            if (BaseMaximumVersion != null && BaseMaximumVersion !=null && BaseMaximumVersion < BaseMinimumVersion)
+            if (BaseMaximumVersion != null && BaseMaximumVersion != null && BaseMaximumVersion < BaseMinimumVersion)
             {
                 string message = StringUtil.Format(Modules.MinimumVersionAndMaximumVersionInvalidRange, BaseMinimumVersion, BaseMaximumVersion);
                 throw new PSArgumentOutOfRangeException(message);
@@ -1689,11 +1676,11 @@ namespace Microsoft.PowerShell.Commands
             {
                 // Process all of the specified PSModuleInfo objects. These would typically be coming in as a result
                 // of doing Get-Module -list
-                foreach (PSModuleInfo module in _moduleInfo)
+                foreach (PSModuleInfo module in ModuleInfo)
                 {
                     RemoteDiscoveryHelper.DispatchModuleInfoProcessing(
                         module,
-                        localAction: delegate()
+                        localAction: delegate ()
                                          {
                                              ImportModule_ViaLocalModuleInfo(importModuleOptions, module);
                                              SetModuleBaseForEngineModules(module.Name, this.Context);
@@ -1701,14 +1688,14 @@ namespace Microsoft.PowerShell.Commands
 
                         cimSessionAction: (cimSession, resourceUri, cimNamespace) => ImportModule_RemotelyViaCimSession(
                             importModuleOptions,
-                            new string[] {module.Name},
+                            new string[] { module.Name },
                             cimSession,
                             resourceUri,
                             cimNamespace),
 
                         psSessionAction: psSession => ImportModule_RemotelyViaPsrpSession(
                             importModuleOptions,
-                            new string[] {module.Path},
+                            new string[] { module.Path },
                             null,
                             psSession));
                 }
@@ -1805,5 +1792,4 @@ namespace Microsoft.PowerShell.Commands
             }
         }
     }
-
 } // Microsoft.PowerShell.Commands

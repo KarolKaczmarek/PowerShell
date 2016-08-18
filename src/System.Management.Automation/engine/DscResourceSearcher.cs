@@ -5,8 +5,6 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Management.Automation.Runspaces;
 using Dbg = System.Management.Automation.Diagnostics;
 
 namespace System.Management.Automation
@@ -23,8 +21,8 @@ namespace System.Management.Automation
             Diagnostics.Assert(context != null, "caller to verify context is not null");
             Diagnostics.Assert(!string.IsNullOrEmpty(resourceName), "caller to verify commandName is valid");
 
-            this._resourceName = resourceName;
-            this._context = context;
+            _resourceName = resourceName;
+            _context = context;
         }
 
         #region private properties
@@ -32,8 +30,8 @@ namespace System.Management.Automation
         private string _resourceName = null;
         private ExecutionContext _context = null;
         private DscResourceInfo _currentMatch = null;
-        private IEnumerator<DscResourceInfo> matchingResource = null;
-        private Collection<DscResourceInfo> matchingResourceList = null;
+        private IEnumerator<DscResourceInfo> _matchingResource = null;
+        private Collection<DscResourceInfo> _matchingResourceList = null;
 
         #endregion
 
@@ -45,7 +43,7 @@ namespace System.Management.Automation
         public void Reset()
         {
             _currentMatch = null;
-            matchingResource = null;
+            _matchingResource = null;
         }
 
         /// <summary>
@@ -122,17 +120,15 @@ namespace System.Management.Automation
         /// <returns>Next DscResource Info object or null if none are found.</returns>
         private DscResourceInfo GetNextDscResource()
         {
-            DscResourceInfo returnValue = null;
-
             var ps = PowerShell.Create(RunspaceMode.CurrentRunspace).AddCommand("Get-DscResource");
 
             WildcardPattern resourceMatcher = WildcardPattern.Get(_resourceName, WildcardOptions.IgnoreCase);
 
-            if (matchingResourceList == null)
+            if (_matchingResourceList == null)
             {
                 Collection<PSObject> psObjs = ps.Invoke();
 
-                matchingResourceList = new Collection<DscResourceInfo>();
+                _matchingResourceList = new Collection<DscResourceInfo>();
 
                 bool matchFound = false;
 
@@ -145,14 +141,14 @@ namespace System.Management.Automation
                         if (resourceMatcher.IsMatch(resourceName))
                         {
                             DscResourceInfo resourceInfo = new DscResourceInfo(resourceName,
-                                                                               resource.ResourceType,                                                                               
+                                                                               resource.ResourceType,
                                                                                resource.Path,
                                                                                resource.ParentPath,
                                                                                _context
                                                                                );
 
-                            
-                            resourceInfo.FriendlyName = resource.FriendlyName;                            
+
+                            resourceInfo.FriendlyName = resource.FriendlyName;
 
                             resourceInfo.CompanyName = resource.CompanyName;
 
@@ -160,7 +156,7 @@ namespace System.Management.Automation
 
                             if (psMod != null)
                                 resourceInfo.Module = psMod;
-                            
+
                             if (resource.ImplementedAs != null)
                             {
                                 ImplementedAsType impType;
@@ -186,8 +182,8 @@ namespace System.Management.Automation
 
                                 resourceInfo.UpdateProperties(propertyList);
                             }
-                            
-                            matchingResourceList.Add(resourceInfo);
+
+                            _matchingResourceList.Add(resourceInfo);
 
                             matchFound = true;
                         } //if 
@@ -195,24 +191,23 @@ namespace System.Management.Automation
                 }// foreach
 
                 if (matchFound)
-                    matchingResource = matchingResourceList.GetEnumerator();
+                    _matchingResource = _matchingResourceList.GetEnumerator();
                 else
-                    return returnValue;
+                    return null;
             }//if
 
-            if (!matchingResource.MoveNext())
+            if (!_matchingResource.MoveNext())
             {
-                matchingResource = null;
+                _matchingResource = null;
             }
             else
             {
-                returnValue = matchingResource.Current;
+                return _matchingResource.Current;
             }
 
-            return returnValue;
+            return null;
         }
 
         #endregion
-
     }
 }

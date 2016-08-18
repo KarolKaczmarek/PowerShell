@@ -2,23 +2,15 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
-using System.Collections;
 using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Management.Automation;
 using System.Management.Automation.Language;
-using System.Reflection;
-using System.Text;
 using System.Diagnostics;
-using System.Resources;
 using System.Management.Automation.Host;
 using System.Management.Automation.Internal.Host;
-using System.Threading;
 using System.Management.Automation.Internal;
 using Dbg = System.Management.Automation.Diagnostics;
 using System.Management.Automation.Runspaces;
-    
+
 namespace System.Management.Automation.Internal
 {
     /// <summary>
@@ -54,7 +46,7 @@ namespace System.Management.Automation.Internal
         #endregion private_members
 
         #region ctor
-        
+
         /// <summary>
         /// Initializes the new instance of Cmdlet class.
         /// </summary>
@@ -62,7 +54,7 @@ namespace System.Management.Automation.Internal
         /// The only constructor is internal, so outside users cannot create
         /// an instance of this class.
         /// </remarks>
-        internal InternalCommand ()
+        internal InternalCommand()
         {
             this.CommandInfo = null;
         }
@@ -77,22 +69,14 @@ namespace System.Management.Automation.Internal
         /// <value></value>
         internal IScriptExtent InvocationExtent { get; set; }
 
-        private InvocationInfo myInvocation = null;
+        private InvocationInfo _myInvocation = null;
         /// <summary>
         /// Return the invocation data object for this command.
         /// </summary>
         /// <value>The invocation object for this command.</value>
         internal InvocationInfo MyInvocation
         {
-            get
-            {
-                if (myInvocation == null)
-                {
-                    myInvocation = new InvocationInfo (this);
-                }
-
-                return myInvocation;
-            }
+            get { return _myInvocation ?? (_myInvocation = new InvocationInfo(this)); }
         }
 
         /// <summary>
@@ -106,7 +90,8 @@ namespace System.Management.Automation.Internal
         internal PSObject CurrentPipelineObject
         {
             get { return currentObjectInPipeline; }
-            set {
+            set
+            {
                 currentObjectInPipeline = value;
             }
         }
@@ -116,9 +101,9 @@ namespace System.Management.Automation.Internal
         /// </summary>
         internal PSHost PSHostInternal
         {
-            get { return CBhost; }
+            get { return _CBhost; }
         }
-        private PSHost CBhost;
+        private PSHost _CBhost;
 
         /// <summary>
         /// Internal helper to get to SessionState
@@ -126,16 +111,17 @@ namespace System.Management.Automation.Internal
         /// 
         internal SessionState InternalState
         {
-            get { return state; }
+            get { return _state; }
         }
-        private SessionState state;
+        private SessionState _state;
 
         /// <summary>
         /// Internal helper. Indicates whether stop has been requested on this command.
         /// </summary>
         internal bool IsStopping
         {
-            get {
+            get
+            {
                 MshCommandRuntime mcr = this.commandRuntime as MshCommandRuntime;
                 return (mcr != null && mcr.IsStopping);
             }
@@ -144,14 +130,14 @@ namespace System.Management.Automation.Internal
         /// <summary>
         /// The information about the command.
         /// </summary>
-        private CommandInfo commandInfo;
+        private CommandInfo _commandInfo;
         /// <summary>
         /// Gets or sets the command information for the command.
         /// </summary>
         internal CommandInfo CommandInfo
         {
-            get { return commandInfo; }
-            set { commandInfo = value; }
+            get { return _commandInfo; }
+            set { _commandInfo = value; }
         }
 
         #endregion internal_members
@@ -166,23 +152,23 @@ namespace System.Management.Automation.Internal
         /// </exception>
         internal ExecutionContext Context
         {
-            get { return context; }
+            get { return _context; }
             set
             {
                 if (value == null)
                 {
                     throw PSTraceSource.NewArgumentNullException("Context");
                 }
-                context = value;
-                Diagnostics.Assert (context.EngineHostInterface is InternalHost, "context.EngineHostInterface is not an InternalHost");
-                CBhost = (InternalHost)context.EngineHostInterface;
+                _context = value;
+                Diagnostics.Assert(_context.EngineHostInterface is InternalHost, "context.EngineHostInterface is not an InternalHost");
+                _CBhost = (InternalHost)_context.EngineHostInterface;
 
                 // Construct the session state API set from the new context
 
-                state = new SessionState (context.EngineSessionState);
+                _state = new SessionState(_context.EngineSessionState);
             }
         }
-        private ExecutionContext context;
+        private ExecutionContext _context;
 
         /// <summary>
         /// This property tells you if you were being invoked inside the runspace or
@@ -197,13 +183,13 @@ namespace System.Management.Automation.Internal
         #endregion public_properties
 
         #region Override
-        
+
         /// <summary>
         /// When overridden in the derived class, performs initialization
         /// of command execution.
         /// Default implementation in the base class just returns.
         /// </summary>
-        internal virtual void DoBeginProcessing ()
+        internal virtual void DoBeginProcessing()
         {
         }
 
@@ -211,7 +197,7 @@ namespace System.Management.Automation.Internal
         /// When overridden in the derived class, performs execution
         /// of the command.
         /// </summary>
-        internal virtual void DoProcessRecord ()
+        internal virtual void DoProcessRecord()
         {
         }
 
@@ -220,7 +206,7 @@ namespace System.Management.Automation.Internal
         /// after the command execution. 
         /// Default implementation in the base class just returns.
         /// </summary>
-        internal virtual void DoEndProcessing ()
+        internal virtual void DoEndProcessing()
         {
         }
 
@@ -230,7 +216,7 @@ namespace System.Management.Automation.Internal
         /// ProcessRecord, and EndProcessing.
         /// Default implementation in the base class just returns.
         /// </summary>
-        internal virtual void DoStopProcessing ()
+        internal virtual void DoStopProcessing()
         {
         }
 
@@ -262,10 +248,10 @@ namespace System.Management.Automation.Internal
         /// </remarks>
         internal void InternalDispose(bool isDisposing)
         {
-            myInvocation = null;
-            state = null;
-            commandInfo = null;
-            context = null;
+            _myInvocation = null;
+            _state = null;
+            _commandInfo = null;
+            _context = null;
         }
 
         #endregion
@@ -297,7 +283,6 @@ namespace System.Management.Automation
         Ignore,
         /// <summary>Suspend the command for further diagnosis. Supported only for workflows.</summary>
         Suspend,
-
     } // enum ActionPreference
     #endregion ActionPreference
 
@@ -358,8 +343,8 @@ namespace System.Management.Automation
     public abstract partial class PSCmdlet : Cmdlet
     {
         #region private_members
-        
-        private ProviderIntrinsics invokeProvider = null;
+
+        private ProviderIntrinsics _invokeProvider = null;
 
         #endregion private_members
 
@@ -455,11 +440,7 @@ namespace System.Management.Automation
             {
                 using (PSTransactionManager.GetEngineProtectionScope())
                 {
-                    if (invokeProvider == null)
-                    {
-                        invokeProvider = new ProviderIntrinsics(this);
-                    }
-                    return invokeProvider;
+                    return _invokeProvider ?? (_invokeProvider = new ProviderIntrinsics(this));
                 }
             }
         } // InvokeProvider
@@ -471,7 +452,6 @@ namespace System.Management.Automation
         {
             using (PSTransactionManager.GetEngineProtectionScope())
             {
-
                 if (providerId == null)
                 {
                     throw PSTraceSource.NewArgumentNullException("providerId");
@@ -505,7 +485,7 @@ namespace System.Management.Automation
         #endregion internal_members
 
         #region ctor
-        
+
         /// <summary>
         /// Initializes the new instance of PSCmdlet class.
         /// </summary>

@@ -1,17 +1,8 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
-using System.Collections;
-using System.Collections.Generic;
+
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Management.Automation;
-using System.Management.Automation.Host;
-using System.Management.Automation.Remoting;
 using System.Management.Automation.Internal;
 using System.Management.Automation.Runspaces;
 using System.Management.Automation.Runspaces.Internal;
@@ -34,7 +25,7 @@ namespace System.Management.Automation.Remoting
         private ObjectRef<Runspace> _runspaceRef;
         private bool _stopInvoke;
         private object _localSyncObject;
-        private static RobustConnectionProgress RCProgress = new RobustConnectionProgress();
+        private static RobustConnectionProgress s_RCProgress = new RobustConnectionProgress();
 
         /// <summary>
         /// Constructor for RunspaceRef.
@@ -202,7 +193,7 @@ namespace System.Management.Automation.Remoting
                 if (psCommand != null)
                 {
                     pipeline = useNestedPipelines ?
-                        _runspaceRef.Value.CreateNestedPipeline(psCommand.Commands[0].CommandText, addToHistory):
+                        _runspaceRef.Value.CreateNestedPipeline(psCommand.Commands[0].CommandText, addToHistory) :
                         _runspaceRef.Value.CreatePipeline(psCommand.Commands[0].CommandText, addToHistory);
 
                     pipeline.Commands.Clear();
@@ -309,13 +300,13 @@ namespace System.Management.Automation.Remoting
                     isRunspacePushed = true;
                 }
 
-                if ( (remoteRunspace.GetCurrentlyRunningPipeline() != null) )
+                if ((remoteRunspace.GetCurrentlyRunningPipeline() != null))
                 {
                     // Don't execute command if pushed runspace is already running one.
                     return;
                 }
 
-                using(PowerShell powerShell = PowerShell.Create())
+                using (PowerShell powerShell = PowerShell.Create())
                 {
                     powerShell.AddCommand("Get-Command");
                     powerShell.AddParameter("Name", new string[] { "Out-Default", "Exit-PSSession" });
@@ -327,7 +318,7 @@ namespace System.Management.Automation.Remoting
                     int expectedNumberOfResults = isReleaseCandidateBackcompatibilityMode ? 2 : 3;
 
                     powerShell.RemotePowerShell.HostCallReceived += new EventHandler<RemoteDataEventArgs<RemoteHostCall>>(HandleHostCall);
-                    
+
                     IAsyncResult asyncResult = powerShell.BeginInvoke();
                     PSDataCollection<PSObject> results = new PSDataCollection<PSObject>();
 
@@ -396,7 +387,7 @@ namespace System.Management.Automation.Remoting
                 remoteRunspace.RunspacePool.RemoteRunspacePoolInternal.Host != null)
             {
                 remoteRunspace.RunspacePool.RemoteRunspacePoolInternal.Host.UI.WriteErrorLine(
-                    StringUtil.Format(RemotingErrorIdStrings.RCAutoDisconnectingError, 
+                    StringUtil.Format(RemotingErrorIdStrings.RCAutoDisconnectingError,
                     remoteRunspace.ConnectionInfo.ComputerName));
             }
         }
@@ -409,7 +400,7 @@ namespace System.Management.Automation.Remoting
             RemoteRunspace remoteRunspace = _runspaceRef.Value as RemoteRunspace;
             if (remoteRunspace != null)
             {
-                RCProgress.StartProgress(
+                s_RCProgress.StartProgress(
                     sourceId,
                     computerName,
                     totalSeconds,
@@ -420,7 +411,7 @@ namespace System.Management.Automation.Remoting
         private void StopProgressBar(
             long sourceId)
         {
-            RCProgress.StopProgress(sourceId);
+            s_RCProgress.StopProgress(sourceId);
         }
 
         #endregion

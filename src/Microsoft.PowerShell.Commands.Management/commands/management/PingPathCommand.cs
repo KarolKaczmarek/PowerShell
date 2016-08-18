@@ -1,7 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
+
 using System.Management.Automation;
 using Dbg = System.Management.Automation;
 
@@ -40,40 +40,29 @@ namespace Microsoft.PowerShell.Commands
         /// <summary>
         /// Gets or sets the path parameter to the command
         /// </summary>
-        [Parameter (Position = 0, ParameterSetName = "Path",
+        [Parameter(Position = 0, ParameterSetName = "Path",
                     Mandatory = true, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
         public string[] Path
         {
-            get
-            {
-                return paths;
-            } // get
-
-            set
-            {
-                paths = value;
-            } // set
-        } // Path
+            get { return _paths; }
+            set { _paths = value; }
+        }
 
         /// <summary>
         /// Gets or sets the literal path parameter to the command
         /// </summary>
         [Parameter(ParameterSetName = "LiteralPath",
-                   Mandatory = true, ValueFromPipeline=false, ValueFromPipelineByPropertyName = true)]
+                   Mandatory = true, ValueFromPipeline = false, ValueFromPipelineByPropertyName = true)]
         [Alias("PSPath")]
         public string[] LiteralPath
         {
-            get
-            {
-                return paths;
-            } // get
-
+            get { return _paths; }
             set
             {
                 base.SuppressWildcardExpansion = true;
-                paths = value;
-            } // set
-        } // LiteralPath
+                _paths = value;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the filter property
@@ -81,14 +70,8 @@ namespace Microsoft.PowerShell.Commands
         [Parameter]
         public override string Filter
         {
-            get
-            {
-                return base.Filter;
-            }
-            set
-            {
-                base.Filter = value;
-            }
+            get { return base.Filter; }
+            set { base.Filter = value; }
         }
 
         /// <summary>
@@ -97,16 +80,9 @@ namespace Microsoft.PowerShell.Commands
         [Parameter]
         public override string[] Include
         {
-            get
-            {
-                return base.Include;
-            } // get
-
-            set
-            {
-                base.Include = value;
-            } // set
-        } // Include
+            get { return base.Include; }
+            set { base.Include = value; }
+        }
 
         /// <summary>
         /// Gets or sets the exclude property
@@ -114,52 +90,23 @@ namespace Microsoft.PowerShell.Commands
         [Parameter]
         public override string[] Exclude
         {
-            get
-            {
-                return base.Exclude;
-            } // get
-
-            set
-            {
-                base.Exclude = value;
-            } // set
-        } // Exclude
+            get { return base.Exclude; }
+            set { base.Exclude = value; }
+        }
 
         /// <summary>
         /// Gets or sets the isContainer property
         /// </summary>
         [Parameter]
         [Alias("Type")]
-        public TestPathType PathType
-        {
-            get
-            {
-                return type;
-            } // get
-
-            set
-            {
-                type = value;
-            } // set
-        } // Type
+        public TestPathType PathType { get; set; } = TestPathType.Any;
 
         /// <summary>
         /// Gets or sets the IsValid parameter
         /// </summary>
         [Parameter]
-        public SwitchParameter IsValid
-        {
-            get
-            {
-                return isValid;
-            } // get
+        public SwitchParameter IsValid { get; set; } = new SwitchParameter();
 
-            set
-            {
-                isValid = value;
-            } // set
-        } // IsValid
-        
         /// <summary>
         /// A virtual method for retrieving the dynamic parameters for a cmdlet. Derived cmdlets
         /// that require dynamic parameters should override this method and return the
@@ -196,24 +143,11 @@ namespace Microsoft.PowerShell.Commands
         #endregion Parameters
 
         #region parameter data
-        
+
         /// <summary>
         /// The path to the item to ping
         /// </summary>
-        private string[] paths;
-
-
-        /// <summary>
-        /// Determines if the command should check to see if any item exists at
-        /// the specified path, a container exists at the specified path, or a 
-        /// leaf item exists at the specified path.
-        /// </summary>
-        private TestPathType type = TestPathType.Any;
-
-        /// <summary>
-        /// Determines if the path should be checked for validity.
-        /// </summary>
-        private SwitchParameter isValid = new SwitchParameter();
+        private string[] _paths;
 
         #endregion parameter data
 
@@ -222,25 +156,25 @@ namespace Microsoft.PowerShell.Commands
         /// <summary>
         /// Determines if an item at the specified path exists.
         /// </summary>
-        protected override void ProcessRecord ()
+        protected override void ProcessRecord()
         {
             CmdletProviderContext currentContext = CmdletProviderContext;
-            
-            foreach (string path in paths)
+
+            foreach (string path in _paths)
             {
                 bool result = false;
 
                 try
                 {
-                    if(IsValid)
+                    if (IsValid)
                     {
-                        result = SessionState.Path.IsValid (path, currentContext);
+                        result = SessionState.Path.IsValid(path, currentContext);
                     }
                     else
                     {
                         if (this.PathType == TestPathType.Container)
                         {
-                            result = InvokeProvider.Item.IsContainer (path, currentContext);
+                            result = InvokeProvider.Item.IsContainer(path, currentContext);
                         }
                         else if (this.PathType == TestPathType.Leaf)
                         {
@@ -253,7 +187,6 @@ namespace Microsoft.PowerShell.Commands
                             result = InvokeProvider.Item.Exists(path, currentContext);
                         }
                     }
-
                 }
                 // Any of the known exceptions means the path does not exist.
                 catch (PSNotSupportedException)
@@ -276,6 +209,5 @@ namespace Microsoft.PowerShell.Commands
 
 
     } // PingPathCommand
-
 } // namespace Microsoft.PowerShell.Commands
 

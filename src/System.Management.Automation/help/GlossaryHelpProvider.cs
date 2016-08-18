@@ -19,7 +19,7 @@ namespace System.Management.Automation
     /// located in the Monad / CustomShell Path as well as in the Application Base
     /// of PSSnapIns
     /// </remarks>
-    internal class GlossaryHelpProvider: HelpProviderWithFullCache
+    internal class GlossaryHelpProvider : HelpProviderWithFullCache
     {
         /// <summary>
         /// Constructor for GlossaryHelpProvider
@@ -35,7 +35,7 @@ namespace System.Management.Automation
         /// Name of this provider
         /// </summary>
         /// <value>Name of this provider</value>
-        override internal string Name
+        internal override string Name
         {
             get
             {
@@ -47,7 +47,7 @@ namespace System.Management.Automation
         /// Help category for this provider, which is a constant: HelpCategory.Command.
         /// </summary>
         /// <value>Help category for this provider</value>
-        override internal HelpCategory HelpCategory
+        internal override HelpCategory HelpCategory
         {
             get
             {
@@ -78,7 +78,7 @@ namespace System.Management.Automation
         /// <returns></returns>
         protected sealed override bool CustomMatch(string target, string key)
         {
-            if(String.IsNullOrEmpty(target) || String.IsNullOrEmpty(key))
+            if (String.IsNullOrEmpty(target) || String.IsNullOrEmpty(key))
                 return false;
 
             string[] terms = key.Split(Utils.Separators.Comma);
@@ -103,7 +103,7 @@ namespace System.Management.Automation
 
             if (files == null)
                 return;
-            
+
             foreach (string file in files)
             {
                 if (!_helpFiles.ContainsKey(file))
@@ -113,7 +113,7 @@ namespace System.Management.Automation
                     _helpFiles[file] = 0;
                 }
             }
-        }        
+        }
 
         /// <summary>
         /// Load help file for HelpInfo objects. The HelpInfo objects will be 
@@ -136,7 +136,7 @@ namespace System.Management.Automation
             try
             {
                 doc = InternalDeserializer.LoadUnsafeXmlDocument(
-                    new FileInfo(helpFile), 
+                    new FileInfo(helpFile),
                     false, /* ignore whitespace, comments, etc. */
                     null); /* default maxCharactersInDocument */
             }
@@ -245,7 +245,7 @@ namespace System.Management.Automation
         /// This will reset the help cache. Normally this corresponds to a 
         /// help culture change. 
         /// </summary>
-        override internal void Reset()
+        internal override void Reset()
         {
             base.Reset();
 

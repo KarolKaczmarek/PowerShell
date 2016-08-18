@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System.IO;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -42,14 +43,14 @@ namespace System.Management.Automation
     ///     4. ProcessForwardedHelp
     /// 
     /// </summary>
-    abstract internal class HelpProvider
+    internal abstract class HelpProvider
     {
         /// <summary>
         /// Constructor for HelpProvider
         /// </summary>
         internal HelpProvider(HelpSystem helpSystem)
         {
-            this._helpSystem = helpSystem;
+            _helpSystem = helpSystem;
         }
 
         private HelpSystem _helpSystem;
@@ -69,7 +70,7 @@ namespace System.Management.Automation
         /// </summary>
         /// <value>Name for the help provider</value>
         /// <remarks>Derived classes should set this.</remarks>
-        abstract internal string Name
+        internal abstract string Name
         {
             get;
         }
@@ -79,7 +80,7 @@ namespace System.Management.Automation
         /// </summary>
         /// <value>Help category for the help provider</value>
         /// <remarks>Derived classes should set this.</remarks>
-        abstract internal HelpCategory HelpCategory
+        internal abstract HelpCategory HelpCategory
         {
             get;
         }
@@ -143,7 +144,7 @@ namespace System.Management.Automation
         /// </summary>
         /// <param name="helpRequest">help request object</param>
         /// <returns>List of HelpInfo objects retrived</returns>
-        abstract internal IEnumerable<HelpInfo> ExactMatchHelp(HelpRequest helpRequest);
+        internal abstract IEnumerable<HelpInfo> ExactMatchHelp(HelpRequest helpRequest);
 
         /// <summary>
         /// Search help info that match the target search pattern.
@@ -156,7 +157,7 @@ namespace System.Management.Automation
         /// If false, seraches for pattern in the command names.
         /// </param>       
         /// <returns>a collection of help info objects</returns>
-        abstract internal IEnumerable<HelpInfo> SearchHelp(HelpRequest helpRequest, bool searchOnlyContent);
+        internal abstract IEnumerable<HelpInfo> SearchHelp(HelpRequest helpRequest, bool searchOnlyContent);
 
         /// <summary>
         /// Process a helpinfo forwarded over by another help provider. 
@@ -173,7 +174,7 @@ namespace System.Management.Automation
         /// <param name="helpInfo">helpInfo passed over by another HelpProvider</param>
         /// <param name="helpRequest">help request object</param>        
         /// <returns></returns>
-        virtual internal IEnumerable<HelpInfo> ProcessForwardedHelp(HelpInfo helpInfo, HelpRequest helpRequest)
+        internal virtual IEnumerable<HelpInfo> ProcessForwardedHelp(HelpInfo helpInfo, HelpRequest helpRequest)
         {
             // Win8: 508648. Remove the current provides category for resolving forward help as the current
             // help provider already process it.
@@ -186,7 +187,7 @@ namespace System.Management.Automation
         /// 
         /// Normally help provider are reset after a help culture change. 
         /// </summary>
-        virtual internal void Reset()
+        internal virtual void Reset()
         {
             return;
         }
@@ -255,7 +256,7 @@ namespace System.Management.Automation
         /// <returns>true if supported,false otherwise.</returns>
         internal bool AreSnapInsSupported()
         {
-            RunspaceConfigForSingleShell runspace = this._helpSystem.ExecutionContext.RunspaceConfiguration as RunspaceConfigForSingleShell;
+            RunspaceConfigForSingleShell runspace = _helpSystem.ExecutionContext.RunspaceConfiguration as RunspaceConfigForSingleShell;
 
             return (null == runspace ? false : true);
         }
@@ -268,15 +269,15 @@ namespace System.Management.Automation
         internal Collection<string> GetSearchPaths()
         {
             Collection<String> searchPaths = this.HelpSystem.GetSearchPaths();
-            
+
             Diagnostics.Assert(searchPaths != null,
                 "HelpSystem returned an null search path");
-            
+
             searchPaths.Add(GetDefaultShellSearchPath());
 
             return searchPaths;
         }
-        
+
         #endregion
     }
 }

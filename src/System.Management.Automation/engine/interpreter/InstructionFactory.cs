@@ -26,14 +26,18 @@ using System.Collections.Generic;
 
 //using Microsoft.Scripting.Math;
 
-namespace System.Management.Automation.Interpreter {
-    internal abstract class InstructionFactory {
+namespace System.Management.Automation.Interpreter
+{
+    internal abstract class InstructionFactory
+    {
         // TODO: weak table for types in a collectible assembly?
-        private static Dictionary<Type, InstructionFactory> _factories;
+        private static Dictionary<Type, InstructionFactory> s_factories;
 
-        internal static InstructionFactory GetFactory(Type type) {
-            if (_factories == null) {
-                _factories = new Dictionary<Type, InstructionFactory>() {
+        internal static InstructionFactory GetFactory(Type type)
+        {
+            if (s_factories == null)
+            {
+                s_factories = new Dictionary<Type, InstructionFactory>() {
                     { typeof(object), InstructionFactory<object>.Factory },
                     { typeof(bool), InstructionFactory<bool>.Factory },
                     { typeof(byte), InstructionFactory<byte>.Factory },
@@ -55,26 +59,29 @@ namespace System.Management.Automation.Interpreter {
                 };
             }
 
-            lock (_factories) {
+            lock (s_factories)
+            {
                 InstructionFactory factory;
-                if (!_factories.TryGetValue(type, out factory)) {
+                if (!s_factories.TryGetValue(type, out factory))
+                {
                     factory = (InstructionFactory)typeof(InstructionFactory<>).MakeGenericType(type).GetField("Factory").GetValue(null);
-                    _factories[type] = factory;
+                    s_factories[type] = factory;
                 }
                 return factory;
             }
         }
 
-        internal protected abstract Instruction GetArrayItem();
-        internal protected abstract Instruction SetArrayItem();
-        internal protected abstract Instruction TypeIs();
-        internal protected abstract Instruction TypeAs();
-        internal protected abstract Instruction DefaultValue();
-        internal protected abstract Instruction NewArray();
-        internal protected abstract Instruction NewArrayInit(int elementCount);
+        protected internal abstract Instruction GetArrayItem();
+        protected internal abstract Instruction SetArrayItem();
+        protected internal abstract Instruction TypeIs();
+        protected internal abstract Instruction TypeAs();
+        protected internal abstract Instruction DefaultValue();
+        protected internal abstract Instruction NewArray();
+        protected internal abstract Instruction NewArrayInit(int elementCount);
     }
 
-    internal sealed class InstructionFactory<T> : InstructionFactory {
+    internal sealed class InstructionFactory<T> : InstructionFactory
+    {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes")]
         public static readonly InstructionFactory Factory = new InstructionFactory<T>();
 
@@ -87,31 +94,38 @@ namespace System.Management.Automation.Interpreter {
 
         private InstructionFactory() { }
 
-        internal protected override Instruction GetArrayItem() {
+        protected internal override Instruction GetArrayItem()
+        {
             return _getArrayItem ?? (_getArrayItem = new GetArrayItemInstruction<T>());
         }
 
-        internal protected override Instruction SetArrayItem() {
+        protected internal override Instruction SetArrayItem()
+        {
             return _setArrayItem ?? (_setArrayItem = new SetArrayItemInstruction<T>());
         }
 
-        internal protected override Instruction TypeIs() {
+        protected internal override Instruction TypeIs()
+        {
             return _typeIs ?? (_typeIs = new TypeIsInstruction<T>());
         }
 
-        internal protected override Instruction TypeAs() {
+        protected internal override Instruction TypeAs()
+        {
             return _typeAs ?? (_typeAs = new TypeAsInstruction<T>());
         }
 
-        internal protected override Instruction DefaultValue() {
+        protected internal override Instruction DefaultValue()
+        {
             return _defaultValue ?? (_defaultValue = new DefaultValueInstruction<T>());
         }
 
-        internal protected override Instruction NewArray() {
+        protected internal override Instruction NewArray()
+        {
             return _newArray ?? (_newArray = new NewArrayInstruction<T>());
         }
 
-        internal protected override Instruction NewArrayInit(int elementCount) {
+        protected internal override Instruction NewArrayInit(int elementCount)
+        {
             return new NewArrayInitInstruction<T>(elementCount);
         }
     }

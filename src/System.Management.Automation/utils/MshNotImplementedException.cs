@@ -2,7 +2,6 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
 using System.Runtime.Serialization;
 
 #if !CORECLR
@@ -93,7 +92,7 @@ namespace System.Management.Automation
         /// <returns> constructed object </returns>
         public PSNotImplementedException(string message,
                         Exception innerException)
-                : base (message, innerException)
+                : base(message, innerException)
         {
         }
         #endregion ctor
@@ -112,8 +111,8 @@ namespace System.Management.Automation
             {
                 if (null == _errorRecord)
                 {
-                    _errorRecord = new ErrorRecord (
-                        new ParentContainsErrorRecordException (this),
+                    _errorRecord = new ErrorRecord(
+                        new ParentContainsErrorRecordException(this),
                         _errorId,
                         ErrorCategory.NotImplemented,
                         null);

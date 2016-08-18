@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System.Collections.ObjectModel;
 
 namespace Microsoft.PowerShell.Commands
@@ -12,18 +13,14 @@ namespace Microsoft.PowerShell.Commands
     {
         internal CSVHelper(char delimiter)
         {
-            this.delimiter = delimiter;
+            Delimiter = delimiter;
         }
 
         /// <summary>
         /// Gets or sets the delimiter that separates the values
         /// </summary>
         /// 
-        internal char Delimiter
-        {
-            get { return delimiter; }
-        }
-        private char delimiter = ',';
+        internal char Delimiter { get; } = ',';
 
         /// <summary>
         /// Parse a CSV String.
@@ -111,8 +108,6 @@ namespace Microsoft.PowerShell.Commands
             }
             return result;
         }
-
     }
-
 }
 

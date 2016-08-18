@@ -10,6 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 //
 // Now define the set of commands for manipulating modules.
 //
+
 namespace Microsoft.PowerShell.Commands
 {
     #region New-Module
@@ -163,10 +164,8 @@ namespace Microsoft.PowerShell.Commands
                         // Export all functions and variables if no exports were specified...
                         if (!localModule.SessionState.Internal.UseExportList)
                         {
-                            List<WildcardPattern> cmdletPatterns =
-                                BaseCmdletPatterns != null ? BaseCmdletPatterns : MatchAll;
-                            List<WildcardPattern> functionPatterns =
-                                BaseFunctionPatterns != null ? BaseFunctionPatterns : MatchAll;
+                            List<WildcardPattern> cmdletPatterns = BaseCmdletPatterns ?? MatchAll;
+                            List<WildcardPattern> functionPatterns = BaseFunctionPatterns ?? MatchAll;
 
                             ModuleIntrinsics.ExportModuleMembers(this,
                                 localModule.SessionState.Internal,
@@ -211,5 +210,4 @@ namespace Microsoft.PowerShell.Commands
     }
 
     #endregion
-   
 } // Microsoft.PowerShell.Commands

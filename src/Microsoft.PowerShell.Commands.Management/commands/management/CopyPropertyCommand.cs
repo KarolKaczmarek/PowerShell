@@ -1,7 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
+
 using System.Management.Automation;
 using Dbg = System.Management.Automation;
 
@@ -10,7 +10,7 @@ namespace Microsoft.PowerShell.Commands
     /// <summary>
     /// A command to copy a property on an item.
     /// </summary>
-    [Cmdlet (VerbsCommon.Copy, "ItemProperty", DefaultParameterSetName = "Path", SupportsShouldProcess = true, SupportsTransactions = true,
+    [Cmdlet(VerbsCommon.Copy, "ItemProperty", DefaultParameterSetName = "Path", SupportsShouldProcess = true, SupportsTransactions = true,
         HelpUri = "http://go.microsoft.com/fwlink/?LinkID=113293")]
     public class CopyItemPropertyCommand : PassThroughItemPropertyCommandBase
     {
@@ -20,19 +20,12 @@ namespace Microsoft.PowerShell.Commands
         /// Gets or sets the path parameter to the command
         /// </summary>
         [Parameter(Position = 0, ParameterSetName = "Path",
-                   Mandatory = true, ValueFromPipeline=true, ValueFromPipelineByPropertyName = true)]
+                   Mandatory = true, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
         public string[] Path
         {
-            get
-            {
-                return paths;
-            } // get
-
-            set
-            {
-                paths = value;
-            } // set
-        } // Path
+            get { return paths; }
+            set { paths = value; }
+        }
 
         /// <summary>
         /// Gets or sets the literal path parameter to the command
@@ -42,17 +35,13 @@ namespace Microsoft.PowerShell.Commands
         [Alias("PSPath")]
         public string[] LiteralPath
         {
-            get
-            {
-                return paths;
-            } // get
-
+            get { return paths; }
             set
             {
                 base.SuppressWildcardExpansion = true;
                 paths = value;
-            } // set
-        } // LiteralPath
+            }
+        }
 
         /// <summary>
         /// The name of the property to create on the item
@@ -60,37 +49,15 @@ namespace Microsoft.PowerShell.Commands
         ///
         [Parameter(Position = 2, Mandatory = true, ValueFromPipelineByPropertyName = true)]
         [Alias("PSProperty")]
-        public string Name
-        {
-            get
-            {
-                return property;
-            } // get
-
-            set
-            {
-                property = value;
-            }
-        } // Property
+        public string Name { get; set; }
 
         /// <summary>
         /// The path to the destination item to copy the property to.
         /// </summary>
         /// 
-        [Parameter(Mandatory=true, Position = 1, ValueFromPipelineByPropertyName = true)]
-        public string Destination
-        {
-            get
-            {
-                return destination;
-            } // get
+        [Parameter(Mandatory = true, Position = 1, ValueFromPipelineByPropertyName = true)]
+        public string Destination { get; set; }
 
-            set
-            {
-                destination = value;
-            }
-        } // Destination
-            
         /// <summary>
         /// A virtual method for retrieving the dynamic parameters for a cmdlet. Derived cmdlets
         /// that require dynamic parameters should override this method and return the
@@ -111,33 +78,23 @@ namespace Microsoft.PowerShell.Commands
             if (Path != null & Path.Length > 0)
             {
                 return InvokeProvider.Property.CopyPropertyDynamicParameters(
-                    Path[0], 
-                    property, 
-                    Destination, 
-                    property, 
+                    Path[0],
+                    Name,
+                    Destination,
+                    Name,
                     context);
             }
             return InvokeProvider.Property.CopyPropertyDynamicParameters(
                 ".",
-                property,
+                Name,
                 Destination,
-                property,
+                Name,
                 context);
         } // GetDynamicParameters
-        
+
         #endregion Parameters
 
         #region parameter data
-        
-        /// <summary>
-        /// The property to be copied.
-        /// </summary>
-        private string property;
-
-        /// <summary>
-        /// The destination path of the item to copy the property to.
-        /// </summary>
-        private string destination;
 
         #endregion parameter data
 
@@ -146,17 +103,17 @@ namespace Microsoft.PowerShell.Commands
         /// <summary>
         /// Copies the property from one item to another
         /// </summary>
-        protected override void ProcessRecord ()
+        protected override void ProcessRecord()
         {
             foreach (string path in Path)
             {
                 try
                 {
                     InvokeProvider.Property.Copy(
-                        path, 
-                        property, 
-                        Destination, 
-                        property, 
+                        path,
+                        Name,
+                        Destination,
+                        Name,
                         GetCurrentContext());
                 }
                 catch (PSNotSupportedException notSupported)
@@ -197,5 +154,4 @@ namespace Microsoft.PowerShell.Commands
 
 
     } // CopyItemPropertyCommand
-
 } // namespace Microsoft.PowerShell.Commands

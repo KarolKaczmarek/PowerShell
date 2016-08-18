@@ -13,7 +13,6 @@
                 "Modules/" : {
                     "include": [
                         "../Modules/Windows-Core",
-                        "../Modules/Windows+Unix-Core",
                         "../Modules/Windows-Core+Full",
                         "../Modules/Shared"
                     ],
@@ -23,6 +22,7 @@
                 }
             },
             "include": [
+                "../../license_thirdparty_proprietary.txt",
                 "../../powershell.version"
             ]
         },
@@ -36,18 +36,22 @@
             "Modules/" : {
                 "include": [
                     "../Modules/Windows-Core",
-                    "../Modules/Windows+Unix-Core",
                     "../Modules/Windows-Core+Full",
                     "../Modules/Shared"
                 ],
                 "exclude": [
                     "../Modules/Shared/Pester/.git*"
                 ]
-            }
+            },
+            "PowerShellProperties.json" : "../System.Management.Automation/PowerShellProperties.json"
         },
         "include": [
+            "pwrshplugin.dll",
+            "pwrshplugin.pdb",
+            "Install-PowerShellRemoting.ps1",
+            "../../license_thirdparty_proprietary.txt",
             "../../powershell.version"
-        ],
+        ]
     },
 
     "dependencies": {
@@ -56,7 +60,9 @@
         "Microsoft.PowerShell.Commands.Diagnostics": "1.0.0-*",
         "Microsoft.PowerShell.LocalAccounts": "1.0.0-*",
         "Microsoft.PowerShell.PackageManagement": "1.0.0-*",
-        "Microsoft.Management.Infrastructure.CimCmdlets": "1.0.0-*"
+        "Microsoft.Management.Infrastructure.CimCmdlets": "1.0.0-*",
+        "Microsoft.WSMan.Management": "1.0.0-*",
+        "PSDesiredStateConfiguration": "1.0.0-alpha01"
     },
 
     "frameworks": {
@@ -66,7 +72,8 @@
                 "define": [ "CORECLR" ]
             },
             "dependencies": {
-                "Microsoft.NETCore.App": "1.0.0"
+                "Microsoft.NETCore.App": "1.0.0",
+                "Microsoft.NETCore.Runtime.CoreCLR": "1.0.4"
             }
         }
     },

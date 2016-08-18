@@ -6,7 +6,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Xml;
 using Dbg = System.Management.Automation.Diagnostics;
@@ -21,7 +20,7 @@ namespace System.Management.Automation
         internal PSClassHelpProvider(HelpSystem helpSystem)
             : base(helpSystem)
         {
-            _context = helpSystem.ExecutionContext;            
+            _context = helpSystem.ExecutionContext;
         }
 
         /// <summary>
@@ -38,7 +37,7 @@ namespace System.Management.Automation
         private readonly Hashtable _helpFiles = new Hashtable();
 
         [TraceSource("PSClassHelpProvider", "PSClassHelpProvider")]
-        static private readonly PSTraceSource tracer = PSTraceSource.GetTracer("PSClassHelpProvider", "PSClassHelpProvider");
+        private static readonly PSTraceSource s_tracer = PSTraceSource.GetTracer("PSClassHelpProvider", "PSClassHelpProvider");
 
         #region common properties
 
@@ -66,13 +65,13 @@ namespace System.Management.Automation
         /// <param name="helpRequest">Help request.</param>
         /// <param name="searchOnlyContent">Not used.</param>
         /// <returns></returns>
-        override internal IEnumerable<HelpInfo> SearchHelp(HelpRequest helpRequest, bool searchOnlyContent)
+        internal override IEnumerable<HelpInfo> SearchHelp(HelpRequest helpRequest, bool searchOnlyContent)
         {
-            Debug.Assert(helpRequest != null, "helpRequest cannot be null.");            
+            Debug.Assert(helpRequest != null, "helpRequest cannot be null.");
 
             string target = helpRequest.Target;
             Collection<string> patternList = new Collection<string>();
-            
+
             bool decoratedSearch = !WildcardPattern.ContainsWildcardCharacters(helpRequest.Target);
 
             if (decoratedSearch)
@@ -88,7 +87,7 @@ namespace System.Management.Automation
             {
                 PSClassSearcher searcher = new PSClassSearcher(pattern, useWildCards, _context);
 
-                foreach(var helpInfo in GetHelpInfo(searcher))
+                foreach (var helpInfo in GetHelpInfo(searcher))
                 {
                     if (helpInfo != null)
                         yield return helpInfo;
@@ -101,11 +100,11 @@ namespace System.Management.Automation
         /// </summary>
         /// <param name="helpRequest">Help Request for the search.</param>
         /// <returns>Enumerable of HelpInfo objects.</returns>
-        override internal IEnumerable<HelpInfo> ExactMatchHelp(HelpRequest helpRequest)
+        internal override IEnumerable<HelpInfo> ExactMatchHelp(HelpRequest helpRequest)
         {
             Debug.Assert(helpRequest != null, "helpRequest cannot be null.");
 
-            if((helpRequest.HelpCategory & Automation.HelpCategory.Class) == 0)
+            if ((helpRequest.HelpCategory & Automation.HelpCategory.Class) == 0)
             {
                 yield return null;
             }
@@ -131,14 +130,14 @@ namespace System.Management.Automation
         /// <returns>Next HelpInfo object.</returns>
         private IEnumerable<HelpInfo> GetHelpInfo(PSClassSearcher searcher)
         {
-            while(searcher.MoveNext())
+            while (searcher.MoveNext())
             {
                 PSClassInfo current = ((IEnumerator<PSClassInfo>)searcher).Current;
 
                 string moduleName = current.Module.Name;
                 string moduleDir = current.Module.ModuleBase;
 
-                if(!String.IsNullOrEmpty(moduleName) && !String.IsNullOrEmpty(moduleDir))
+                if (!String.IsNullOrEmpty(moduleName) && !String.IsNullOrEmpty(moduleDir))
                 {
                     string helpFileToFind = moduleName + "-Help.xml";
 
@@ -208,18 +207,16 @@ namespace System.Management.Automation
         }
 
         #region private methods
-        
+
         private HelpInfo GetHelpInfoFromHelpFile(PSClassInfo classInfo, string helpFileToFind, Collection<string> searchPaths, bool reportErrors, out string helpFile)
         {
             Dbg.Assert(classInfo != null, "Caller should verify that classInfo != null");
             Dbg.Assert(helpFileToFind != null, "Caller should verify that helpFileToFind != null");
 
-            HelpInfo result = null;
-
             helpFile = MUIFileSearcher.LocateFile(helpFileToFind, searchPaths);
-            
+
             if (!File.Exists(helpFile))
-                return result;
+                return null;
 
             if (!String.IsNullOrEmpty(helpFile))
             {
@@ -229,10 +226,10 @@ namespace System.Management.Automation
                     LoadHelpFile(helpFile, helpFile, classInfo.Name, reportErrors);
                 }
 
-                result = GetFromPSClasseHelpCache(helpFile, Automation.HelpCategory.Class);
+                return GetFromPSClasseHelpCache(helpFile, Automation.HelpCategory.Class);
             }
 
-            return result;
+            return null;
         }
 
         /// <summary>
@@ -289,7 +286,7 @@ namespace System.Management.Automation
             }
 
             if (e != null)
-                tracer.WriteLine("Error occured in PSClassHelpProvider {0}", e.Message);
+                s_tracer.WriteLine("Error occured in PSClassHelpProvider {0}", e.Message);
 
             if (reportErrors && (e != null))
             {
@@ -337,7 +334,7 @@ namespace System.Management.Automation
 
             if (helpItemsNode == null)
             {
-                tracer.WriteLine("Unable to find 'helpItems' element in file {0}", helpFile);
+                s_tracer.WriteLine("Unable to find 'helpItems' element in file {0}", helpFile);
                 return;
             }
 
@@ -377,7 +374,5 @@ namespace System.Management.Automation
         }
 
         #endregion
-
-
     }
 }

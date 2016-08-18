@@ -1,9 +1,6 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
-using System.Management.Automation;
-
 
 namespace System.Management.Automation
 {
@@ -31,15 +28,15 @@ namespace System.Management.Automation
                 throw PSTraceSource.NewArgumentNullException("attribute");
             }
 
-            this.attribute = attribute;
-            this.isMandatory = attribute.Mandatory;
-            this.position = attribute.Position;
-            this.valueFromRemainingArguments = attribute.ValueFromRemainingArguments;
+            _attribute = attribute;
+            IsMandatory = attribute.Mandatory;
+            Position = attribute.Position;
+            ValueFromRemainingArguments = attribute.ValueFromRemainingArguments;
             this.valueFromPipeline = attribute.ValueFromPipeline;
             this.valueFromPipelineByPropertyName = attribute.ValueFromPipelineByPropertyName;
-            this.helpMessage = attribute.HelpMessage;
-            this.helpMessageBaseName = attribute.HelpMessageBaseName;
-            this.helpMessageResourceId = attribute.HelpMessageResourceId;
+            HelpMessage = attribute.HelpMessage;
+            HelpMessageBaseName = attribute.HelpMessageBaseName;
+            HelpMessageResourceId = attribute.HelpMessageResourceId;
         }
 
         internal ParameterSetSpecificMetadata(
@@ -52,14 +49,14 @@ namespace System.Management.Automation
             string helpMessageResourceId,
             string helpMessage)
         {
-            this.isMandatory = isMandatory;
-            this.position = position;
-            this.valueFromRemainingArguments = valueFromRemainingArguments;
+            IsMandatory = isMandatory;
+            Position = position;
+            ValueFromRemainingArguments = valueFromRemainingArguments;
             this.valueFromPipeline = valueFromPipeline;
             this.valueFromPipelineByPropertyName = valueFromPipelineByPropertyName;
-            this.helpMessageBaseName = helpMessageBaseName;
-            this.helpMessageResourceId = helpMessageResourceId;
-            this.helpMessage = helpMessage;
+            HelpMessageBaseName = helpMessageBaseName;
+            HelpMessageResourceId = helpMessageResourceId;
+            HelpMessage = helpMessage;
         }
 
         #endregion ctor
@@ -68,28 +65,14 @@ namespace System.Management.Automation
         /// Returns true if the parameter is mandatory for this parameterset, false otherwise.
         /// </summary>
         /// <value></value>
-        internal bool IsMandatory
-        {
-            get
-            {
-                return isMandatory;
-            }
-        }
-        private bool isMandatory;
+        internal bool IsMandatory { get; }
 
         /// <summary>
         /// If the parameter is allowed to be positional for this parameter set, this returns
         /// the position it is allowed to be in. If it is not positional, this returns int.MinValue.
         /// </summary>
         /// <value></value>
-        internal int Position
-        {
-            get
-            {
-                return position;
-            }
-        }
-        private int position = int.MinValue;
+        internal int Position { get; } = int.MinValue;
 
         /// <summary>
         /// Returns true if the parameter is positional for this parameter set, or false otherwise.
@@ -99,7 +82,7 @@ namespace System.Management.Automation
         {
             get
             {
-                return position != int.MinValue;
+                return Position != int.MinValue;
             }
         }
 
@@ -108,14 +91,7 @@ namespace System.Management.Automation
         /// or false otherwise.
         /// </summary>
         /// <value></value>
-        internal bool ValueFromRemainingArguments
-        {
-            get
-            {
-                return valueFromRemainingArguments;
-            }
-        }
-        private bool valueFromRemainingArguments;
+        internal bool ValueFromRemainingArguments { get; }
 
         internal bool valueFromPipeline;
         /// <summary>
@@ -142,41 +118,20 @@ namespace System.Management.Automation
             }
         }
 
-        private string helpMessage;
         /// <summary>
         /// A short description for this parameter, suitable for presentation as a tool tip.
         /// </summary>
-        internal string HelpMessage
-        {
-            get
-            {
-                return helpMessage;
-            }
-        }
+        internal string HelpMessage { get; }
 
-        private string helpMessageBaseName;
         /// <summary>
         /// The base name of the resource for a help message.
         /// </summary>
-        internal string HelpMessageBaseName
-        {
-            get
-            {
-                return helpMessageBaseName;
-            }
-        }
+        internal string HelpMessageBaseName { get; }
 
-        private string helpMessageResourceId = null;
         /// <summary>
         /// The Id of the resource for a help message.
         /// </summary>
-        internal string HelpMessageResourceId
-        {
-            get
-            {
-                return helpMessageResourceId;
-            }
-        }
+        internal string HelpMessageResourceId { get; } = null;
 
 
         /// <summary>
@@ -184,36 +139,14 @@ namespace System.Management.Automation
         /// data is for the "all" parameter set
         /// </summary>
         /// 
-        internal bool IsInAllSets
-        {
-            get
-            {
-                return isInAllSets;
-            }
-            set
-            {
-                isInAllSets = value;
-            }
-        }
-        private bool isInAllSets;
+        internal bool IsInAllSets { get; set; }
 
         /// <summary>
         /// Gets the parameter set flag that represents the parameter set
         /// that this data is valid for.
         /// </summary>
         /// 
-        internal uint ParameterSetFlag
-        {
-            get
-            {
-                return parameterSetFlag;
-            }
-
-            set
-            {
-                parameterSetFlag = value;
-            }
-        }
+        internal uint ParameterSetFlag { get; set; }
 
         /// <summary>
         /// If HelpMessageBaseName and HelpMessageResourceId are set, the help info is
@@ -288,9 +221,7 @@ namespace System.Management.Automation
         }
 
 
-        private uint parameterSetFlag;
-
-        private ParameterAttribute attribute;
+        private ParameterAttribute _attribute;
     } // ParameterSetSpecificMetadata
 }
 

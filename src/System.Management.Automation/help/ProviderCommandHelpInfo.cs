@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using Dbg = System.Management.Automation.Diagnostics;
 
 namespace System.Management.Automation
@@ -43,7 +44,7 @@ namespace System.Management.Automation
         /// <summary>
         /// Get parameter.
         /// </summary>
-        override internal PSObject[] GetParameter(string pattern)
+        internal override PSObject[] GetParameter(string pattern)
         {
             return _helpInfo.GetParameter(pattern);
         }
@@ -57,7 +58,7 @@ namespace System.Management.Automation
         /// Null if no Uri is specified by the helpinfo or a 
         /// valid Uri.
         /// </returns>
-        override internal Uri GetUriForOnlineHelp()
+        internal override Uri GetUriForOnlineHelp()
         {
             return _helpInfo.GetUriForOnlineHelp();
         }
@@ -65,7 +66,7 @@ namespace System.Management.Automation
         /// <summary>
         /// The Name property.
         /// </summary>
-        override internal string Name
+        internal override string Name
         {
             get
             {
@@ -76,7 +77,7 @@ namespace System.Management.Automation
         /// <summary>
         /// The Synopsis property.
         /// </summary>
-        override internal string Synopsis
+        internal override string Synopsis
         {
             get
             {
@@ -87,7 +88,7 @@ namespace System.Management.Automation
         /// <summary>
         /// The HelpCategory property.
         /// </summary>
-        override internal HelpCategory HelpCategory
+        internal override HelpCategory HelpCategory
         {
             get
             {
@@ -98,7 +99,7 @@ namespace System.Management.Automation
         /// <summary>
         /// The FullHelp property.
         /// </summary>
-        override internal PSObject FullHelp
+        internal override PSObject FullHelp
         {
             get
             {
@@ -109,7 +110,7 @@ namespace System.Management.Automation
         /// <summary>
         /// The Component property.
         /// </summary>
-        override internal string Component
+        internal override string Component
         {
             get
             {
@@ -120,7 +121,7 @@ namespace System.Management.Automation
         /// <summary>
         /// The Role property.
         /// </summary>
-        override internal string Role
+        internal override string Role
         {
             get
             {
@@ -131,7 +132,7 @@ namespace System.Management.Automation
         /// <summary>
         /// The Functionality property.
         /// </summary>
-        override internal string Functionality
+        internal override string Functionality
         {
             get
             {

@@ -7,6 +7,7 @@ using System.IO;
 using System.Threading;
 using System.Security.Principal;
 using System.Management.Automation.Internal;
+using Microsoft.Win32.SafeHandles;
 using Dbg = System.Management.Automation.Diagnostics;
 
 namespace System.Management.Automation.Remoting.Server
@@ -25,7 +26,7 @@ namespace System.Management.Automation.Remoting.Server
         protected object _syncObject = new object();
         protected string _initialCommand;
         protected ManualResetEvent allcmdsClosedEvent;
-        
+
         // Thread impersonation.
         protected WindowsIdentity _windowsIdentityToImpersonate;
 
@@ -296,14 +297,21 @@ namespace System.Management.Automation.Remoting.Server
 
         #region Methods
 
-        protected OutOfProcessServerSessionTransportManager CreateSessionTransportManager(string configurationName)
+        protected OutOfProcessServerSessionTransportManager CreateSessionTransportManager(string configurationName, PSRemotingCryptoHelperServer cryptoHelper)
         {
+            PSSenderInfo senderInfo;
+#if !UNIX
             WindowsIdentity currentIdentity = WindowsIdentity.GetCurrent();
             PSPrincipal userPrincipal = new PSPrincipal(new PSIdentity("", true, currentIdentity.Name, null),
                 currentIdentity);
-            PSSenderInfo senderInfo = new PSSenderInfo(userPrincipal, "http://localhost");
+            senderInfo = new PSSenderInfo(userPrincipal, "http://localhost");
+#else
+            PSPrincipal userPrincipal = new PSPrincipal(new PSIdentity("", true, "", null),
+                null);
+            senderInfo = new PSSenderInfo(userPrincipal, "http://localhost");
+#endif
 
-            OutOfProcessServerSessionTransportManager tm = new OutOfProcessServerSessionTransportManager(originalStdOut, originalStdErr);
+            OutOfProcessServerSessionTransportManager tm = new OutOfProcessServerSessionTransportManager(originalStdOut, originalStdErr, cryptoHelper);
 
             ServerRemoteSession srvrRemoteSession = ServerRemoteSession.CreateServerRemoteSession(senderInfo,
                 _initialCommand, tm, configurationName);
@@ -311,11 +319,11 @@ namespace System.Management.Automation.Remoting.Server
             return tm;
         }
 
-        protected void Start(string initialCommand, string configurationName = null)
+        protected void Start(string initialCommand, PSRemotingCryptoHelperServer cryptoHelper, string configurationName = null)
         {
             _initialCommand = initialCommand;
 
-            sessionTM = CreateSessionTransportManager(configurationName);
+            sessionTM = CreateSessionTransportManager(configurationName, cryptoHelper);
 
             try
             {
@@ -326,7 +334,7 @@ namespace System.Management.Automation.Remoting.Server
                     {
                         if (sessionTM == null)
                         {
-                            sessionTM = CreateSessionTransportManager(configurationName);
+                            sessionTM = CreateSessionTransportManager(configurationName, cryptoHelper);
                         }
                     }
                     if (string.IsNullOrEmpty(data))
@@ -415,7 +423,7 @@ namespace System.Management.Automation.Remoting.Server
     {
         #region Private Data
 
-        private static OutOfProcessMediator SingletonInstance;
+        private static OutOfProcessMediator s_singletonInstance;
 
         #endregion
 
@@ -461,20 +469,89 @@ namespace System.Management.Automation.Remoting.Server
         {
             lock (SyncObject)
             {
-                if (null != SingletonInstance)
+                if (null != s_singletonInstance)
                 {
                     Dbg.Assert(false, "Run should not be called multiple times");
                     return;
                 }
 
-                SingletonInstance = new OutOfProcessMediator();
+                s_singletonInstance = new OutOfProcessMediator();
             }
 
 #if !CORECLR // AppDomain is not available in CoreCLR
             // Setup unhandled exception to log events
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(AppDomainUnhandledException);
 #endif
-            SingletonInstance.Start(initialCommand);
+            s_singletonInstance.Start(initialCommand, new PSRemotingCryptoHelperServer());
+        }
+
+        #endregion
+    }
+
+    internal sealed class SSHProcessMediator : OutOfProcessMediatorBase
+    {
+        #region Private Data
+
+        private static SSHProcessMediator s_singletonInstance;
+
+        #endregion
+
+        #region Constructors
+
+        private SSHProcessMediator() : base(true)
+        {
+#if !UNIX
+            var inputHandle = PlatformInvokes.GetStdHandle((uint)PlatformInvokes.StandardHandleId.Input);
+            originalStdIn = new StreamReader(
+                new FileStream(new SafeFileHandle(inputHandle, false), FileAccess.Read));
+
+            var outputHandle = PlatformInvokes.GetStdHandle((uint)PlatformInvokes.StandardHandleId.Output);
+            originalStdOut = new OutOfProcessTextWriter(
+                new StreamWriter(
+                    new FileStream(new SafeFileHandle(outputHandle, false), FileAccess.Write)));
+
+            var errorHandle = PlatformInvokes.GetStdHandle((uint)PlatformInvokes.StandardHandleId.Error);
+            originalStdErr = new OutOfProcessTextWriter(
+                new StreamWriter(
+                    new FileStream(new SafeFileHandle(errorHandle, false), FileAccess.Write)));
+#else
+            originalStdIn = new StreamReader(Console.OpenStandardInput(), true);
+            originalStdOut = new OutOfProcessTextWriter(
+                new StreamWriter(Console.OpenStandardOutput()));
+            originalStdErr = new OutOfProcessTextWriter(
+                new StreamWriter(Console.OpenStandardError()));
+#endif
+        }
+
+        #endregion
+
+        #region Static Methods
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="initialCommand"></param>
+        internal static void Run(string initialCommand)
+        {
+            lock (SyncObject)
+            {
+                if (s_singletonInstance != null)
+                {
+                    Dbg.Assert(false, "Run should not be called multiple times");
+                    return;
+                }
+
+                s_singletonInstance = new SSHProcessMediator();
+            }
+
+            PSRemotingCryptoHelperServer cryptoHelper;
+#if !UNIX
+            cryptoHelper = new PSRemotingCryptoHelperServer();
+#else
+            cryptoHelper = null;
+#endif
+
+            s_singletonInstance.Start(initialCommand, cryptoHelper);
         }
 
         #endregion
@@ -484,7 +561,7 @@ namespace System.Management.Automation.Remoting.Server
     {
         #region Private Data
 
-        private static NamedPipeProcessMediator SingletonInstance;
+        private static NamedPipeProcessMediator s_singletonInstance;
 
         private readonly RemoteSessionNamedPipeServer _namedPipeServer;
 
@@ -517,7 +594,7 @@ namespace System.Management.Automation.Remoting.Server
             originalStdIn = namedPipeServer.TextReader;
             originalStdOut = new OutOfProcessTextWriter(namedPipeServer.TextWriter);
             originalStdErr = new NamedPipeErrorTextWriter(namedPipeServer.TextWriter);
-            
+
             // Flow impersonation if requested.
             WindowsIdentity currentIdentity = null;
             try
@@ -539,20 +616,20 @@ namespace System.Management.Automation.Remoting.Server
         {
             lock (SyncObject)
             {
-                if (SingletonInstance != null && !SingletonInstance.IsDisposed)
+                if (s_singletonInstance != null && !s_singletonInstance.IsDisposed)
                 {
                     Dbg.Assert(false, "Run should not be called multiple times, unless the singleton was disposed.");
                     return;
                 }
 
-                SingletonInstance = new NamedPipeProcessMediator(namedPipeServer);
+                s_singletonInstance = new NamedPipeProcessMediator(namedPipeServer);
             }
-            
-#if !CORECLR 
+
+#if !CORECLR
             // AppDomain is not available in CoreCLR
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(AppDomainUnhandledException);
 #endif
-            SingletonInstance.Start(initialCommand, namedPipeServer.ConfigurationName);
+            s_singletonInstance.Start(initialCommand, new PSRemotingCryptoHelperServer(), namedPipeServer.ConfigurationName);
         }
 
         #endregion
@@ -578,7 +655,7 @@ namespace System.Management.Automation.Remoting.Server
         #region Constructors
 
         internal NamedPipeErrorTextWriter(
-            TextWriter textWriter) : base (textWriter)
+            TextWriter textWriter) : base(textWriter)
         { }
 
         #endregion
@@ -587,7 +664,7 @@ namespace System.Management.Automation.Remoting.Server
 
         internal override void WriteLine(string data)
         {
-            string dataToWrite = (data != null) ? _errorPrepend + data : data;
+            string dataToWrite = (data != null) ? _errorPrepend + data : null;
             base.WriteLine(dataToWrite);
         }
 
@@ -598,7 +675,7 @@ namespace System.Management.Automation.Remoting.Server
     {
         #region Private Data
 
-        private static HyperVSocketMediator Instance;
+        private static HyperVSocketMediator s_instance;
 
         private readonly RemoteSessionHyperVSocketServer _hypervSocketServer;
 
@@ -635,7 +712,7 @@ namespace System.Management.Automation.Remoting.Server
         {
             lock (SyncObject)
             {
-                Instance = new HyperVSocketMediator();
+                s_instance = new HyperVSocketMediator();
             }
 
 #if !CORECLR 
@@ -643,7 +720,7 @@ namespace System.Management.Automation.Remoting.Server
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(AppDomainUnhandledException);
 #endif
 
-            Instance.Start(initialCommand, configurationName);
+            s_instance.Start(initialCommand, new PSRemotingCryptoHelperServer(), configurationName);
         }
 
         #endregion
@@ -679,7 +756,7 @@ namespace System.Management.Automation.Remoting.Server
 
         internal override void WriteLine(string data)
         {
-            string dataToWrite = (data != null) ? _errorPrepend + data : data;
+            string dataToWrite = (data != null) ? _errorPrepend + data : null;
             base.WriteLine(dataToWrite);
         }
 

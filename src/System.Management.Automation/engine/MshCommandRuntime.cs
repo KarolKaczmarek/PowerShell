@@ -32,45 +32,30 @@ namespace System.Management.Automation
     {
         #region private_members
 
-        private ExecutionContext context;
         /// <summary>
         /// Gets/Set the execution context value for this runtime object.
         /// </summary>
-        internal ExecutionContext Context
-        {
-            get { return context; }
-            set { context = value; }
-        }
+        internal ExecutionContext Context { get; set; }
 
-        private SessionState state = null;
+        private SessionState _state = null;
         internal InternalHost CBhost;
 
-        private PSHost host;
         /// <summary>
         /// The host object for this object
         /// </summary>
-        public PSHost Host { get { return host; } }	
+        public PSHost Host { get; }
 
         // Output pipes.
-        private Pipe inputPipe;
-        private Pipe outputPipe;
-        private Pipe errorOutputPipe;
-        private Pipe warningOutputPipe;
-        private Pipe verboseOutputPipe;
-        private Pipe debugOutputPipe;
-        private Pipe informationOutputPipe;
+        private Pipe _inputPipe;
+        private Pipe _outputPipe;
+        private Pipe _errorOutputPipe;
 
-        private bool isClosed;
         /// <summary>
         /// IsClosed indicates to the Cmdlet whether its upstream partner
         /// could still write more data to its incoming queue.
         /// Note that there may still be data in the incoming queue.
         /// </summary>
-        internal bool IsClosed
-        {
-            get { return isClosed; }
-            set { isClosed = value; }
-        }
+        internal bool IsClosed { get; set; }
 
         /// <summary>
         /// True if we're not closed and the input pipe is non-null...
@@ -81,7 +66,7 @@ namespace System.Management.Automation
             {
                 // No objects in the input pipe
                 // The pipe is closed. So there can't be any more object
-                if (isClosed && (inputPipe == null || inputPipe.Empty))
+                if (IsClosed && (_inputPipe == null || _inputPipe.Empty))
                 {
                     return false;
                 }
@@ -103,24 +88,24 @@ namespace System.Management.Automation
         /// </remarks>
         internal string OutVariable { get; set; }
 
-        internal IList OutVarList { get { return outVarList; } set { outVarList = value; } }
-        private IList outVarList = null;
+        internal IList OutVarList { get { return _outVarList; } set { _outVarList = value; } }
+        private IList _outVarList = null;
 
         internal PipelineProcessor PipelineProcessor { get; set; }
 
-        private CommandInfo commandInfo;
-        private InternalCommand thisCommand;
+        private CommandInfo _commandInfo;
+        private InternalCommand _thisCommand;
 
         #endregion private_members
 
         internal MshCommandRuntime(ExecutionContext context, CommandInfo commandInfo, InternalCommand thisCommand)
         {
-            this.context = context;
-            this.host = context.EngineHostInterface;
+            Context = context;
+            Host = context.EngineHostInterface;
             this.CBhost = (InternalHost)context.EngineHostInterface;
-            this.commandInfo = commandInfo;
-            this.thisCommand = thisCommand;
-            this.shouldLogPipelineExecutionDetail = InitShouldLogPipelineExecutionDetail();
+            _commandInfo = commandInfo;
+            _thisCommand = thisCommand;
+            LogPipelineExecutionDetail = InitShouldLogPipelineExecutionDetail();
         }
 
         /// <summary>
@@ -129,27 +114,19 @@ namespace System.Management.Automation
         /// <returns></returns>
         public override string ToString()
         {
-            if (null != commandInfo)
-                return commandInfo.ToString();
+            if (null != _commandInfo)
+                return _commandInfo.ToString();
             return "<NullCommandInfo>"; // does not require localization
         }
 
-        private InvocationInfo myInvocation;
+        private InvocationInfo _myInvocation;
         /// <summary>
         /// Return the invocation data object for this command.
         /// </summary>
         /// <value>The invocation object for this command.</value>
         internal InvocationInfo MyInvocation
         {
-            get
-            {
-                if (myInvocation == null)
-                {
-                    myInvocation = thisCommand.MyInvocation;
-                }
-
-                return myInvocation;
-            }
+            get { return _myInvocation ?? (_myInvocation = _thisCommand.MyInvocation); }
         }
 
         /// <summary>
@@ -308,12 +285,12 @@ namespace System.Management.Automation
             ThrowIfWriteNotPermitted(true);
             _WriteObjectsSkipAllowCheck(sendToPipeline);
         }
-// Trust:  public void WriteObject(object sendToPipeline, DataTrustCategory trustCategory);		// enumerateCollection defaults to false
-// Trust:  public void WriteObject(object sendToPipeline, bool enumerateCollection, DataTrustCategory trustCategory);
+        // Trust:  public void WriteObject(object sendToPipeline, DataTrustCategory trustCategory);		// enumerateCollection defaults to false
+        // Trust:  public void WriteObject(object sendToPipeline, bool enumerateCollection, DataTrustCategory trustCategory);
 
         // Variables needed to generate a unique SourceId for
         // WriteProgress(ProgressRecord).
-        private static Int64 _lastUsedSourceId /* = 0 */;
+        private static Int64 s_lastUsedSourceId /* = 0 */;
         private Int64 _sourceId /* = 0 */;
 
         /// <summary>
@@ -373,7 +350,7 @@ namespace System.Management.Automation
 
             if (0 == _sourceId)
             {
-                _sourceId = Interlocked.Increment(ref _lastUsedSourceId);
+                _sourceId = Interlocked.Increment(ref s_lastUsedSourceId);
             }
 
             this.WriteProgress(_sourceId, progressRecord, overrideInquire);
@@ -502,7 +479,7 @@ namespace System.Management.Automation
 
                 if (DebugOutputPipe != null)
                 {
-                    if (CBhost!= null && CBhost.InternalUI != null &&
+                    if (CBhost != null && CBhost.InternalUI != null &&
                         DebugOutputPipe.NullPipe)
                     {
                         // If redirecting to a null pipe, still write to
@@ -779,7 +756,7 @@ namespace System.Management.Automation
 
                     CBhost.InternalUI.WriteInformationRecord(record);
 
-                    if ((record.Tags.Contains("PSHOST") && (! record.Tags.Contains("FORWARDED")))
+                    if ((record.Tags.Contains("PSHOST") && (!record.Tags.Contains("FORWARDED")))
                         || (preference == ActionPreference.Continue))
                     {
                         HostInformationMessage hostOutput = record.MessageData as HostInformationMessage;
@@ -810,16 +787,16 @@ namespace System.Management.Automation
                                 // It is possible for either one or the other to be empty if run from a 
                                 // non-interative host, but only one was specified in Write-Host.
                                 // So fill them with defaults if they are empty.
-                                if(! foregroundColor.HasValue)
+                                if (!foregroundColor.HasValue)
                                 {
                                     foregroundColor = ConsoleColor.Gray;
                                 }
 
-                                if(! backgroundColor.HasValue)
+                                if (!backgroundColor.HasValue)
                                 {
                                     backgroundColor = ConsoleColor.Black;
                                 }
-                                
+
                                 if (noNewLine)
                                 {
                                     CBhost.InternalUI.Write(foregroundColor.Value, backgroundColor.Value, message);
@@ -881,21 +858,14 @@ namespace System.Management.Automation
         /// <seealso cref="System.Management.Automation.ICommandRuntime.WriteProgress(ProgressRecord)"/>
         public void WriteCommandDetail(string text)
         {
-            this.PipelineProcessor.LogExecutionInfo(this.thisCommand.MyInvocation, text);
+            this.PipelineProcessor.LogExecutionInfo(_thisCommand.MyInvocation, text);
         }
 
-        private bool shouldLogPipelineExecutionDetail = false;
-        internal bool LogPipelineExecutionDetail
-        {
-            get
-            {
-                return shouldLogPipelineExecutionDetail;
-            }
-        }
+        internal bool LogPipelineExecutionDetail { get; } = false;
 
         private bool InitShouldLogPipelineExecutionDetail()
         {
-            CmdletInfo cmdletInfo = commandInfo as CmdletInfo;
+            CmdletInfo cmdletInfo = _commandInfo as CmdletInfo;
 
             if (cmdletInfo != null)
             {
@@ -908,7 +878,7 @@ namespace System.Management.Automation
                 {
                     return cmdletInfo.PSSnapIn.LogPipelineExecutionDetails;
                 }
-                
+
                 if (cmdletInfo.PSSnapIn == null && cmdletInfo.Module != null)
                 {
                     return cmdletInfo.Module.LogPipelineExecutionDetails;
@@ -918,7 +888,7 @@ namespace System.Management.Automation
             }
 
             // Logging should be enabled for functions from modules also
-            FunctionInfo functionInfo = commandInfo as FunctionInfo;
+            FunctionInfo functionInfo = _commandInfo as FunctionInfo;
             if (functionInfo != null && functionInfo.Module != null)
             {
                 return functionInfo.Module.LogPipelineExecutionDetails;
@@ -932,7 +902,7 @@ namespace System.Management.Automation
         /// the cmdlet. Semantically this is equivalent to :  cmd | % { $pipelineVariable = $_; (...) }
         /// </summary>
         internal string PipelineVariable { get; set; }
-        private PSVariable pipelineVarReference = null;
+        private PSVariable _pipelineVarReference = null;
 
         internal void SetupOutVariable()
         {
@@ -946,35 +916,28 @@ namespace System.Management.Automation
             // Handle the creation of OutVariable in the case of Out-Default specially,
             // as it needs to handle much of its OutVariable support itself.
             if (
-                (! String.IsNullOrEmpty(this.OutVariable)) &&
+                (!String.IsNullOrEmpty(this.OutVariable)) &&
                 (!(this.OutVariable.StartsWith("+", StringComparison.Ordinal))) &&
-                String.Equals("Out-Default", this.thisCommand.CommandInfo.Name, StringComparison.OrdinalIgnoreCase))
+                String.Equals("Out-Default", _thisCommand.CommandInfo.Name, StringComparison.OrdinalIgnoreCase))
             {
-                if (this.state == null)
-                    this.state = new SessionState(context.EngineSessionState);
+                if (_state == null)
+                    _state = new SessionState(Context.EngineSessionState);
 
                 IList oldValue = null;
-                oldValue = PSObject.Base(this.state.PSVariable.GetValue(this.OutVariable)) as IList;
+                oldValue = PSObject.Base(_state.PSVariable.GetValue(this.OutVariable)) as IList;
 
-                if (oldValue == null)
+                _outVarList = oldValue ?? new ArrayList();
+
+                if (!(_thisCommand is PSScriptCmdlet))
                 {
-                    outVarList = new ArrayList();
-                }
-                else
-                {
-                    outVarList = oldValue;
+                    this.OutputPipe.AddVariableList(VariableStreamKind.Output, _outVarList);
                 }
 
-                if (!(thisCommand is PSScriptCmdlet))
-                {
-                    this.OutputPipe.AddVariableList(VariableStreamKind.Output, outVarList);
-                }
-
-                this.state.PSVariable.Set(this.OutVariable, outVarList);
+                _state.PSVariable.Set(this.OutVariable, _outVarList);
             }
             else
             {
-                SetupVariable(VariableStreamKind.Output, this.OutVariable, ref outVarList);
+                SetupVariable(VariableStreamKind.Output, this.OutVariable, ref _outVarList);
             }
         }
 
@@ -990,20 +953,20 @@ namespace System.Management.Automation
 
             EnsureVariableParameterAllowed();
 
-            if (this.state == null)
-                this.state = new SessionState(context.EngineSessionState);
+            if (_state == null)
+                _state = new SessionState(Context.EngineSessionState);
 
             // Create the pipeline variable
-            pipelineVarReference = new PSVariable(this.PipelineVariable);
-            this.state.PSVariable.Set(pipelineVarReference);
+            _pipelineVarReference = new PSVariable(this.PipelineVariable);
+            _state.PSVariable.Set(_pipelineVarReference);
 
             // Get the reference again in case we re-used one from the
             // same scope.
-            pipelineVarReference = this.state.PSVariable.Get(this.PipelineVariable);
+            _pipelineVarReference = _state.PSVariable.Get(this.PipelineVariable);
 
-            if (!(thisCommand is PSScriptCmdlet))
+            if (!(_thisCommand is PSScriptCmdlet))
             {
-                this.OutputPipe.SetPipelineVariable(pipelineVarReference);
+                this.OutputPipe.SetPipelineVariable(_pipelineVarReference);
             }
         }
 
@@ -1019,9 +982,9 @@ namespace System.Management.Automation
             set { OutputPipe.OutBufferCount = value; }
         }
 
-    #endregion Write
+        #endregion Write
 
-    #region Should
+        #region Should
         #region ShouldProcess
         /// <summary>
         /// Confirm the operation with the user.  Cmdlets which make changes
@@ -1436,7 +1399,7 @@ namespace System.Management.Automation
         private bool CanShouldProcessAutoConfirm()
         {
             // retrieve ConfirmImpact from commandInfo
-            CommandMetadata commandMetadata = commandInfo.CommandMetadata;
+            CommandMetadata commandMetadata = _commandInfo.CommandMetadata;
             if (null == commandMetadata)
             {
                 Dbg.Assert(false, "Expected CommandMetadata");
@@ -1796,7 +1759,7 @@ namespace System.Management.Automation
         public bool ShouldContinue(
             string query, string caption, bool hasSecurityImpact, ref bool yesToAll, ref bool noToAll)
         {
-                return DoShouldContinue(query, caption, hasSecurityImpact, true, ref yesToAll, ref noToAll);
+            return DoShouldContinue(query, caption, hasSecurityImpact, true, ref yesToAll, ref noToAll);
         }
 
         /// <summary>
@@ -1964,7 +1927,7 @@ namespace System.Management.Automation
                 supportsToAllOptions, // allowNoToAll
                 false,                // replaceNoWithHalt
                 hasSecurityImpact     // hasSecurityImpact
-                );               
+                );
 
             switch (continueStatus)
             {
@@ -1983,46 +1946,46 @@ namespace System.Management.Automation
             return true;
         }
         #endregion ShouldContinue
-    #endregion Should
+        #endregion Should
 
-    #region Transaction Support
-    /// <summary>
-    /// Returns true if a transaction is available for use.
-    /// </summary>
-    public bool TransactionAvailable()
-    {
-        return UseTransactionFlagSet && Context.TransactionManager.HasTransaction;
-    }
-
-    /// <summary>
-    /// Gets an object that surfaces the current PowerShell transaction.
-    /// When this object is disposed, PowerShell resets the active transaction
-    /// </summary>
-    public PSTransactionContext CurrentPSTransaction
-    {
-        get
+        #region Transaction Support
+        /// <summary>
+        /// Returns true if a transaction is available for use.
+        /// </summary>
+        public bool TransactionAvailable()
         {
-            if(! TransactionAvailable())
-            {
-                string error = null;
-
-                if (! UseTransactionFlagSet)
-                    error = TransactionStrings.CmdletRequiresUseTx;
-                else
-                    error = TransactionStrings.NoTransactionAvailable;
-
-                // We want to throw in this situation, and want to use a
-                // property because it mimics the C# using(TransactionScope ...) syntax
-                #pragma warning suppress 56503
-                throw new InvalidOperationException(error);
-            }
-
-            return new PSTransactionContext(Context.TransactionManager);
+            return UseTransactionFlagSet && Context.TransactionManager.HasTransaction;
         }
-    }
-    #endregion Transaction Support
 
-    #region Misc
+        /// <summary>
+        /// Gets an object that surfaces the current PowerShell transaction.
+        /// When this object is disposed, PowerShell resets the active transaction
+        /// </summary>
+        public PSTransactionContext CurrentPSTransaction
+        {
+            get
+            {
+                if (!TransactionAvailable())
+                {
+                    string error = null;
+
+                    if (!UseTransactionFlagSet)
+                        error = TransactionStrings.CmdletRequiresUseTx;
+                    else
+                        error = TransactionStrings.NoTransactionAvailable;
+
+                    // We want to throw in this situation, and want to use a
+                    // property because it mimics the C# using(TransactionScope ...) syntax
+#pragma warning suppress 56503
+                    throw new InvalidOperationException(error);
+                }
+
+                return new PSTransactionContext(Context.TransactionManager);
+            }
+        }
+        #endregion Transaction Support
+
+        #region Misc
         /// <summary>
         /// Implementation of ThrowTerminatingError.
         /// </summary>
@@ -2076,7 +2039,7 @@ namespace System.Management.Automation
                 Exception textLookupError = errorRecord.ErrorDetails.TextLookupError;
                 errorRecord.ErrorDetails.TextLookupError = null;
                 MshLog.LogCommandHealthEvent(
-                    this.context,
+                    Context,
                     textLookupError,
                     Severity.Warning);
             }
@@ -2101,9 +2064,9 @@ namespace System.Management.Automation
             // Code sees only that execution stopped
             throw ManageException(e);
         }
-    #endregion Misc
+        #endregion Misc
 
-    #region Data Merging
+        #region Data Merging
 
         /// <summary>
         /// Data streams available for merging.
@@ -2159,12 +2122,7 @@ namespace System.Management.Automation
         /// <summary>
         /// Get/sets error data stream merge state.
         /// </summary>
-        internal MergeDataStream ErrorMergeTo
-        {
-            get { return this.errorMergeTo; }
-            set { this.errorMergeTo = value; }
-        }
-        private MergeDataStream errorMergeTo;
+        internal MergeDataStream ErrorMergeTo { get; set; }
 
         /// <summary>
         /// Method to set data stream merging based on passed in runtime object.
@@ -2202,28 +2160,19 @@ namespace System.Management.Automation
         /// <summary>
         /// Claims the unclaimed error output of all previous commands
         /// </summary>
-        internal bool MergeUnclaimedPreviousErrorResults
-        {
-            get { return mergeUnclaimedPreviousErrorResults; }
-            set { mergeUnclaimedPreviousErrorResults = value; }
-        }
-        private bool mergeUnclaimedPreviousErrorResults = false;
+        internal bool MergeUnclaimedPreviousErrorResults { get; set; } = false;
 
-    #endregion
+        #endregion
 
-    #region Internal Pipes
+        #region Internal Pipes
 
         /// <summary>
         /// Gets or sets the input pipe.
         /// </summary>
         internal Pipe InputPipe
         {
-            get {
-                if (inputPipe == null)
-                    inputPipe = new Pipe();
-                return inputPipe;
-            }
-            set { inputPipe = value; }
+            get { return _inputPipe ?? (_inputPipe = new Pipe()); }
+            set { _inputPipe = value; }
         }
 
         /// <summary>
@@ -2231,19 +2180,15 @@ namespace System.Management.Automation
         /// </summary>
         internal Pipe OutputPipe
         {
-            get {
-                if (outputPipe == null)
-                    this.outputPipe = new Pipe();
-                return outputPipe;
-            }
-            set { outputPipe = value; }
+            get { return _outputPipe ?? (_outputPipe = new Pipe()); }
+            set { _outputPipe = value; }
         }
 
         internal object[] GetResultsAsArray()
         {
-            if (outputPipe == null)
+            if (_outputPipe == null)
                 return StaticEmptyArray;
-            return outputPipe.ToArray();
+            return _outputPipe.ToArray();
         }
 
         /// <summary>
@@ -2257,51 +2202,31 @@ namespace System.Management.Automation
         /// </summary>
         internal Pipe ErrorOutputPipe
         {
-            get {
-                if (errorOutputPipe == null)
-                    errorOutputPipe = new Pipe();
-                return errorOutputPipe;
-            }
-            set { errorOutputPipe = value; }
+            get { return _errorOutputPipe ?? (_errorOutputPipe = new Pipe()); }
+            set { _errorOutputPipe = value; }
         }
 
         /// <summary>
         /// Gets or sets the warning output pipe.
         /// </summary>
-        internal Pipe WarningOutputPipe
-        {
-            get { return warningOutputPipe; }
-            set { warningOutputPipe = value; }
-        }
+        internal Pipe WarningOutputPipe { get; set; }
 
         /// <summary>
         /// Gets or sets the verbose output pipe.
         /// </summary>
-        internal Pipe VerboseOutputPipe
-        {
-            get { return verboseOutputPipe; }
-            set { verboseOutputPipe = value; }
-        }
+        internal Pipe VerboseOutputPipe { get; set; }
 
         /// <summary>
         /// Gets or sets the debug output pipe.
         /// </summary>
-        internal Pipe DebugOutputPipe
-        {
-            get { return debugOutputPipe; }
-            set { debugOutputPipe = value; }
-        }
+        internal Pipe DebugOutputPipe { get; set; }
 
         /// <summary>
         /// Gets or sets the informational output pipe.
         /// </summary>
-        internal Pipe InformationOutputPipe
-        {
-            get { return informationOutputPipe; }
-            set { informationOutputPipe = value; }
-        }
+        internal Pipe InformationOutputPipe { get; set; }
 
-    #endregion
+        #endregion
 
         #region Internal helpers
         /// <summary>
@@ -2323,7 +2248,7 @@ namespace System.Management.Automation
         internal void ThrowIfWriteNotPermitted(bool needsToWriteToPipeline)
         {
             if (null == this.PipelineProcessor
-                || this.thisCommand != this.PipelineProcessor._permittedToWrite
+                || _thisCommand != this.PipelineProcessor._permittedToWrite
                 || needsToWriteToPipeline && !this.PipelineProcessor._permittedToWriteToPipeline
                 || Thread.CurrentThread != this.PipelineProcessor._permittedToWriteThread
                )
@@ -2346,7 +2271,7 @@ namespace System.Management.Automation
         /// <returns>IDisposable</returns>
         internal IDisposable AllowThisCommandToWrite(bool permittedToWriteToPipeline)
         {
-            return new AllowWrite(this.thisCommand, permittedToWriteToPipeline);
+            return new AllowWrite(_thisCommand, permittedToWriteToPipeline);
         }
 
         private class AllowWrite : IDisposable
@@ -2412,7 +2337,7 @@ namespace System.Management.Automation
 
             if (null != PipelineProcessor)
             {
-                PipelineProcessor.RecordFailure(e, thisCommand);
+                PipelineProcessor.RecordFailure(e, _thisCommand);
             }
 
             // 1021203-2005/05/09-JonN
@@ -2435,7 +2360,7 @@ namespace System.Management.Automation
                 // Log a command health event
 
                 MshLog.LogCommandHealthEvent(
-                    this.context,
+                    Context,
                     e,
                     Severity.Warning);
             }
@@ -2447,7 +2372,7 @@ namespace System.Management.Automation
         #endregion Internal helpers
 
         #region Error PSVariable
-        private IList errorVarList;
+        private IList _errorVarList;
 
         /// <summary>
         /// ErrorVariable tells which variable to populate with the errors.
@@ -2460,17 +2385,17 @@ namespace System.Management.Automation
 
         internal void SetupErrorVariable()
         {
-            SetupVariable(VariableStreamKind.Error, this.ErrorVariable, ref errorVarList);
+            SetupVariable(VariableStreamKind.Error, this.ErrorVariable, ref _errorVarList);
         } // SetupErrorVariable
 
         private void EnsureVariableParameterAllowed()
         {
-            if ((context.LanguageMode == PSLanguageMode.NoLanguage) ||
-                (context.LanguageMode == PSLanguageMode.RestrictedLanguage))
+            if ((Context.LanguageMode == PSLanguageMode.NoLanguage) ||
+                (Context.LanguageMode == PSLanguageMode.RestrictedLanguage))
             {
                 throw InterpreterError.NewInterpreterException(null, typeof(RuntimeException),
-                    null, "VariableReferenceNotSupportedInDataSection", 
-                    ParserStrings.VariableReferenceNotSupportedInDataSection, 
+                    null, "VariableReferenceNotSupportedInDataSection",
+                    ParserStrings.VariableReferenceNotSupportedInDataSection,
                     ParserStrings.DefaultAllowedVariablesInDataSection);
             }
         }
@@ -2513,13 +2438,13 @@ namespace System.Management.Automation
                     return; // not outermost scope
             }
 
-            context.AppendDollarError(obj);
+            Context.AppendDollarError(obj);
         } // AppendDollarError
 
         #endregion Error PSVariable
 
         #region Warning PSVariable
-        private IList warningVarList;
+        private IList _warningVarList;
 
         /// <summary>
         /// WarningVariable tells which variable to populate with the warnings.
@@ -2532,7 +2457,7 @@ namespace System.Management.Automation
 
         internal void SetupWarningVariable()
         {
-            SetupVariable(VariableStreamKind.Warning, this.WarningVariable, ref warningVarList);
+            SetupVariable(VariableStreamKind.Warning, this.WarningVariable, ref _warningVarList);
         } // SetupWarningVariable
 
         /// <summary>
@@ -2547,7 +2472,7 @@ namespace System.Management.Automation
         #endregion Warning PSVariable
 
         #region Information PSVariable
-        private IList informationVarList;
+        private IList _informationVarList;
 
         /// <summary>
         /// InformationVariable tells which variable to populate with informational output.
@@ -2556,16 +2481,11 @@ namespace System.Management.Automation
         /// <remarks>
         /// This is a common parameter via class CommonParameters.
         /// </remarks>
-        internal string InformationVariable
-        {
-            get { return informationVariable; }
-            set { informationVariable = value; }
-        }
-        private string informationVariable;
+        internal string InformationVariable { get; set; }
 
         internal void SetupInformationVariable()
         {
-            SetupVariable(VariableStreamKind.Information, this.InformationVariable, ref informationVarList);
+            SetupVariable(VariableStreamKind.Information, this.InformationVariable, ref _informationVarList);
         } // SetupWarningVariable
 
 
@@ -2578,13 +2498,13 @@ namespace System.Management.Automation
 
             EnsureVariableParameterAllowed();
 
-            if (this.state == null)
-                this.state = new SessionState(context.EngineSessionState);
+            if (_state == null)
+                _state = new SessionState(Context.EngineSessionState);
 
             if (variableName.StartsWith("+", StringComparison.Ordinal))
             {
                 variableName = variableName.Substring(1);
-                object oldValue = PSObject.Base(this.state.PSVariable.GetValue(variableName));
+                object oldValue = PSObject.Base(_state.PSVariable.GetValue(variableName));
                 varList = oldValue as IList;
                 if (null == varList)
                 {
@@ -2618,11 +2538,11 @@ namespace System.Management.Automation
                 varList = new ArrayList();
             }
 
-            if (!(thisCommand is PSScriptCmdlet))
+            if (!(_thisCommand is PSScriptCmdlet))
             {
                 this.OutputPipe.AddVariableList(streamKind, varList);
             }
-            this.state.PSVariable.Set(variableName, varList);
+            _state.PSVariable.Set(variableName, varList);
         } // SetupVariable
 
         /// <summary>
@@ -2635,7 +2555,7 @@ namespace System.Management.Automation
         } // AppendInformation
 
         #endregion Information PSVariable
-        
+
         #region Write
         internal bool UseSecurityContextRun = true;
 
@@ -2737,7 +2657,7 @@ namespace System.Management.Automation
 
         internal void WriteError(ErrorRecord errorRecord, bool overrideInquire)
         {
-        // This check will be repeated in _WriteErrorSkipAllowCheck,
+            // This check will be repeated in _WriteErrorSkipAllowCheck,
             // but we want PipelineStoppedException to take precedence
             // over InvalidOperationException if the pipeline has been
             // closed.
@@ -2751,7 +2671,7 @@ namespace System.Management.Automation
 
 #if CORECLR
             // SecurityContext is not supported in CoreCLR
-            DoWriteError(new KeyValuePair<ErrorRecord, ActionPreference> (errorRecord, preference));
+            DoWriteError(new KeyValuePair<ErrorRecord, ActionPreference>(errorRecord, preference));
 #else
             if (UseSecurityContextRun)
             {
@@ -2764,11 +2684,10 @@ namespace System.Management.Automation
                     PipelineProcessor.SecurityContext.CreateCopy(),
                     delegateCallback,
                     new KeyValuePair<ErrorRecord, ActionPreference>(errorRecord, preference));
-
             }
             else
             {
-                DoWriteError(new KeyValuePair<ErrorRecord, ActionPreference> (errorRecord, preference));
+                DoWriteError(new KeyValuePair<ErrorRecord, ActionPreference>(errorRecord, preference));
             }
 #endif
         } // WriteError
@@ -2801,13 +2720,13 @@ namespace System.Management.Automation
 
             // If this error came from a transacted cmdlet,
             // rollback the transaction
-            if(UseTransaction)
+            if (UseTransaction)
             {
-                if(
-                   (context.TransactionManager.RollbackPreference != RollbackSeverity.TerminatingError) &&
-                   (context.TransactionManager.RollbackPreference != RollbackSeverity.Never))
+                if (
+                   (Context.TransactionManager.RollbackPreference != RollbackSeverity.TerminatingError) &&
+                   (Context.TransactionManager.RollbackPreference != RollbackSeverity.Never))
                 {
-                    context.TransactionManager.Rollback(true);
+                    Context.TransactionManager.Rollback(true);
                 }
             }
 
@@ -2839,7 +2758,7 @@ namespace System.Management.Automation
         /// but the command failure will ultimately be
         /// <see cref="System.Management.Automation.ActionPreferenceStopException"/>,
         /// </remarks>
-        internal void _WriteErrorSkipAllowCheck(ErrorRecord errorRecord, ActionPreference? actionPreference = null)
+        internal void _WriteErrorSkipAllowCheck(ErrorRecord errorRecord, ActionPreference? actionPreference = null, bool isNativeError = false)
         {
             ThrowIfStopping();
 
@@ -2849,19 +2768,19 @@ namespace System.Management.Automation
                 Exception textLookupError = errorRecord.ErrorDetails.TextLookupError;
                 errorRecord.ErrorDetails.TextLookupError = null;
                 MshLog.LogCommandHealthEvent(
-                    this.context,
+                    Context,
                     textLookupError,
                     Severity.Warning);
             }
 
             this.PipelineProcessor.ExecutionFailed = true;
-            if (this.shouldLogPipelineExecutionDetail)
+            if (LogPipelineExecutionDetail)
             {
-                this.PipelineProcessor.LogExecutionError(this.thisCommand.MyInvocation, errorRecord);
+                this.PipelineProcessor.LogExecutionError(_thisCommand.MyInvocation, errorRecord);
             }
 
             ActionPreference preference = ErrorAction;
-            if(actionPreference.HasValue)
+            if (actionPreference.HasValue)
             {
                 preference = actionPreference.Value;
             }
@@ -2892,7 +2811,7 @@ namespace System.Management.Automation
                         new ActionPreferenceStopException(
                             MyInvocation,
                             errorRecord,
-                            StringUtil.Format(CommandBaseStrings.ErrorPreferenceStop, 
+                            StringUtil.Format(CommandBaseStrings.ErrorPreferenceStop,
                                               "ErrorActionPreference",
                                               errorRecord.ToString()));
                     throw ManageException(e);
@@ -2921,7 +2840,9 @@ namespace System.Management.Automation
             PSObject errorWrap = PSObject.AsPSObject(errorRecord);
             // It's possible we've already added the member (this method is recursive sometimes
             // when tracing), so don't add the member again.
-            if (errorWrap.Members["writeErrorStream"] == null)
+
+            // We don't add a note property on messages that comes from stderr stream.
+            if (!isNativeError && errorWrap.Members["writeErrorStream"] == null)
             {
                 PSNoteProperty note = new PSNoteProperty("writeErrorStream", true);
                 errorWrap.Properties.Add(note);
@@ -2939,9 +2860,9 @@ namespace System.Management.Automation
             {
                 // If this is an error pipe for a hosting application and we are logging,
                 // then create a temporary PowerShell to log the error.
-                if (context.InternalHost.UI.IsTranscribing)
+                if (Context.InternalHost.UI.IsTranscribing)
                 {
-                    context.InternalHost.UI.TranscribeError(context, errorRecord.InvocationInfo, errorWrap);
+                    Context.InternalHost.UI.TranscribeError(Context, errorRecord.InvocationInfo, errorWrap);
                 }
 
                 this.ErrorOutputPipe.AddWithoutAppendingOutVarList(errorWrap);
@@ -2956,8 +2877,8 @@ namespace System.Management.Automation
         // workings of the command and when what information will get output.
         // See "User Feedback Mechanisms - Note.doc" for details.
 
-        private bool isConfirmPreferenceCached = false;
-        private ConfirmImpact confirmPreference = InitialSessionState.defaultConfirmPreference;
+        private bool _isConfirmPreferenceCached = false;
+        private ConfirmImpact _confirmPreference = InitialSessionState.defaultConfirmPreference;
         /// <summary>
         /// Preference setting controlling behavior of ShouldProcess()
         /// </summary>
@@ -2977,28 +2898,28 @@ namespace System.Management.Automation
                     return ConfirmImpact.Low;
                 if (Debug)
                 {
-                    if (isConfirmFlagSet) // -Debug -Confirm:$false
+                    if (IsConfirmFlagSet) // -Debug -Confirm:$false
                         return ConfirmImpact.None;
                     return ConfirmImpact.Low;
                 }
-                if (isConfirmFlagSet) // -Confirm:$false
+                if (IsConfirmFlagSet) // -Confirm:$false
                     return ConfirmImpact.None;
 
-                if (!isConfirmPreferenceCached)
+                if (!_isConfirmPreferenceCached)
                 {
                     bool defaultUsed = false;
-                    confirmPreference = Context.GetEnumPreference<ConfirmImpact>(SpecialVariables.ConfirmPreferenceVarPath, confirmPreference, out defaultUsed);
-                    isConfirmPreferenceCached = true;
+                    _confirmPreference = Context.GetEnumPreference<ConfirmImpact>(SpecialVariables.ConfirmPreferenceVarPath, _confirmPreference, out defaultUsed);
+                    _isConfirmPreferenceCached = true;
                 }
-                return confirmPreference;
+                return _confirmPreference;
             }
         }
 
 
 
-        private bool isDebugPreferenceSet = false;
-        private ActionPreference debugPreference = InitialSessionState.defaultDebugPreference;
-        private bool isDebugPreferenceCached = false;
+        private bool _isDebugPreferenceSet = false;
+        private ActionPreference _debugPreference = InitialSessionState.defaultDebugPreference;
+        private bool _isDebugPreferenceCached = false;
         /// <summary>
         /// Preference setting
         /// </summary>
@@ -3009,9 +2930,9 @@ namespace System.Management.Automation
         {
             get
             {
-                if (isDebugPreferenceSet)
-                    return debugPreference;
-                if (isDebugFlagSet)
+                if (_isDebugPreferenceSet)
+                    return _debugPreference;
+                if (IsDebugFlagSet)
                 {
                     if (Debug)
                     {
@@ -3031,32 +2952,32 @@ namespace System.Management.Automation
                 }
 
 
-                if (!isDebugPreferenceCached)
+                if (!_isDebugPreferenceCached)
                 {
                     bool defaultUsed = false;
-                    
-                    debugPreference = context.GetEnumPreference<ActionPreference>(SpecialVariables.DebugPreferenceVarPath, debugPreference, out defaultUsed);
+
+                    _debugPreference = Context.GetEnumPreference<ActionPreference>(SpecialVariables.DebugPreferenceVarPath, _debugPreference, out defaultUsed);
 
                     // If the host couldn't prompt for the debug action anyways, change it to 'Continue'.
                     // This lets hosts still see debug output without having to implement the prompting logic.
-                    if((CBhost.ExternalHost.UI == null) && (debugPreference == ActionPreference.Inquire))
+                    if ((CBhost.ExternalHost.UI == null) && (_debugPreference == ActionPreference.Inquire))
                     {
-                        debugPreference = ActionPreference.Continue;
+                        _debugPreference = ActionPreference.Continue;
                     }
 
-                    isDebugPreferenceCached = true;
+                    _isDebugPreferenceCached = true;
                 }
-                return debugPreference;
+                return _debugPreference;
             }
             set
             {
-                debugPreference = value;
-                isDebugPreferenceSet = true;
+                _debugPreference = value;
+                _isDebugPreferenceSet = true;
             } // set
         }
 
-        private bool isVerbosePreferenceCached = false;
-        private ActionPreference verbosePreference = InitialSessionState.defaultVerbosePreference;
+        private bool _isVerbosePreferenceCached = false;
+        private ActionPreference _verbosePreference = InitialSessionState.defaultVerbosePreference;
         /// <summary>
         /// Preference setting
         /// </summary>
@@ -3067,7 +2988,7 @@ namespace System.Management.Automation
         {
             get
             {
-                if (isVerboseFlagSet)
+                if (IsVerboseFlagSet)
                 {
                     if (Verbose)
                         return ActionPreference.Continue;
@@ -3089,27 +3010,23 @@ namespace System.Management.Automation
                     }
                 }
 
-                if (!isVerbosePreferenceCached)
+                if (!_isVerbosePreferenceCached)
                 {
                     bool defaultUsed = false;
-                    verbosePreference = context.GetEnumPreference<ActionPreference>(
-                        SpecialVariables.VerbosePreferenceVarPath, 
-                        verbosePreference, 
+                    _verbosePreference = Context.GetEnumPreference<ActionPreference>(
+                        SpecialVariables.VerbosePreferenceVarPath,
+                        _verbosePreference,
                         out defaultUsed);
                 }
 
-                return verbosePreference;
+                return _verbosePreference;
             }
         }
 
-        private bool isWarningPreferenceSet = false;
-        internal bool IsWarningActionSet
-        {
-            get { return isWarningPreferenceSet; }
-        }
+        internal bool IsWarningActionSet { get; private set; } = false;
 
-        private bool isWarningPreferenceCached = false;
-        private ActionPreference warningPreference = InitialSessionState.defaultWarningPreference;
+        private bool _isWarningPreferenceCached = false;
+        private ActionPreference _warningPreference = InitialSessionState.defaultWarningPreference;
         /// <summary>
         /// Preference setting
         /// </summary>
@@ -3121,8 +3038,8 @@ namespace System.Management.Automation
             get
             {
                 // Setting CommonParameters.WarningAction has highest priority
-                if (isWarningPreferenceSet)
-                    return warningPreference;
+                if (IsWarningActionSet)
+                    return _warningPreference;
 
                 if (Debug)
                     return ActionPreference.Inquire;
@@ -3131,13 +3048,13 @@ namespace System.Management.Automation
                 // Debug:$false and Verbose:$false ignored
 
 
-                if (!isWarningPreferenceCached)
+                if (!_isWarningPreferenceCached)
                 {
                     bool defaultUsed = false;
-                    warningPreference = context.GetEnumPreference<ActionPreference>(SpecialVariables.WarningPreferenceVarPath, warningPreference, out defaultUsed);
+                    _warningPreference = Context.GetEnumPreference<ActionPreference>(SpecialVariables.WarningPreferenceVarPath, _warningPreference, out defaultUsed);
                 }
 
-                return warningPreference;
+                return _warningPreference;
             }
             set
             {
@@ -3146,16 +3063,16 @@ namespace System.Management.Automation
                     throw PSTraceSource.NewNotSupportedException(ErrorPackage.SuspendActionPreferenceErrorActionOnly);
                 }
 
-                warningPreference = value;
-                isWarningPreferenceSet = true;
+                _warningPreference = value;
+                IsWarningActionSet = true;
             } // set
         }
 
         // This is used so that people can tell whether the verbose switch
         // was specified.  This is useful in the Cmdlet-calling-Cmdlet case
         // where you'd like the underlying Cmdlet to have the same switches.
-        private bool verboseFlag = false;
-        private bool isVerboseFlagSet = false;
+        private bool _verboseFlag = false;
+
         /// <summary>
         /// Echo tells the command to articulate the actions it performs while executing.
         /// </summary>
@@ -3164,24 +3081,18 @@ namespace System.Management.Automation
         /// </remarks>
         internal bool Verbose
         {
-            get { return verboseFlag; }
+            get { return _verboseFlag; }
             set
             {
-                verboseFlag = value;
-                isVerboseFlagSet = true;
+                _verboseFlag = value;
+                IsVerboseFlagSet = true;
             } // Set
         }
 
-        internal bool IsVerboseFlagSet
-        {
-            get
-            {
-                return isVerboseFlagSet;
-            }
-        }
+        internal bool IsVerboseFlagSet { get; private set; } = false;
 
-        private bool confirmFlag = false;
-        private bool isConfirmFlagSet = false;
+        private bool _confirmFlag = false;
+
         /// <summary>
         /// Confirm tells the command to ask the admin before performing an action.
         /// </summary>
@@ -3192,25 +3103,18 @@ namespace System.Management.Automation
         {
             get
             {
-                return confirmFlag;
+                return _confirmFlag;
             }
             set
             {
-                confirmFlag = value;
-                isConfirmFlagSet = true;
+                _confirmFlag = value;
+                IsConfirmFlagSet = true;
             } // set
         }
 
-        internal bool IsConfirmFlagSet
-        {
-            get
-            {
-                return isConfirmFlagSet;
-            }
-        }
+        internal bool IsConfirmFlagSet { get; private set; } = false;
 
-        private bool useTransactionFlag = false;
-        private bool useTransactionFlagSet = false;
+        private bool _useTransactionFlag = false;
 
         /// <summary>
         /// UseTransaction tells the command to activate the current PowerShell transaction.
@@ -3222,29 +3126,23 @@ namespace System.Management.Automation
         {
             get
             {
-                return useTransactionFlag;
+                return _useTransactionFlag;
             }
             set
             {
-                useTransactionFlag = value;
-                useTransactionFlagSet = true;
+                _useTransactionFlag = value;
+                UseTransactionFlagSet = true;
             } // set
         }
 
-        internal bool UseTransactionFlagSet
-        {
-            get
-            {
-                return useTransactionFlagSet;
-            }
-        }
+        internal bool UseTransactionFlagSet { get; private set; } = false;
 
 
         //This is used so that people can tell whether the debug switch was specified.  This
         // Is useful in the Cmdlet-calling-Cmdlet case where you'd like the underlying Cmdlet to
         // have the same switches.
-        private bool debugFlag = false;
-        private bool isDebugFlagSet = false;
+        private bool _debugFlag = false;
+
         /// <summary>
         /// Debug tell the command system to provide Programmer/Support type messages to understand what is really occuring
         /// and give the user the opportunity to stop or debug the situation
@@ -3254,25 +3152,18 @@ namespace System.Management.Automation
         /// </remarks>
         internal bool Debug
         {
-            get { return debugFlag; }
+            get { return _debugFlag; }
             set
             {
-                debugFlag = value;
-                isDebugFlagSet = true;
+                _debugFlag = value;
+                IsDebugFlagSet = true;
             } // set
         }
 
-        internal bool IsDebugFlagSet
-        {
-            get
-            {
-                return isDebugFlagSet;
-            }
-        }
+        internal bool IsDebugFlagSet { get; private set; } = false;
 
-        private bool whatIfFlag = InitialSessionState.defaultWhatIfPreference;
-        private bool isWhatIfFlagSet /* = false */;
-        private bool isWhatIfPreferenceCached /* = false */;
+        private bool _whatIfFlag = InitialSessionState.defaultWhatIfPreference;
+        private bool _isWhatIfPreferenceCached /* = false */;
         /// <summary>
         /// WhatIf indicates that the command should not
         /// perform any changes to persistent state outside Monad.
@@ -3284,33 +3175,26 @@ namespace System.Management.Automation
         {
             get
             {
-                if (!isWhatIfFlagSet && !isWhatIfPreferenceCached)
+                if (!IsWhatIfFlagSet && !_isWhatIfPreferenceCached)
                 {
                     bool defaultUsed = false;
-                    whatIfFlag = context.GetBooleanPreference(SpecialVariables.WhatIfPreferenceVarPath, whatIfFlag, out defaultUsed);
-                    isWhatIfPreferenceCached = true;
+                    _whatIfFlag = Context.GetBooleanPreference(SpecialVariables.WhatIfPreferenceVarPath, _whatIfFlag, out defaultUsed);
+                    _isWhatIfPreferenceCached = true;
                 }
 
-                return whatIfFlag;
+                return _whatIfFlag;
             }
             set
             {
-                whatIfFlag = value;
-                isWhatIfFlagSet = true;
+                _whatIfFlag = value;
+                IsWhatIfFlagSet = true;
             } // set
         }
 
-        internal bool IsWhatIfFlagSet
-        {
-            get
-            {
-                return isWhatIfFlagSet;
-            }
-        }
+        internal bool IsWhatIfFlagSet { get; private set; }
 
-        private bool isErrorActionSet = false;
-        private ActionPreference errorAction = InitialSessionState.defaultErrorActionPreference;
-        private bool isErrorActionPreferenceCached = false;
+        private ActionPreference _errorAction = InitialSessionState.defaultErrorActionPreference;
+        private bool _isErrorActionPreferenceCached = false;
         /// <summary>
         /// ErrorAction tells the command what to do when an error occurs
         /// </summary>
@@ -3325,8 +3209,8 @@ namespace System.Management.Automation
             get
             {
                 // Setting CommonParameters.ErrorAction has highest priority
-                if (isErrorActionSet)
-                    return errorAction;
+                if (IsErrorActionSet)
+                    return _errorAction;
 
                 // Debug takes preference over Verbose
                 if (Debug)
@@ -3335,34 +3219,27 @@ namespace System.Management.Automation
                     return ActionPreference.Continue;
 
                 // fall back to $ErrorAction
-                if (!isErrorActionPreferenceCached)
+                if (!_isErrorActionPreferenceCached)
                 {
                     bool defaultUsed = false;
-                    errorAction = context.GetEnumPreference<ActionPreference>(SpecialVariables.ErrorActionPreferenceVarPath, errorAction, out defaultUsed);
-                    isErrorActionPreferenceCached = true;
+                    _errorAction = Context.GetEnumPreference<ActionPreference>(SpecialVariables.ErrorActionPreferenceVarPath, _errorAction, out defaultUsed);
+                    _isErrorActionPreferenceCached = true;
                 }
-                return errorAction;
-
+                return _errorAction;
             }
             set
             {
-                if ((! (this.commandInfo is WorkflowInfo)) && (value == ActionPreference.Suspend))
+                if ((!(_commandInfo is WorkflowInfo)) && (value == ActionPreference.Suspend))
                 {
                     throw PSTraceSource.NewNotSupportedException(ErrorPackage.SuspendActionPreferenceSupportedOnlyOnWorkflow);
                 }
 
-                errorAction = value;
-                isErrorActionSet = true;
+                _errorAction = value;
+                IsErrorActionSet = true;
             } // set
         }
 
-        internal bool IsErrorActionSet
-        {
-            get
-            {
-                return isErrorActionSet;
-            }
-        }
+        internal bool IsErrorActionSet { get; private set; } = false;
 
         /// <summary>
         /// 
@@ -3374,26 +3251,26 @@ namespace System.Management.Automation
         {
             get
             {
-                if (isProgressPreferenceSet)
-                    return progressPreference;
+                if (_isProgressPreferenceSet)
+                    return _progressPreference;
 
-                if (!isProgressPreferenceCached)
+                if (!_isProgressPreferenceCached)
                 {
                     bool defaultUsed = false;
-                    progressPreference = context.GetEnumPreference<ActionPreference>(SpecialVariables.ProgressPreferenceVarPath, progressPreference, out defaultUsed);
-                    isProgressPreferenceCached = true;
+                    _progressPreference = Context.GetEnumPreference<ActionPreference>(SpecialVariables.ProgressPreferenceVarPath, _progressPreference, out defaultUsed);
+                    _isProgressPreferenceCached = true;
                 }
-                return progressPreference;
+                return _progressPreference;
             }
             set
             {
-                progressPreference = value;
-                isProgressPreferenceSet = true;
+                _progressPreference = value;
+                _isProgressPreferenceSet = true;
             } // set
         }
-        private ActionPreference progressPreference = InitialSessionState.defaultProgressPreference;
-        private bool isProgressPreferenceSet = false;
-        private bool isProgressPreferenceCached = false;
+        private ActionPreference _progressPreference = InitialSessionState.defaultProgressPreference;
+        private bool _isProgressPreferenceSet = false;
+        private bool _isProgressPreferenceCached = false;
 
         /// <summary>
         /// 
@@ -3405,16 +3282,16 @@ namespace System.Management.Automation
         {
             get
             {
-                if (isInformationPreferenceSet)
-                    return informationPreference;
+                if (IsInformationActionSet)
+                    return _informationPreference;
 
-                if (!isInformationPreferenceCached)
+                if (!_isInformationPreferenceCached)
                 {
                     bool defaultUsed = false;
-                    informationPreference = context.GetEnumPreference<ActionPreference>(SpecialVariables.InformationPreferenceVarPath, informationPreference, out defaultUsed);
-                    isInformationPreferenceCached = true;
+                    _informationPreference = Context.GetEnumPreference<ActionPreference>(SpecialVariables.InformationPreferenceVarPath, _informationPreference, out defaultUsed);
+                    _isInformationPreferenceCached = true;
                 }
-                return informationPreference;
+                return _informationPreference;
             }
             set
             {
@@ -3423,26 +3300,18 @@ namespace System.Management.Automation
                     throw PSTraceSource.NewNotSupportedException(ErrorPackage.SuspendActionPreferenceErrorActionOnly);
                 }
 
-                informationPreference = value;
-                isInformationPreferenceSet = true;
+                _informationPreference = value;
+                IsInformationActionSet = true;
             } // set
         }
-        private ActionPreference informationPreference = InitialSessionState.defaultInformationPreference;
+        private ActionPreference _informationPreference = InitialSessionState.defaultInformationPreference;
 
-        internal bool IsInformationActionSet
-        {
-            get { return isInformationPreferenceSet; }
-        }
-        private bool isInformationPreferenceSet = false;
-        private bool isInformationPreferenceCached = false;
+        internal bool IsInformationActionSet { get; private set; } = false;
+
+        private bool _isInformationPreferenceCached = false;
 
 
-        private PagingParameters pagingParameters;
-        internal PagingParameters PagingParameters
-        {
-            get { return pagingParameters; }
-            set { pagingParameters = value; }
-        }
+        internal PagingParameters PagingParameters { get; set; }
 
         #endregion Preference
 
@@ -3706,7 +3575,7 @@ namespace System.Management.Automation
                 CBhost.InternalUI.TranscribeResult(inquireMessage);
 
                 System.Text.StringBuilder textChoices = new System.Text.StringBuilder();
-                foreach(ChoiceDescription choice in choices)
+                foreach (ChoiceDescription choice in choices)
                 {
                     if (textChoices.Length > 0)
                     {
@@ -3717,7 +3586,7 @@ namespace System.Management.Automation
                 CBhost.InternalUI.TranscribeResult(textChoices.ToString());
 
                 int defaultOption = 0;
-                if(hasSecurityImpact)
+                if (hasSecurityImpact)
                 {
                     defaultOption = skipOneOption;
                 }
@@ -3727,7 +3596,7 @@ namespace System.Management.Automation
 
                 string chosen = choices[response].Label;
                 int labelIndex = chosen.IndexOf('&');
-                if(labelIndex > -1)
+                if (labelIndex > -1)
                 {
                     chosen = chosen[labelIndex + 1].ToString();
                 }
@@ -3752,9 +3621,8 @@ namespace System.Management.Automation
                     return ContinueStatus.NoToAll;
                 else if (pauseOption == response)
                 {
-
                     // This call returns when the user exits the nested prompt.
-                    CBhost.EnterNestedPrompt(this.thisCommand);
+                    CBhost.EnterNestedPrompt(_thisCommand);
                     // continue loop
                 }
                 else if (-1 == response)
@@ -3795,31 +3663,31 @@ namespace System.Management.Automation
 
         internal void SetVariableListsInPipe()
         {
-            Diagnostics.Assert(thisCommand is PSScriptCmdlet, "this is only done for script cmdlets");
+            Diagnostics.Assert(_thisCommand is PSScriptCmdlet, "this is only done for script cmdlets");
 
-            if (outVarList != null)
+            if (_outVarList != null)
             {
-                this.OutputPipe.AddVariableList(VariableStreamKind.Output, outVarList);
+                this.OutputPipe.AddVariableList(VariableStreamKind.Output, _outVarList);
             }
 
-            if (errorVarList != null)
+            if (_errorVarList != null)
             {
-                this.OutputPipe.AddVariableList(VariableStreamKind.Error, errorVarList);
+                this.OutputPipe.AddVariableList(VariableStreamKind.Error, _errorVarList);
             }
 
-            if (warningVarList != null)
+            if (_warningVarList != null)
             {
-                this.OutputPipe.AddVariableList(VariableStreamKind.Warning, warningVarList);
+                this.OutputPipe.AddVariableList(VariableStreamKind.Warning, _warningVarList);
             }
 
-            if (informationVarList != null)
+            if (_informationVarList != null)
             {
-                this.OutputPipe.AddVariableList(VariableStreamKind.Information, informationVarList);
+                this.OutputPipe.AddVariableList(VariableStreamKind.Information, _informationVarList);
             }
 
             if (this.PipelineVariable != null)
             {
-                this.OutputPipe.SetPipelineVariable(pipelineVarReference);
+                this.OutputPipe.SetPipelineVariable(_pipelineVarReference);
             }
         }
 
@@ -3827,30 +3695,30 @@ namespace System.Management.Automation
         {
             //Diagnostics.Assert(thisCommand is PSScriptCmdlet, "this is only done for script cmdlets");
 
-            if (outVarList != null)
+            if (_outVarList != null)
             {
-                this.OutputPipe.RemoveVariableList(VariableStreamKind.Output, outVarList);
+                this.OutputPipe.RemoveVariableList(VariableStreamKind.Output, _outVarList);
             }
 
-            if (errorVarList != null)
+            if (_errorVarList != null)
             {
-                this.OutputPipe.RemoveVariableList(VariableStreamKind.Error, errorVarList);
+                this.OutputPipe.RemoveVariableList(VariableStreamKind.Error, _errorVarList);
             }
 
-            if (warningVarList != null)
+            if (_warningVarList != null)
             {
-                this.OutputPipe.RemoveVariableList(VariableStreamKind.Warning, warningVarList);
+                this.OutputPipe.RemoveVariableList(VariableStreamKind.Warning, _warningVarList);
             }
 
-            if (informationVarList != null)
+            if (_informationVarList != null)
             {
-                this.OutputPipe.RemoveVariableList(VariableStreamKind.Information, informationVarList);
+                this.OutputPipe.RemoveVariableList(VariableStreamKind.Information, _informationVarList);
             }
 
             if (this.PipelineVariable != null)
             {
                 this.OutputPipe.RemovePipelineVariable();
-                this.state.PSVariable.Remove(this.PipelineVariable);
+                _state.PSVariable.Remove(this.PipelineVariable);
             }
         }
     }

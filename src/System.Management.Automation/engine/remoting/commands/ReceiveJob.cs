@@ -8,12 +8,10 @@ using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Management.Automation;
-using System.Management.Automation.Host;
 using System.Management.Automation.Remoting;
 using System.Management.Automation.Remoting.Internal;
 using System.Management.Automation.Runspaces;
 using System.Management.Automation.Tracing;
-using System.Text;
 using System.Threading;
 using Dbg = System.Management.Automation.Diagnostics;
 using System.Management.Automation.Internal;
@@ -86,14 +84,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return jobs;
+                return _jobs;
             }
             set
             {
-                jobs = value;
+                _jobs = value;
             }
         }
-        private Job[] jobs;
+        private Job[] _jobs;
 
         /// <summary>
         /// Name of the computer for which the results needs to be
@@ -109,14 +107,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return computerNames;
+                return _computerNames;
             }
             set
             {
-                computerNames = value;
+                _computerNames = value;
             }
         }
-        private String[] computerNames;
+        private String[] _computerNames;
 
         /// <summary>
         /// Locations for which the results needs to be returned.
@@ -131,14 +129,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return locations;
+                return _locations;
             }
             set
             {
-                locations = value;
+                _locations = value;
             }
         }
-        private String[] locations;
+        private String[] _locations;
 
         /// <summary>
         /// Runspaces for which the results needs to be
@@ -153,14 +151,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return remoteRunspaceInfos;
+                return _remoteRunspaceInfos;
             }
             set
             {
-                remoteRunspaceInfos = value;
+                _remoteRunspaceInfos = value;
             }
         }
-        private PSSession[] remoteRunspaceInfos;
+        private PSSession[] _remoteRunspaceInfos;
 
         /// <summary>
         /// If the results need to be not removed from the store
@@ -171,15 +169,15 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return !flush;
+                return !_flush;
             }
             set
             {
-                flush = !value;
+                _flush = !value;
                 ValidateWait();
             }
         }
-        private bool flush = true;
+        private bool _flush = true;
 
         /// <summary>
         /// 
@@ -189,14 +187,14 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return !recurse;
+                return !_recurse;
             }
             set
             {
-                recurse = !value;
+                _recurse = !value;
             }
         }
-        private bool recurse = true;
+        private bool _recurse = true;
 
         /// <summary>
         /// 
@@ -346,7 +344,7 @@ namespace Microsoft.PowerShell.Commands
             {
                 case SessionParameterSet:
                     {
-                        foreach (Job job in jobs)
+                        foreach (Job job in _jobs)
                         {
                             PSRemotingJob remoteJob =
                                         job as PSRemotingJob;
@@ -363,7 +361,7 @@ namespace Microsoft.PowerShell.Commands
                             }
 
                             //Runspace parameter is supported only on PSRemotingJob objects
-                            foreach (PSSession remoteRunspaceInfo in remoteRunspaceInfos)
+                            foreach (PSSession remoteRunspaceInfo in _remoteRunspaceInfos)
                             {
                                 // get the required child jobs
                                 List<Job> childJobs = remoteJob.GetJobsForRunspace(remoteRunspaceInfo);
@@ -377,7 +375,7 @@ namespace Microsoft.PowerShell.Commands
 
                 case ComputerNameParameterSet:
                     {
-                        foreach (Job job in jobs)
+                        foreach (Job job in _jobs)
                         {
                             // the job can either be a remoting job or another one
                             PSRemotingJob remoteJob =
@@ -396,7 +394,7 @@ namespace Microsoft.PowerShell.Commands
                             }
 
                             String[] resolvedComputernames = null;
-                            ResolveComputerNames(computerNames, out resolvedComputernames);
+                            ResolveComputerNames(_computerNames, out resolvedComputernames);
 
                             foreach (String resolvedComputerName in resolvedComputernames)
                             {
@@ -412,17 +410,17 @@ namespace Microsoft.PowerShell.Commands
 
                 case "Location":
                     {
-                        if (locations == null)
+                        if (_locations == null)
                         {
                             //WriteAll();
-                            jobsToWrite.AddRange(jobs);
+                            jobsToWrite.AddRange(_jobs);
                             checkForRecurse = true;
                         }
                         else
                         {
-                            foreach (Job job in jobs)
+                            foreach (Job job in _jobs)
                             {
-                                foreach (String location in locations)
+                                foreach (String location in _locations)
                                 {
                                     // get the required child Job objects
                                     List<Job> childJobs = job.GetJobsForLocation(location);
@@ -887,7 +885,7 @@ namespace Microsoft.PowerShell.Commands
                 // If it was generated by a job that gave location information, unpack the
                 // base exception.
                 JobFailedException exceptionWithLocation = baseReason as JobFailedException;
-                if(exceptionWithLocation != null)
+                if (exceptionWithLocation != null)
                 {
                     resultReason = exceptionWithLocation.Reason;
                 }
@@ -917,7 +915,7 @@ namespace Microsoft.PowerShell.Commands
         /// <returns>collection with copy of data</returns>
         private Collection<T> ReadAll<T>(PSDataCollection<T> psDataCollection)
         {
-            if (flush)
+            if (_flush)
             {
                 return psDataCollection.ReadAll();
             }
@@ -1103,7 +1101,7 @@ namespace Microsoft.PowerShell.Commands
             _tracer.WriteMessage(ClassNameTrace, "HandleJobStateChanged", Guid.Empty, job,
                                  "END wait for write existing data", null);
 
-            lock(_syncObject)
+            lock (_syncObject)
             {
                 if (!_jobsBeingAggregated.Contains(job))
                 {
@@ -1320,7 +1318,7 @@ namespace Microsoft.PowerShell.Commands
 
         private T GetData<T>(PSDataCollection<T> collection, int index)
         {
-            if (flush)
+            if (_flush)
             {
                 Collection<T> data = collection.ReadAndRemove(1);
                 if (data.Count > 0)
@@ -1380,7 +1378,7 @@ namespace Microsoft.PowerShell.Commands
             if (!_autoRemoveJob) return;
             if (!_jobsSpecifiedInParameters.Contains(job.InstanceId)) return;
             if (!job.IsFinishedState(job.JobStateInfo.State)) return;
-            
+
             // Only finished jobs that were specified by the user on the cmdline
             // (computed in processRecord) should reach this point.
             if (job.HasMoreData)
@@ -1451,7 +1449,7 @@ namespace Microsoft.PowerShell.Commands
         {
             foreach (Job job in jobs)
             {
-                if(JobManager.IsJobFromAdapter(job.InstanceId, "PSWorkflowJob") &&
+                if (JobManager.IsJobFromAdapter(job.InstanceId, "PSWorkflowJob") &&
                     job.JobStateInfo.State == JobState.Stopped)
                 {
                     MshCommandRuntime mshCommandRuntime = CommandRuntime as MshCommandRuntime;
@@ -1461,7 +1459,7 @@ namespace Microsoft.PowerShell.Commands
                     }
                 }
 
-                if (checkForRecurse && recurse)
+                if (checkForRecurse && _recurse)
                 {
                     WriteJobResultsRecursively(job, registerInsteadOfWrite);
                 }
@@ -1525,7 +1523,7 @@ namespace Microsoft.PowerShell.Commands
 
         private void ValidateWait()
         {
-            if (_wait && !flush)
+            if (_wait && !_flush)
             {
                 throw PSTraceSource.NewInvalidOperationException(RemotingErrorIdStrings.BlockCannotBeUsedWithKeep);
             }

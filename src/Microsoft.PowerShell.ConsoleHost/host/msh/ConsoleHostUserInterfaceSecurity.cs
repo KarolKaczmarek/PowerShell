@@ -3,13 +3,9 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
 using System;
-using System.Text;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Security;
 using System.Management.Automation;
 using System.Management.Automation.Internal;
-using System.Threading;
 using Microsoft.Win32;
 using System.Globalization;
 
@@ -41,19 +37,19 @@ namespace Microsoft.PowerShell
         /// 
         /// <returns> PSCredential object</returns>
         ///
-        
+
         public override PSCredential PromptForCredential(
-            string caption,   
+            string caption,
             string message,
             string userName,
-            string targetName )
+            string targetName)
         {
-            return PromptForCredential( caption,
+            return PromptForCredential(caption,
                                          message,
                                          userName,
                                          targetName,
                                          PSCredentialTypes.Default,
-                                         PSCredentialUIOptions.Default );
+                                         PSCredentialUIOptions.Default);
         }
 
         /// <summary>
@@ -73,16 +69,16 @@ namespace Microsoft.PowerShell
         /// 
         /// <returns> PSCredential object, or null if input was cancelled (or if reading from stdin and stdin at EOF)</returns>
         ///
-        
+
         public override PSCredential PromptForCredential(
-            string caption,   
+            string caption,
             string message,
-            string userName, 
+            string userName,
             string targetName,
             PSCredentialTypes allowedCredentialTypes,
-            PSCredentialUIOptions options )
+            PSCredentialUIOptions options)
         {
-            if (! PromptUsingConsole())
+            if (!PromptUsingConsole())
             {
                 IntPtr mainWindowHandle = GetMainWindowHandle();
                 return HostUtilities.CredUIPromptForCredential(caption, message, userName, targetName, allowedCredentialTypes, options, mainWindowHandle);
@@ -156,11 +152,11 @@ namespace Microsoft.PowerShell
 #else
             System.Diagnostics.Process currentProcess = System.Diagnostics.Process.GetCurrentProcess();
             IntPtr mainWindowHandle = currentProcess.MainWindowHandle;
-            
-            while((mainWindowHandle == IntPtr.Zero) && (currentProcess != null))
+
+            while ((mainWindowHandle == IntPtr.Zero) && (currentProcess != null))
             {
                 currentProcess = PsUtils.GetParentProcess(currentProcess);
-                if(currentProcess != null)
+                if (currentProcess != null)
                 {
                     mainWindowHandle = currentProcess.MainWindowHandle;
                 }
@@ -174,58 +170,33 @@ namespace Microsoft.PowerShell
         // APIs
         private bool PromptUsingConsole()
         {
-#if CORECLR  // on Nano there is no other way to prompt except by using console
+#if CORECLR
+            // on Nano there is no other way to prompt except by using console
             return true;
 #else
-            string PolicyKeyName = Utils.GetRegistryConfigurationPrefix();
-            const string PromptValueName = "ConsolePrompting";
             bool promptUsingConsole = false;
-            RegistryKey key;
-
-            // Open the registry key that holds the configuration setting
-            try
-            {
-                key = Registry.LocalMachine.OpenSubKey(PolicyKeyName);
-            }
-            catch (System.Security.SecurityException)
-            {
-                tracer.TraceError("User doesn't have access to read CredUI registry key.");
-                return promptUsingConsole;
-            }
-
-            if (key == null)
-            {
-                return promptUsingConsole;
-            }
-
             // Get the configuration setting
             try
             {
-                object consolePromptingKey = key.GetValue(PromptValueName);
-                if (consolePromptingKey != null) { promptUsingConsole = Convert.ToBoolean(consolePromptingKey.ToString(), CultureInfo.InvariantCulture); }
+                promptUsingConsole = ConfigPropertyAccessor.Instance.GetConsolePrompting();
             }
             catch (System.Security.SecurityException e)
             {
-                tracer.TraceError("Could not read CredUI registry key: " + e.Message);
-                if (key != null) { key.Dispose(); } // No RegistryKey.Close() on CoreCLR
+                s_tracer.TraceError("Could not read CredUI registry key: " + e.Message);
                 return promptUsingConsole;
             }
             catch (InvalidCastException e)
             {
-                tracer.TraceError("Could not parse CredUI registry key: " + e.Message);
-                if (key != null) { key.Dispose(); } // No RegistryKey.Close() on CoreCLR
+                s_tracer.TraceError("Could not parse CredUI registry key: " + e.Message);
                 return promptUsingConsole;
             }
             catch (FormatException e)
             {
-                tracer.TraceError("Could not parse CredUI registry key: " + e.Message);
-                if (key != null) { key.Dispose(); } // No RegistryKey.Close() on CoreCLR
+                s_tracer.TraceError("Could not parse CredUI registry key: " + e.Message);
                 return promptUsingConsole;
             }
 
-            tracer.WriteLine("DetermineCredUIPolicy: policy == {0}", promptUsingConsole);
-
-            if (key != null) { key.Dispose(); } // No RegistryKey.Close() on CoreCLR
+            s_tracer.WriteLine("DetermineCredUIPolicy: policy == {0}", promptUsingConsole);
             return promptUsingConsole;
 #endif
         }

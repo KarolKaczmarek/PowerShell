@@ -1,11 +1,10 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System;
 using System.Management.Automation;
 using System.Collections.ObjectModel;
-using System.Management.Automation.Runspaces;
-using System.Management.Automation.Provider;
 
 
 namespace Microsoft.PowerShell.Commands
@@ -19,30 +18,22 @@ namespace Microsoft.PowerShell.Commands
         /// File parameter set name
         /// </summary>
         protected const string FileParameterSet = "FileSet";
-        string[] appendPath = new string[0];
+
         /// <summary>
         /// Files to append to the existing set
         /// </summary>
-        [Parameter(Position = 0, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true, ParameterSetName = FileParameterSet)]
+        [Parameter(Position = 0, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true,
+            ParameterSetName = FileParameterSet)]
         [Alias("PSPath", "Path")]
         [ValidateNotNull]
-        public string[] AppendPath
-        {
-            set { appendPath = value; }
-            get { return appendPath; }
-        }
+        public string[] AppendPath { set; get; } = Utils.EmptyArray<string>();
 
-        string[] prependPath = new string[0];
         /// <summary>
         /// Files to prepend to the existing set
         /// </summary>
         [Parameter(ParameterSetName = FileParameterSet)]
         [ValidateNotNull]
-        public string[] PrependPath
-        {
-            set { prependPath = value; }
-            get { return prependPath; }
-        }
+        public string[] PrependPath { set; get; } = Utils.EmptyArray<string>();
 
         private static void ReportWrongExtension(string file, string errorId, PSCmdlet cmdlet)
         {
@@ -71,7 +62,7 @@ namespace Microsoft.PowerShell.Commands
         /// <param name="errorId"></param>
         /// <param name="cmdlet"></param>
         /// <returns></returns>
-        internal static Collection<string> Glob(string []files, string errorId, PSCmdlet cmdlet)
+        internal static Collection<string> Glob(string[] files, string errorId, PSCmdlet cmdlet)
         {
             Collection<string> retValue = new Collection<string>();
             foreach (string file in files)
@@ -82,7 +73,7 @@ namespace Microsoft.PowerShell.Commands
                 {
                     providerPaths = cmdlet.SessionState.Path.GetResolvedProviderPathFromPSPath(file, out provider);
                 }
-                catch(SessionStateException e)
+                catch (SessionStateException e)
                 {
                     cmdlet.WriteError(new ErrorRecord(e, errorId, ErrorCategory.InvalidOperation, file));
                     continue;

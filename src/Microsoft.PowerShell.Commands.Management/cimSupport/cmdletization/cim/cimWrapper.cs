@@ -17,7 +17,7 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
     /// <summary>
     /// CIM-specific ObjectModelWrapper
     /// </summary>
-    public sealed class CimCmdletAdapter : 
+    public sealed class CimCmdletAdapter :
         SessionBasedCmdletAdapter<CimInstance, CimSession>,
         IDynamicParameters
     {
@@ -37,7 +37,7 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
         [Parameter]
         [ValidateNotNullOrEmpty]
         [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
-        [Alias("Session")] 
+        [Alias("Session")]
         public CimSession[] CimSession
         {
             get
@@ -58,17 +58,17 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
         {
             get
             {
-                if (this._throttleLimitIsSetExplicitly)
+                if (_throttleLimitIsSetExplicitly)
                 {
                     return base.ThrottleLimit;
                 }
 
                 return this.CmdletDefinitionContext.DefaultThrottleLimit;
             }
-            set 
-            { 
+            set
+            {
                 base.ThrottleLimit = value;
-                this._throttleLimitIsSetExplicitly = true;
+                _throttleLimitIsSetExplicitly = true;
             }
         }
         private bool _throttleLimitIsSetExplicitly;
@@ -90,14 +90,11 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
         {
             get
             {
-                if (_cmdletInvocationContext == null)
-                {
-                    this._cmdletInvocationContext = new CimCmdletInvocationContext(
+                return _cmdletInvocationContext ??
+                    (_cmdletInvocationContext = new CimCmdletInvocationContext(
                         this.CmdletDefinitionContext,
                         this.Cmdlet,
-                        this.GetDynamicNamespace());
-                }
-                return _cmdletInvocationContext;
+                        this.GetDynamicNamespace()));
             }
         }
         private CimCmdletInvocationContext _cmdletInvocationContext;
@@ -108,7 +105,7 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
             {
                 if (_cmdletDefinitionContext == null)
                 {
-                    this._cmdletDefinitionContext = new CimCmdletDefinitionContext(
+                    _cmdletDefinitionContext = new CimCmdletDefinitionContext(
                             this.ClassName,
                             this.ClassVersion,
                             this.ModuleVersion,
@@ -129,7 +126,7 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
 
         #region SessionBasedCmdletAdapter overrides
 
-        private static long _jobNumber;
+        private static long s_jobNumber;
 
         /// <summary>
         /// Returns a new job name to use for the parent job that handles throttling of the child jobs that actually perform querying and method invocation.
@@ -137,7 +134,7 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
         /// <returns>Job name</returns>
         protected override string GenerateParentJobName()
         {
-            return "CimJob" + Interlocked.Increment(ref CimCmdletAdapter._jobNumber).ToString(CultureInfo.InvariantCulture);
+            return "CimJob" + Interlocked.Increment(ref CimCmdletAdapter.s_jobNumber).ToString(CultureInfo.InvariantCulture);
         }
 
         /// <summary>
@@ -211,7 +208,7 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
             }
 
             CimJobContext jobContext = this.CreateJobContext(session, objectInstance);
-            
+
             Dbg.Assert(objectInstance != null, "Caller should verify objectInstance != null");
 
             StartableJob result;
@@ -228,7 +225,7 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
                 result = new ModifyInstanceJob(
                     jobContext,
                     passThru,
-                    objectInstance, 
+                    objectInstance,
                     methodInvocationInfo);
             }
             else
@@ -240,7 +237,7 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
                     methodInvocationInfo);
             }
 
-            return result; 
+            return result;
         }
 
         private bool IsSupportedSession(CimSession cimSession, TerminatingErrorTracker terminatingErrorTracker)
@@ -252,8 +249,8 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
                 if (cimSession.ComputerName != null && (!cimSession.ComputerName.Equals("localhost", StringComparison.OrdinalIgnoreCase)))
                 {
                     PSPropertyInfo protocolProperty = PSObject.AsPSObject(cimSession).Properties["Protocol"];
-                    if ((protocolProperty != null) && 
-                        (protocolProperty.Value != null) && 
+                    if ((protocolProperty != null) &&
+                        (protocolProperty.Value != null) &&
                         (protocolProperty.Value.ToString().Equals("DCOM", StringComparison.OrdinalIgnoreCase)))
                     {
                         bool sessionWasAlreadyTerminated;
@@ -326,19 +323,19 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
                     methodInvocationInfo);
             }
 
-            return result; 
+            return result;
         }
 
         #endregion SessionBasedCmdletAdapter overrides
 
         #region Session affinity management
 
-        private static readonly ConditionalWeakTable<CimInstance, CimSession> cimInstanceToSessionOfOrigin = new ConditionalWeakTable<CimInstance, CimSession>();
+        private static readonly ConditionalWeakTable<CimInstance, CimSession> s_cimInstanceToSessionOfOrigin = new ConditionalWeakTable<CimInstance, CimSession>();
 
         internal static void AssociateSessionOfOriginWithInstance(CimInstance cimInstance, CimSession sessionOfOrigin)
         {
             // GetValue adds value to the table, if the key is not present in the table
-            cimInstanceToSessionOfOrigin.GetValue(cimInstance, _ => sessionOfOrigin);
+            s_cimInstanceToSessionOfOrigin.GetValue(cimInstance, _ => sessionOfOrigin);
         }
 
         internal static CimSession GetSessionOfOriginFromCimInstance(CimInstance instance)
@@ -346,7 +343,7 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
             CimSession result = null;
             if (instance != null)
             {
-                cimInstanceToSessionOfOrigin.TryGetValue(instance, out result);
+                s_cimInstanceToSessionOfOrigin.TryGetValue(instance, out result);
             }
             return result;
         }
@@ -392,7 +389,7 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
                     namespaceAttributes.Add(new ParameterAttribute());
                     RuntimeDefinedParameter namespaceRuntimeParameter = new RuntimeDefinedParameter(
                         CimNamespaceParameter,
-                        typeof (string),
+                        typeof(string),
                         namespaceAttributes);
                     _dynamicParameters.Add(CimNamespaceParameter, namespaceRuntimeParameter);
                 }
@@ -402,6 +399,5 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
         }
 
         #endregion
-
     }
 }

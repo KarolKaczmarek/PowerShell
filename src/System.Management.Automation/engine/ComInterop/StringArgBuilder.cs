@@ -8,31 +8,31 @@ using System.Linq.Expressions;
 #else
 using Microsoft.Scripting.Ast;
 #endif
-
-using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 
-namespace System.Management.Automation.ComInterop {
-
-    internal class StringArgBuilder : SimpleArgBuilder {
+namespace System.Management.Automation.ComInterop
+{
+    internal class StringArgBuilder : SimpleArgBuilder
+    {
         private readonly bool _isWrapper;
 
         internal StringArgBuilder(Type parameterType)
-            : base(parameterType) {
-
+            : base(parameterType)
+        {
             Debug.Assert(parameterType == typeof(string) ||
                         parameterType == typeof(BStrWrapper));
 
             _isWrapper = parameterType == typeof(BStrWrapper);
         }
 
-        internal override Expression Marshal(Expression parameter) {
+        internal override Expression Marshal(Expression parameter)
+        {
             parameter = base.Marshal(parameter);
 
             // parameter.WrappedObject
-            if (_isWrapper) {
+            if (_isWrapper)
+            {
                 parameter = Expression.Property(
                     Helpers.Convert(parameter, typeof(BStrWrapper)),
                     typeof(BStrWrapper).GetProperty("WrappedObject")
@@ -42,7 +42,8 @@ namespace System.Management.Automation.ComInterop {
             return parameter;
         }
 
-        internal override Expression MarshalToRef(Expression parameter) {
+        internal override Expression MarshalToRef(Expression parameter)
+        {
             parameter = Marshal(parameter);
 
 
@@ -53,7 +54,8 @@ namespace System.Management.Automation.ComInterop {
             );
         }
 
-        internal override Expression UnmarshalFromRef(Expression value) {
+        internal override Expression UnmarshalFromRef(Expression value)
+        {
             // value == IntPtr.Zero ? null : Marshal.PtrToStringBSTR(value);
             Expression unmarshal = Expression.Condition(
                 Expression.Equal(value, Expression.Constant(IntPtr.Zero)),
@@ -64,7 +66,8 @@ namespace System.Management.Automation.ComInterop {
                 )
             );
 
-            if (_isWrapper) {
+            if (_isWrapper)
+            {
                 unmarshal = Expression.New(
                     typeof(BStrWrapper).GetConstructor(new Type[] { typeof(string) }),
                     unmarshal

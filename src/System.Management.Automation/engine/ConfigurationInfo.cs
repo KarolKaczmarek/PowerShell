@@ -1,10 +1,6 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
-using System.Management.Automation;
-using System.Text;
-
 
 namespace System.Management.Automation
 {
@@ -37,7 +33,7 @@ namespace System.Management.Automation
         /// 
         internal ConfigurationInfo(string name, ScriptBlock configuration, ExecutionContext context) : this(name, configuration, context, null)
         {
-        } 
+        }
 
         /// <summary>
         /// Creates an instance of the ConfigurationInfo class with the specified name and ScriptBlock
@@ -67,7 +63,7 @@ namespace System.Management.Automation
             : base(name, configuration, context, helpFile)
         {
             SetCommandType(CommandTypes.Configuration);
-        } 
+        }
 
         /// <summary>
         /// Creates an instance of the ConfigurationInfo class with the specified name and ScriptBlock
@@ -132,7 +128,7 @@ namespace System.Management.Automation
         {
             SetCommandType(CommandTypes.Configuration);
             IsMetaConfiguration = isMetaConfig;
-        } 
+        }
 
         /// <summary>
         /// Creates an instance of the ConfigurationInfo class with the specified name and ScriptBlock
@@ -165,7 +161,7 @@ namespace System.Management.Automation
         internal ConfigurationInfo(string name, ScriptBlock configuration, ScopedItemOptions options, ExecutionContext context, string helpFile)
             : this(name, configuration, options, context, helpFile, false)
         {
-        } 
+        }
 
         /// <summary>
         /// This is a copy constructor, used primarily for get-command.
@@ -197,7 +193,7 @@ namespace System.Management.Automation
 
         internal override HelpCategory HelpCategory
         {
-            get { return HelpCategory.Configuration;  }
+            get { return HelpCategory.Configuration; }
         }
 
         /// <summary>
@@ -205,5 +201,5 @@ namespace System.Management.Automation
         /// </summary>
         public bool IsMetaConfiguration
         { get; internal set; }
-    } 
-} 
+    }
+}

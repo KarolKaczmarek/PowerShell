@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System.Collections;
 using System.Collections.Generic;
 using System.Management.Automation.Internal;
@@ -19,7 +20,7 @@ namespace System.Management.Automation
     /// The real information for alias is stored in command help. To retrieve the real 
     /// help information, help forwarding is needed. 
     /// </remarks>
-    internal class AliasHelpProvider: HelpProvider
+    internal class AliasHelpProvider : HelpProvider
     {
         /// <summary>
         /// Initializes a new instance of AliasHelpProvider class.
@@ -59,7 +60,7 @@ namespace System.Management.Automation
         /// Name of alias help provider
         /// </summary>
         /// <value>Name of alias help provider</value>
-        override internal string Name
+        internal override string Name
         {
             get
             {
@@ -71,7 +72,7 @@ namespace System.Management.Automation
         /// Help category of alias help provider, which is a constant: HelpCategory.Alias. 
         /// </summary>
         /// <value>Help category of alias help provider.</value>
-        override internal HelpCategory HelpCategory
+        internal override HelpCategory HelpCategory
         {
             get
             {
@@ -93,13 +94,13 @@ namespace System.Management.Automation
         /// </remarks>
         /// <param name="helpRequest">help request object</param> 
         /// <returns>help info found</returns>
-        override internal IEnumerable<HelpInfo> ExactMatchHelp(HelpRequest helpRequest)
+        internal override IEnumerable<HelpInfo> ExactMatchHelp(HelpRequest helpRequest)
         {
             CommandInfo commandInfo = null;
 
             try
             {
-                commandInfo = this._commandDiscovery.LookupCommandInfo(helpRequest.Target);
+                commandInfo = _commandDiscovery.LookupCommandInfo(helpRequest.Target);
             }
             catch (CommandNotFoundException)
             {
@@ -135,7 +136,7 @@ namespace System.Management.Automation
         /// If false, seraches for pattern in the command names.
         /// </param> 
         /// <returns>a IEnumerable of helpinfo object</returns>
-        override internal IEnumerable<HelpInfo> SearchHelp(HelpRequest helpRequest, bool searchOnlyContent)
+        internal override IEnumerable<HelpInfo> SearchHelp(HelpRequest helpRequest, bool searchOnlyContent)
         {
             // aliases do not have help content...so doing nothing in that case
             if (!searchOnlyContent)
@@ -257,7 +258,7 @@ namespace System.Management.Automation
             }
         }
 
-        static private bool Match(HelpInfo helpInfo, HelpRequest helpRequest)
+        private static bool Match(HelpInfo helpInfo, HelpRequest helpRequest)
         {
             if (helpRequest == null)
                 return true;
@@ -265,7 +266,7 @@ namespace System.Management.Automation
             if (0 == (helpRequest.HelpCategory & helpInfo.HelpCategory))
             {
                 return false;
-            }           
+            }
 
             if (!Match(helpInfo.Component, helpRequest.Component))
             {
@@ -285,7 +286,7 @@ namespace System.Management.Automation
             return true;
         }
 
-        static private bool Match(string target, string[] patterns)
+        private static bool Match(string target, string[] patterns)
         {
             // patterns should never be null as shell never accepts
             // empty inputs. Keeping this check as a safe measure.
@@ -305,7 +306,7 @@ namespace System.Management.Automation
             return false;
         }
 
-        static private bool Match(string target, string pattern)
+        private static bool Match(string target, string pattern)
         {
             if (String.IsNullOrEmpty(pattern))
                 return true;

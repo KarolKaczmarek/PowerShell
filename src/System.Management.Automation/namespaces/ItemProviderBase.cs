@@ -2,7 +2,6 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
 using System.Management.Automation.Internal;
 
 namespace System.Management.Automation.Provider
@@ -144,8 +143,8 @@ namespace System.Management.Automation.Provider
         /// </returns>
         /// 
         internal object SetItemDynamicParameters(
-            string path, 
-            object value, 
+            string path,
+            object value,
             CmdletProviderContext context)
         {
             Context = context;
@@ -202,14 +201,14 @@ namespace System.Management.Automation.Provider
         /// </returns>
         /// 
         internal object ClearItemDynamicParameters(
-            string path, 
+            string path,
             CmdletProviderContext context)
         {
             Context = context;
             return ClearItemDynamicParameters(path);
         } // ClearItemDynamicParameters
-        
-        
+
+
         /// <summary>
         /// Internal wrapper for the InvokeDefaultAction protected method. It is called instead
         /// of the protected method that is overridden by derived classes so that the
@@ -236,7 +235,7 @@ namespace System.Management.Automation.Provider
 
             InvokeDefaultAction(path);
         } // InvokeDefaultAction
-        
+
         /// <summary>
         /// Gives the provider to attach additional parameters to
         /// the invoke-item cmdlet.
@@ -260,7 +259,7 @@ namespace System.Management.Automation.Provider
         /// </returns>
         /// 
         internal object InvokeDefaultActionDynamicParameters(
-            string path, 
+            string path,
             CmdletProviderContext context)
         {
             Context = context;
@@ -285,7 +284,7 @@ namespace System.Management.Automation.Provider
         /// True if the item exists, false otherwise.
         /// </returns>
         /// 
-        internal bool ItemExists (string path, CmdletProviderContext context)
+        internal bool ItemExists(string path, CmdletProviderContext context)
         {
             Context = context;
 
@@ -296,7 +295,7 @@ namespace System.Management.Automation.Provider
             {
                 // Some providers don't expect non-valid path elements, and instead
                 // throw an exception here.
-                itemExists = ItemExists (path);
+                itemExists = ItemExists(path);
             }
             catch (Exception e)
             {
@@ -329,12 +328,12 @@ namespace System.Management.Automation.Provider
         /// The default implemenation returns null. (no additional parameters)
         /// </returns>
         /// 
-        internal object ItemExistsDynamicParameters (
+        internal object ItemExistsDynamicParameters(
             string path,
             CmdletProviderContext context)
         {
             Context = context;
-            return ItemExistsDynamicParameters (path);
+            return ItemExistsDynamicParameters(path);
         } // ItemExistsDynamicParameters
 
         /// <summary>
@@ -363,13 +362,13 @@ namespace System.Management.Automation.Provider
         /// and ensure that the path does not refer to a device.
         /// </remarks>
         /// 
-        internal bool IsValidPath (string path, CmdletProviderContext context)
+        internal bool IsValidPath(string path, CmdletProviderContext context)
         {
             Context = context;
 
             // Call virtual method
 
-            return IsValidPath (path);
+            return IsValidPath(path);
         } // IsValidPath
 
         /// <summary>
@@ -627,7 +626,7 @@ namespace System.Management.Automation.Provider
         /// the path represents an item that is hidden from the user and Force is set to false.
         /// </remarks>     
         protected virtual void InvokeDefaultAction(
-            string path) 
+            string path)
         {
             using (PSTransactionManager.GetEngineProtectionScope())
             {
@@ -774,10 +773,8 @@ namespace System.Management.Automation.Provider
         } // IsValidPath
 
         #endregion Protected methods
-
     } // ItemCmdletProvider
 
     #endregion ItemCmdletProvider
-        
 } // namespace System.Management.Automation
 

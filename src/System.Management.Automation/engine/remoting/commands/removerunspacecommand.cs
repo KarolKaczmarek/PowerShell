@@ -3,14 +3,12 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
 using System;
-using System.Threading;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Management.Automation;
 using System.Management.Automation.Remoting;
- 
+
 using System.Management.Automation.Runspaces;
-using System.Management.Automation.Host;
 using System.Diagnostics.CodeAnalysis;
 
 using Dbg = System.Management.Automation.Diagnostics;
@@ -47,20 +45,9 @@ namespace Microsoft.PowerShell.Commands
                    Position = 0,
                    ValueFromPipeline = true,
                    ValueFromPipelineByPropertyName = true,
-                   ParameterSetName=RemovePSSessionCommand.SessionParameterSet)]
-        [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]           
-        public PSSession[] Session
-        {
-            get
-            {
-                return remoteRunspaceInfos;
-            }
-            set
-            {
-                remoteRunspaceInfos = value;
-            }
-        }
-        private PSSession[] remoteRunspaceInfos;
+                   ParameterSetName = RemovePSSessionCommand.SessionParameterSet)]
+        [SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays")]
+        public PSSession[] Session { get; set; }
 
         /// <summary>
         /// ID of target container.
@@ -71,12 +58,7 @@ namespace Microsoft.PowerShell.Commands
                    ValueFromPipelineByPropertyName = true,
                    ParameterSetName = PSRunspaceCmdlet.ContainerIdParameterSet)]
         [ValidateNotNullOrEmpty]
-        public override string[] ContainerId
-        {
-            get { return containerId; }
-            set { containerId = value; }
-        }
-        private string[] containerId;
+        public override string[] ContainerId { get; set; }
 
         /// <summary>
         /// Guid of target virtual machine.
@@ -88,12 +70,7 @@ namespace Microsoft.PowerShell.Commands
                    ParameterSetName = PSRunspaceCmdlet.VMIdParameterSet)]
         [ValidateNotNullOrEmpty]
         [Alias("VMGuid")]
-        public override Guid[] VMId
-        {
-            get { return vmId; }
-            set { vmId = value; }
-        }
-        private Guid[] vmId;
+        public override Guid[] VMId { get; set; }
 
         /// <summary>
         /// Name of target virtual machine.
@@ -104,12 +81,7 @@ namespace Microsoft.PowerShell.Commands
                    ValueFromPipelineByPropertyName = true,
                    ParameterSetName = PSRunspaceCmdlet.VMNameParameterSet)]
         [ValidateNotNullOrEmpty]
-        public override string[] VMName
-        {
-            get { return vmName; }
-            set { vmName = value; }
-        }
-        private string[] vmName;
+        public override string[] VMName { get; set; }
 
         #endregion Parameters
 
@@ -143,7 +115,7 @@ namespace Microsoft.PowerShell.Commands
                     break;
                 case RemovePSSessionCommand.SessionParameterSet:
                     {
-                        toRemove = remoteRunspaceInfos;
+                        toRemove = Session;
                     }
                     break;
                 default:
@@ -185,7 +157,7 @@ namespace Microsoft.PowerShell.Commands
                             string msg = System.Management.Automation.Internal.StringUtil.Format(
                                 RemotingErrorIdStrings.RemoveRunspaceNotConnected, remoteRunspace.PSSessionName);
                             Exception reason = new RuntimeException(msg);
-                            ErrorRecord errorRecord = new ErrorRecord(reason, "RemoveSessionCannotConnectToServer", 
+                            ErrorRecord errorRecord = new ErrorRecord(reason, "RemoveSessionCannotConnectToServer",
                                 ErrorCategory.InvalidOperation, remoteRunspace);
                             WriteError(errorRecord);
 

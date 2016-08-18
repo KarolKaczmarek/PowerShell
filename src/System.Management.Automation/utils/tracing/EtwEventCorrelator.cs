@@ -1,6 +1,5 @@
 #if !UNIX
 //-----------------------------------------------------------------------
-// <copyright file="EtwEventCorrelator.cs" company="Microsoft">
 //     Copyright (c) Microsoft Corporation.  All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
@@ -8,7 +7,6 @@
 namespace System.Management.Automation.Tracing
 {
     using System;
-    using System.Diagnostics;
     using System.Diagnostics.Eventing;
 
     /// <summary>

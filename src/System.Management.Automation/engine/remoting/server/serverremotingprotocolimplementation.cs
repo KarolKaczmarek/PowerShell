@@ -2,17 +2,12 @@
  * Copyright (c) Microsoft Corporation.  All rights reserved.
  * --********************************************************************/
 
-using System.Security;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Management.Automation;
-using System.Management.Automation.Internal;
 using System.Management.Automation.Remoting.Server;
 
 using Dbg = System.Management.Automation.Diagnostics;
 
 namespace System.Management.Automation.Remoting
-{    
+{
     /// <summary>
     /// This class is an implementation of the abstract class ServerRemoteSessionDataStructureHandler.
     /// </summary>
@@ -70,10 +65,10 @@ namespace System.Management.Automation.Remoting
         internal override void SendNegotiationAsync()
         {
             RemoteSessionCapability serverCapability = _session.Context.ServerCapability;
-            RemoteDataObject data = RemotingEncoder.GenerateServerSessionCapability(serverCapability, 
+            RemoteDataObject data = RemotingEncoder.GenerateServerSessionCapability(serverCapability,
                 Guid.Empty);
 
-            RemoteSessionStateMachineEventArgs negotiationSendCompletedArg = 
+            RemoteSessionStateMachineEventArgs negotiationSendCompletedArg =
                 new RemoteSessionStateMachineEventArgs(RemoteSessionEvent.NegotiationSendCompleted);
             _stateMachine.RaiseEvent(negotiationSendCompletedArg);
 
@@ -88,7 +83,7 @@ namespace System.Management.Automation.Remoting
         /// This event indicates that the client capability negotiation packet has been received.
         /// </summary>
         internal override event EventHandler<RemoteSessionNegotiationEventArgs> NegotiationReceived;
-        
+
         /// <summary>
         /// Event that raised when session datastructure handler is closing.
         /// </summary>
@@ -101,8 +96,8 @@ namespace System.Management.Automation.Remoting
         /// </summary>
         /// <param name="encryptedSessionKey">encrypted session key
         /// as a string</param>
-        internal override void  SendEncryptedSessionKey(string encryptedSessionKey)
-        { 	    
+        internal override void SendEncryptedSessionKey(string encryptedSessionKey)
+        {
             _transportManager.SendDataToClient<object>(RemotingEncoder.GenerateEncryptedSessionKeyResponse(
                 Guid.Empty, encryptedSessionKey), true);
         }
@@ -114,7 +109,6 @@ namespace System.Management.Automation.Remoting
         {
             _transportManager.SendDataToClient<object>(
                 RemotingEncoder.GeneratePublicKeyRequest(Guid.Empty), true);
-                
         }
 
         /// <summary>
@@ -241,13 +235,10 @@ namespace System.Management.Automation.Remoting
 
                 default:
                     throw new PSRemotingDataStructureException(RemotingErrorIdStrings.ReceivedUnsupportedAction, dataType);
-            
-            }              
+            }
         }
 
         #endregion Overrides
-
     }
-
 }
 

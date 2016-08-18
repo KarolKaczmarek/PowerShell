@@ -5,7 +5,6 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Management.Automation.Internal;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace System.Management.Automation
@@ -32,7 +31,7 @@ namespace System.Management.Automation
         internal NativeCommandParameterBinder(
             NativeCommand command) : base(command.MyInvocation, command.Context, command)
         {
-            this.nativeCommand = command;
+            _nativeCommand = command;
         }
         #endregion ctor
 
@@ -73,18 +72,18 @@ namespace System.Management.Automation
             {
                 if (!first)
                 {
-                    arguments.Append(' ');
+                    _arguments.Append(' ');
                 }
                 first = false;
 
                 if (parameter.ParameterNameSpecified)
                 {
                     Diagnostics.Assert(parameter.ParameterText.IndexOf(' ') == -1, "Parameters cannot have whitespace");
-                    arguments.Append(parameter.ParameterText);
+                    _arguments.Append(parameter.ParameterText);
 
                     if (parameter.SpaceAfterParameter)
                     {
-                        arguments.Append(' ');
+                        _arguments.Append(' ');
                     }
                 }
 
@@ -124,11 +123,11 @@ namespace System.Management.Automation
         {
             get
             {
-                return arguments.ToString();
+                return _arguments.ToString();
             }
         } // Arguments
-        private readonly StringBuilder arguments = new StringBuilder();
-        
+        private readonly StringBuilder _arguments = new StringBuilder();
+
         #endregion internal members
 
         #region private members
@@ -167,7 +166,7 @@ namespace System.Management.Automation
                 {
                     if (needSeparator)
                     {
-                        arguments.Append(separator);
+                        _arguments.Append(separator);
                     }
                     else
                     {
@@ -177,7 +176,7 @@ namespace System.Management.Automation
                     if (sawVerbatimArgumentMarker)
                     {
                         arg = Environment.ExpandEnvironmentVariables(arg);
-                        arguments.Append(arg);
+                        _arguments.Append(arg);
                     }
                     else
                     {
@@ -211,13 +210,13 @@ namespace System.Management.Automation
 
                         if (needQuotes)
                         {
-                            arguments.Append('"');
-                            arguments.Append(arg);
-                            arguments.Append('"');
+                            _arguments.Append('"');
+                            _arguments.Append(arg);
+                            _arguments.Append('"');
                         }
                         else
                         {
-                            arguments.Append(arg);
+                            _arguments.Append(arg);
                         }
                     }
                 }
@@ -227,8 +226,7 @@ namespace System.Management.Automation
         /// <summary>
         /// The native command to bind to
         /// </summary>
-        private NativeCommand nativeCommand;
+        private NativeCommand _nativeCommand;
         #endregion private members
     }
-
 } // namespace System.Management.Automation

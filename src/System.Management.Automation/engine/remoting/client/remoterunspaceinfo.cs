@@ -10,18 +10,18 @@ namespace System.Management.Automation.Runspaces
     /// <summary>
     /// Computer target type
     /// </summary>
-    public enum TargetMachineType 
-    { 
+    public enum TargetMachineType
+    {
         /// <summary>
         /// Target is a machine with which the session is based on networking
         /// </summary>
-        RemoteMachine, 
-    
+        RemoteMachine,
+
         /// <summary>
         /// Target is a virtual machine with which the session is based on Hyper-V socket
         /// </summary>
-        VirtualMachine, 
-    
+        VirtualMachine,
+
         /// <summary>
         /// Target is a container with which the session is based on Hyper-V socket (Hyper-V
         /// container) or named pipe (windows container)
@@ -43,17 +43,12 @@ namespace System.Management.Automation.Runspaces
     {
         #region Private Members
 
-        private RemoteRunspace remoteRunspace;
-        private String shell;
-        private TargetMachineType computerType;
+        private RemoteRunspace _remoteRunspace;
 
         /// <summary>
         /// Static variable which is incremented to generate id
         /// </summary>
-        private static int seed = 0;
-
-        private int sessionid;
-        private String name;
+        private static int s_seed = 0;
 
         #endregion Private Members
 
@@ -62,17 +57,7 @@ namespace System.Management.Automation.Runspaces
         /// <summary>
         /// Type of the computer target
         /// </summary>
-        public TargetMachineType ComputerType
-        {
-            get
-            {
-                return computerType;
-            }
-            set
-            {
-                computerType = value;
-            }
-        }
+        public TargetMachineType ComputerType { get; set; }
 
         /// <summary>
         /// Name of the computer target
@@ -81,7 +66,7 @@ namespace System.Management.Automation.Runspaces
         {
             get
             {
-                return remoteRunspace.ConnectionInfo.ComputerName;
+                return _remoteRunspace.ConnectionInfo.ComputerName;
             }
         }
 
@@ -94,7 +79,7 @@ namespace System.Management.Automation.Runspaces
             {
                 if (ComputerType == TargetMachineType.Container)
                 {
-                    ContainerConnectionInfo connectionInfo = remoteRunspace.ConnectionInfo as ContainerConnectionInfo;
+                    ContainerConnectionInfo connectionInfo = _remoteRunspace.ConnectionInfo as ContainerConnectionInfo;
                     return connectionInfo.ContainerProc.ContainerId;
                 }
                 else
@@ -113,7 +98,7 @@ namespace System.Management.Automation.Runspaces
             {
                 if (ComputerType == TargetMachineType.VirtualMachine)
                 {
-                    return remoteRunspace.ConnectionInfo.ComputerName;
+                    return _remoteRunspace.ConnectionInfo.ComputerName;
                 }
                 else
                 {
@@ -131,7 +116,7 @@ namespace System.Management.Automation.Runspaces
             {
                 if (ComputerType == TargetMachineType.VirtualMachine)
                 {
-                    VMConnectionInfo connectionInfo = remoteRunspace.ConnectionInfo as VMConnectionInfo;
+                    VMConnectionInfo connectionInfo = _remoteRunspace.ConnectionInfo as VMConnectionInfo;
                     return connectionInfo.VMGuid;
                 }
                 else
@@ -144,13 +129,7 @@ namespace System.Management.Automation.Runspaces
         /// <summary>
         /// Shell which is executed in the remote machine
         /// </summary>
-        public String ConfigurationName
-        {
-            get
-            {
-                return shell;
-            }
-        }
+        public String ConfigurationName { get; }
 
         /// <summary>
         /// InstanceID that identifies this runspace
@@ -159,7 +138,7 @@ namespace System.Management.Automation.Runspaces
         {
             get
             {
-                return remoteRunspace.InstanceId;
+                return _remoteRunspace.InstanceId;
             }
         }
 
@@ -167,30 +146,13 @@ namespace System.Management.Automation.Runspaces
         /// SessionId of this runspace. This is unique only across 
         /// a session 
         /// </summary>
-        public int Id
-        {
-            get
-            {
-                return sessionid;
-            }
-        }
+        public int Id { get; }
 
         /// <summary>
         /// Friendly name for identifying this runspace
         /// </summary>
-        public String Name
-        {
-            get
-            {
-                return name;
-            }
+        public String Name { get; set; }
 
-            set
-            {
-                name = value;
-            }
-        }
-                      
         /// <summary>
         /// Indicates whether the specified runspace is available
         /// for executing commands
@@ -210,8 +172,8 @@ namespace System.Management.Automation.Runspaces
         public PSPrimitiveDictionary ApplicationPrivateData
         {
             get
-            { 
-                return this.Runspace.GetApplicationPrivateData(); 
+            {
+                return this.Runspace.GetApplicationPrivateData();
             }
         }
 
@@ -226,7 +188,7 @@ namespace System.Management.Automation.Runspaces
         {
             get
             {
-                return remoteRunspace;
+                return _remoteRunspace;
             }
         }
 
@@ -260,12 +222,12 @@ namespace System.Management.Automation.Runspaces
         internal bool InsertRunspace(RemoteRunspace remoteRunspace)
         {
             if (remoteRunspace == null ||
-                remoteRunspace.InstanceId != this.remoteRunspace.InstanceId)
+                remoteRunspace.InstanceId != _remoteRunspace.InstanceId)
             {
                 return false;
             }
 
-            this.remoteRunspace = remoteRunspace;
+            _remoteRunspace = remoteRunspace;
             return true;
         }
 
@@ -281,40 +243,40 @@ namespace System.Management.Automation.Runspaces
         /// the info object need to be created</param>
         internal PSSession(RemoteRunspace remoteRunspace)
         {
-            this.remoteRunspace = remoteRunspace;
+            _remoteRunspace = remoteRunspace;
 
             // Use passed in session Id, if available.
             if (remoteRunspace.PSSessionId != -1)
             {
-                sessionid = remoteRunspace.PSSessionId;
+                Id = remoteRunspace.PSSessionId;
             }
             else
             {
-                sessionid = System.Threading.Interlocked.Increment(ref seed);
-                remoteRunspace.PSSessionId = sessionid;
+                Id = System.Threading.Interlocked.Increment(ref s_seed);
+                remoteRunspace.PSSessionId = Id;
             }
 
             // Use passed in friendly name, if available.
             if (!string.IsNullOrEmpty(remoteRunspace.PSSessionName))
             {
-                name = remoteRunspace.PSSessionName;
+                Name = remoteRunspace.PSSessionName;
             }
             else
             {
-                name = AutoGenerateRunspaceName();
-                remoteRunspace.PSSessionName = name;
+                Name = AutoGenerateRunspaceName(Id);
+                remoteRunspace.PSSessionName = Name;
             }
 
             // WSMan session
             if (remoteRunspace.ConnectionInfo is WSManConnectionInfo)
             {
-                computerType = TargetMachineType.RemoteMachine;
+                ComputerType = TargetMachineType.RemoteMachine;
 
                 string fullShellName = WSManConnectionInfo.ExtractPropertyAsWsManConnectionInfo<string>(
                     remoteRunspace.ConnectionInfo,
                     "ShellUri", string.Empty);
-                
-                shell = GetDisplayShellName(fullShellName);
+
+                ConfigurationName = GetDisplayShellName(fullShellName);
                 return;
             }
 
@@ -322,8 +284,8 @@ namespace System.Management.Automation.Runspaces
             VMConnectionInfo vmConnectionInfo = remoteRunspace.ConnectionInfo as VMConnectionInfo;
             if (vmConnectionInfo != null)
             {
-                computerType = TargetMachineType.VirtualMachine;
-                shell = vmConnectionInfo.ConfigurationName;
+                ComputerType = TargetMachineType.VirtualMachine;
+                ConfigurationName = vmConnectionInfo.ConfigurationName;
                 return;
             }
 
@@ -331,8 +293,17 @@ namespace System.Management.Automation.Runspaces
             ContainerConnectionInfo containerConnectionInfo = remoteRunspace.ConnectionInfo as ContainerConnectionInfo;
             if (containerConnectionInfo != null)
             {
-                computerType = TargetMachineType.Container;
-                shell = containerConnectionInfo.ContainerProc.ConfigurationName;
+                ComputerType = TargetMachineType.Container;
+                ConfigurationName = containerConnectionInfo.ContainerProc.ConfigurationName;
+                return;
+            }
+
+            // SSH session
+            SSHConnectionInfo sshConnectionInfo = remoteRunspace.ConnectionInfo as SSHConnectionInfo;
+            if (sshConnectionInfo != null)
+            {
+                ComputerType = TargetMachineType.RemoteMachine;
+                ConfigurationName = "DefaultShell";
                 return;
             }
 
@@ -348,9 +319,35 @@ namespace System.Management.Automation.Runspaces
         /// Generates and returns the runspace name
         /// </summary>
         /// <returns>auto generated name</returns>
-        private String AutoGenerateRunspaceName()
+        private string AutoGenerateRunspaceName(int id)
         {
-            return "Session" + sessionid.ToString(System.Globalization.NumberFormatInfo.InvariantInfo);
+            string sessionIdStr = id.ToString(System.Globalization.NumberFormatInfo.InvariantInfo);
+
+            if (_remoteRunspace.ConnectionInfo is WSManConnectionInfo)
+            {
+                return "WinRM" + sessionIdStr;
+            }
+            else if (_remoteRunspace.ConnectionInfo is SSHConnectionInfo)
+            {
+                return "SSH" + sessionIdStr;
+            }
+            else if ((_remoteRunspace.ConnectionInfo is NamedPipeConnectionInfo) ||
+                     (_remoteRunspace.ConnectionInfo is ContainerConnectionInfo))
+            {
+                return "NamedPipe" + sessionIdStr;
+            }
+            else if (_remoteRunspace.ConnectionInfo is NewProcessConnectionInfo)
+            {
+                return "Process" + sessionIdStr;
+            }
+            else if (_remoteRunspace.ConnectionInfo is VMConnectionInfo)
+            {
+                return "Socket" + sessionIdStr;
+            }
+            else
+            {
+                return "Session" + sessionIdStr;
+            }
         }
 
         /// <summary>
@@ -377,7 +374,7 @@ namespace System.Management.Automation.Runspaces
         /// <returns>Returned name</returns>
         internal static String GenerateRunspaceName(out int rtnId)
         {
-            int id = System.Threading.Interlocked.Increment(ref seed);
+            int id = System.Threading.Interlocked.Increment(ref s_seed);
             rtnId = id;
             return ComposeRunspaceName(id);
         }
@@ -388,7 +385,7 @@ namespace System.Management.Automation.Runspaces
         /// <returns>Id</returns>
         internal static int GenerateRunspaceId()
         {
-            return System.Threading.Interlocked.Increment(ref seed);
+            return System.Threading.Interlocked.Increment(ref s_seed);
         }
 
         /// <summary>
@@ -398,7 +395,7 @@ namespace System.Management.Automation.Runspaces
         /// <returns>Runspace name</returns>
         internal static string ComposeRunspaceName(int id)
         {
-            return "Session" + id.ToString(System.Globalization.NumberFormatInfo.InvariantInfo);
+            return "WinRM" + id.ToString(System.Globalization.NumberFormatInfo.InvariantInfo);
         }
 
         #endregion

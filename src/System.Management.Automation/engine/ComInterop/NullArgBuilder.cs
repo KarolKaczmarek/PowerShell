@@ -9,18 +9,17 @@ using System.Linq.Expressions;
 using Microsoft.Scripting.Ast;
 #endif
 
-using System;
-using System.Diagnostics;
-
-namespace System.Management.Automation.ComInterop {
-
+namespace System.Management.Automation.ComInterop
+{
     /// <summary>
     /// ArgBuilder which always produces null.  
     /// </summary>
-    internal sealed class NullArgBuilder : ArgBuilder {
+    internal sealed class NullArgBuilder : ArgBuilder
+    {
         internal NullArgBuilder() { }
 
-        internal override Expression Marshal(Expression parameter) {
+        internal override Expression Marshal(Expression parameter)
+        {
             return Expression.Constant(null);
         }
     }

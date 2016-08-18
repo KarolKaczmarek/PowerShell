@@ -38,14 +38,14 @@ namespace System.Management.Automation
         /// that is derived from ISecurityDescriptorCmdletProvider.
         /// </throws>
         /// 
-        static internal ISecurityDescriptorCmdletProvider GetPermissionProviderInstance(CmdletProvider providerInstance)
+        internal static ISecurityDescriptorCmdletProvider GetPermissionProviderInstance(CmdletProvider providerInstance)
         {
             if (providerInstance == null)
             {
                 throw PSTraceSource.NewArgumentNullException("providerInstance");
             }
 
-            ISecurityDescriptorCmdletProvider permissionCmdletProvider = 
+            ISecurityDescriptorCmdletProvider permissionCmdletProvider =
                 providerInstance as ISecurityDescriptorCmdletProvider;
 
             if (permissionCmdletProvider == null)
@@ -61,7 +61,7 @@ namespace System.Management.Automation
         #endregion private methods
 
         #region GetSecurityDescriptor
-        
+
 
         /// <summary>
         /// Gets the security descriptor from the specified item.
@@ -93,12 +93,7 @@ namespace System.Management.Automation
 
             context.ThrowFirstErrorOrDoNothing();
 
-            Collection<PSObject> contextResults = context.GetAccumulatedObjects();
-            
-            if (contextResults == null)
-            {
-                contextResults = new Collection<PSObject>();
-            }
+            Collection<PSObject> contextResults = context.GetAccumulatedObjects() ?? new Collection<PSObject>();
 
             return contextResults;
         } // GetSecurityDescriptor
@@ -142,7 +137,7 @@ namespace System.Management.Automation
             ProviderInfo provider = null;
 
             CmdletProvider providerInstance = null;
-            Collection<string> providerPaths = 
+            Collection<string> providerPaths =
                 Globber.GetGlobbedProviderPathsFromMonadPath(
                     path,
                     false,
@@ -198,14 +193,13 @@ namespace System.Management.Automation
             catch (Exception e) // Catch-all OK, 3rd party callout.
             {
                 CommandProcessorBase.CheckForSevereException(e);
-                throw NewProviderInvocationException (
+                throw NewProviderInvocationException(
                     "GetSecurityDescriptorProviderException",
                     SessionStateStrings.GetSecurityDescriptorProviderException,
                     providerInstance.ProviderInfo,
                     path,
                     e);
             }
-
         } // GetSecurityDescriptor
 
         #endregion GetSecurityDescriptor
@@ -245,15 +239,9 @@ namespace System.Management.Automation
             SetSecurityDescriptor(path, securityDescriptor, context);
 
             context.ThrowFirstErrorOrDoNothing();
-            
-            Collection<PSObject> contextResults = context.GetAccumulatedObjects();
 
             // Return an empty array instead of null
-
-            if (contextResults == null)
-            {
-                contextResults = new Collection<PSObject>();
-            }
+            Collection<PSObject> contextResults = context.GetAccumulatedObjects() ?? new Collection<PSObject>();
 
             return contextResults;
         } // SetSecurityDescriptor
@@ -302,29 +290,27 @@ namespace System.Management.Automation
             ProviderInfo provider = null;
 
             CmdletProvider providerInstance = null;
-            Collection<string> providerPaths = 
+            Collection<string> providerPaths =
                 Globber.GetGlobbedProviderPathsFromMonadPath(
                     path,
                     false,
                     context,
                     out provider,
                     out providerInstance);
-            
+
             foreach (string providerPath in providerPaths)
             {
-
                 SetSecurityDescriptor(
                     providerInstance,
-                    providerPath, 
-                    securityDescriptor, 
+                    providerPath,
+                    securityDescriptor,
                     context);
             }
-
         } // SetSecurityDescriptor
 
         private void SetSecurityDescriptor(
             CmdletProvider providerInstance,
-            string path, 
+            string path,
             ObjectSecurity securityDescriptor,
             CmdletProviderContext context)
         {
@@ -371,7 +357,7 @@ namespace System.Management.Automation
                 // thrown if one tries to set SACL and does not have
                 // SeSecurityPrivilege
                 //
-                context.WriteError (new ErrorRecord (e, e.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                context.WriteError(new ErrorRecord(e, e.GetType().FullName, ErrorCategory.PermissionDenied, path));
             }
             catch (UnauthorizedAccessException e)
             {
@@ -380,7 +366,7 @@ namespace System.Management.Automation
                 // -- owner or pri. group are invalid OR
                 // -- marta returns ERROR_ACCESS_DENIED
                 //
-                context.WriteError (new ErrorRecord (e, e.GetType().FullName, ErrorCategory.PermissionDenied, path));
+                context.WriteError(new ErrorRecord(e, e.GetType().FullName, ErrorCategory.PermissionDenied, path));
             }
             catch (NotSupportedException e)
             {
@@ -390,7 +376,7 @@ namespace System.Management.Automation
                 // 
                 // for example, FAT or FAT32 file in case of file system provider
                 //
-                context.WriteError (new ErrorRecord (e, e.GetType().FullName, ErrorCategory.InvalidOperation, path));
+                context.WriteError(new ErrorRecord(e, e.GetType().FullName, ErrorCategory.InvalidOperation, path));
             }
             catch (SystemException e)
             {
@@ -399,26 +385,24 @@ namespace System.Management.Automation
                 // thrown if the CLR gets back unexpected error
                 // from OS security or marta
                 //
-                context.WriteError (new ErrorRecord (e, e.GetType().FullName, ErrorCategory.InvalidOperation, path));
+                context.WriteError(new ErrorRecord(e, e.GetType().FullName, ErrorCategory.InvalidOperation, path));
             }
             catch (Exception e) // Catch-all OK, 3rd party callout.
             {
                 CommandProcessorBase.CheckForSevereException(e);
-                throw NewProviderInvocationException (
+                throw NewProviderInvocationException(
                     "SetSecurityDescriptorProviderException",
                     SessionStateStrings.SetSecurityDescriptorProviderException,
                     providerInstance.ProviderInfo,
                     path,
                     e);
             }
-
-
         } // SetSecurityDescriptor
 
         #endregion SetSecurityDescriptor
 
         #region NewSecurityDescriptor
-        
+
         /// <summary>
         /// Gets the security descriptor from the specified item.
         /// </summary>
@@ -455,7 +439,7 @@ namespace System.Management.Automation
             ProviderInfo provider = null;
 
             CmdletProvider providerInstance = null;
-            Collection<string> providerPaths = 
+            Collection<string> providerPaths =
                 Globber.GetGlobbedProviderPathsFromMonadPath(
                     path,
                     false,
@@ -471,7 +455,6 @@ namespace System.Management.Automation
                 sd = NewSecurityDescriptorFromPath(providerInstance,
                                                    providerPaths[0],
                                                    sections);
-                
             }
             else
             {
@@ -482,7 +465,7 @@ namespace System.Management.Automation
         } // NewSecurityDescriptor
 
         private ObjectSecurity NewSecurityDescriptorFromPath(
-            CmdletProvider providerInstance, 
+            CmdletProvider providerInstance,
             string path,
             AccessControlSections sections)
         {
@@ -503,7 +486,7 @@ namespace System.Management.Automation
 
             // This just verifies that the provider supports the interface.
 
-            ISecurityDescriptorCmdletProvider sdProvider = 
+            ISecurityDescriptorCmdletProvider sdProvider =
                 GetPermissionProviderInstance(providerInstance);
 
             try
@@ -526,7 +509,7 @@ namespace System.Management.Automation
             catch (Exception e) // Catch-all OK, 3rd party callout.
             {
                 CommandProcessorBase.CheckForSevereException(e);
-                throw NewProviderInvocationException (
+                throw NewProviderInvocationException(
                     "NewSecurityDescriptorProviderException",
                     SessionStateStrings.GetSecurityDescriptorProviderException,
                     providerInstance.ProviderInfo,
@@ -535,7 +518,6 @@ namespace System.Management.Automation
             }
 
             return sd;
-
         } // NewSecurityDescriptor
 
         /// <summary>
@@ -611,7 +593,7 @@ namespace System.Management.Automation
 
             // This just verifies that the provider supports the interface.
 
-            ISecurityDescriptorCmdletProvider sdProvider = 
+            ISecurityDescriptorCmdletProvider sdProvider =
                 GetPermissionProviderInstance(providerInstance);
 
             try
@@ -634,7 +616,7 @@ namespace System.Management.Automation
             catch (Exception e) // Catch-all OK, 3rd party callout.
             {
                 CommandProcessorBase.CheckForSevereException(e);
-                throw NewProviderInvocationException (
+                throw NewProviderInvocationException(
                     "NewSecurityDescriptorProviderException",
                     SessionStateStrings.GetSecurityDescriptorProviderException,
                     providerInstance.ProviderInfo,
@@ -643,11 +625,9 @@ namespace System.Management.Automation
             }
 
             return sd;
-            
         } // NewSecurityDescriptorOfType
 
         #endregion NewSecurityDescriptor
-
     }
 }
 

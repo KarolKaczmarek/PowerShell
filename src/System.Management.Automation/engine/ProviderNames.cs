@@ -2,9 +2,6 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
-
-
 namespace System.Management.Automation
 {
     /// <summary>
@@ -60,8 +57,8 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the name of the EnvironmentProvider
         /// </summary>
-        internal override string Environment 
-        { 
+        internal override string Environment
+        {
             get
             {
                 return "Environment";
@@ -71,8 +68,8 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the name of the Certificate
         /// </summary>
-        internal override string Certificate 
-        { 
+        internal override string Certificate
+        {
             get
             {
                 return "Certificate";
@@ -82,8 +79,8 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the name of the VariableProvider
         /// </summary>
-        internal override string Variable 
-        { 
+        internal override string Variable
+        {
             get
             {
                 return "Variable";
@@ -93,8 +90,8 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the name of the AliasProvider
         /// </summary>
-        internal override string Alias 
-        { 
+        internal override string Alias
+        {
             get
             {
                 return "Alias";
@@ -104,8 +101,8 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the name of the FunctionProvider
         /// </summary>
-        internal override string Function 
-        { 
+        internal override string Function
+        {
             get
             {
                 return "Function";
@@ -115,8 +112,8 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the name of the FileSystemProvider
         /// </summary>
-        internal override string FileSystem 
-        { 
+        internal override string FileSystem
+        {
             get
             {
                 return "FileSystem";
@@ -126,8 +123,8 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the name of the RegistryProvider
         /// </summary>
-        internal override string Registry 
-        { 
+        internal override string Registry
+        {
             get
             {
                 return "Registry";
@@ -143,8 +140,8 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the name of the EnvironmentProvider
         /// </summary>
-        internal override string Environment 
-        { 
+        internal override string Environment
+        {
             get
             {
                 return "Microsoft.PowerShell.Core\\Environment";
@@ -154,8 +151,8 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the name of the Certificate
         /// </summary>
-        internal override string Certificate 
-        { 
+        internal override string Certificate
+        {
             get
             {
                 return "Microsoft.PowerShell.Security\\Certificate";
@@ -165,8 +162,8 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the name of the VariableProvider
         /// </summary>
-        internal override string Variable 
-        { 
+        internal override string Variable
+        {
             get
             {
                 return "Microsoft.PowerShell.Core\\Variable";
@@ -176,8 +173,8 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the name of the AliasProvider
         /// </summary>
-        internal override string Alias 
-        { 
+        internal override string Alias
+        {
             get
             {
                 return "Microsoft.PowerShell.Core\\Alias";
@@ -187,8 +184,8 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the name of the FunctionProvider
         /// </summary>
-        internal override string Function 
-        { 
+        internal override string Function
+        {
             get
             {
                 return "Microsoft.PowerShell.Core\\Function";
@@ -198,8 +195,8 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the name of the FileSystemProvider
         /// </summary>
-        internal override string FileSystem 
-        { 
+        internal override string FileSystem
+        {
             get
             {
                 return "Microsoft.PowerShell.Core\\FileSystem";
@@ -209,14 +206,13 @@ namespace System.Management.Automation
         /// <summary>
         /// Gets the name of the RegistryProvider
         /// </summary>
-        internal override string Registry 
-        { 
+        internal override string Registry
+        {
             get
             {
                 return "Microsoft.PowerShell.Core\\Registry";
             }
         }
     }
-
 }
 

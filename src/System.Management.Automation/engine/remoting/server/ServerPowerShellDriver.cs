@@ -20,35 +20,29 @@ namespace System.Management.Automation
     {
         #region Private Members
 
-        private bool extraPowerShellAlreadyScheduled;     
-        private PowerShell extraPowerShell;     // extra PowerShell at the server to be run after localPowerShell
-        private PowerShell localPowerShell;     // local PowerShell at the server
-        private PSDataCollection<PSObject> localPowerShellOutput; // output buffer for the local PowerShell
-        private Guid clientPowerShellId;        // the client PowerShell's guid 
-                                                // that is associated with this
-                                                // powershell driver
-        private Guid clientRunspacePoolId;      // the id of the client runspace pool
-                                                // associated with this powershell
-        private ServerPowerShellDataStructureHandler dsHandler;
-                                                // data structure handler object to handle all
-                                                // communications with the client
-        private PSDataCollection<object> input; // input for local powershell invocation
-        private bool[] datasent = new bool[2];  // if the remaining data has been sent
-                                                // to the client before sending state
-                                                // information
-        private object syncObject = new object(); // sync object for synchronizing sending
-                                                  // data to client
-        private bool noInput;                   // there is no input when this driver 
-                                                // was created
-        private bool addToHistory;
-        private ServerRemoteHost remoteHost;   // the server remote host instance
+        private bool _extraPowerShellAlreadyScheduled;
+        private PowerShell _extraPowerShell;     // extra PowerShell at the server to be run after localPowerShell
+        private PSDataCollection<PSObject> _localPowerShellOutput; // output buffer for the local PowerShell
+        // that is associated with this
+                                                 // powershell driver
+        // associated with this powershell
+        // data structure handler object to handle all
+        // communications with the client
+        private bool[] _datasent = new bool[2];  // if the remaining data has been sent
+                                                 // to the client before sending state
+                                                 // information
+        private object _syncObject = new object(); // sync object for synchronizing sending
+                                                   // data to client
+        private bool _noInput;                   // there is no input when this driver 
+                                                 // was created
+        private bool _addToHistory;
+        private ServerRemoteHost _remoteHost;   // the server remote host instance
                                                 // associated with this powershell
 #if !CORECLR // No ApartmentState In CoreCLR
         private ApartmentState apartmentState;  // apartment state for this powershell
 #endif
-        private RemoteStreamOptions remoteStreamOptions;  // serialization options for the streams in this powershell
 
-        private IRSPDriverInvoke psDriverInvoker;  // Handles nested invocation of PS drivers.
+        private IRSPDriverInvoke _psDriverInvoker;  // Handles nested invocation of PS drivers.
 
         #endregion Private Members
 
@@ -139,7 +133,7 @@ namespace System.Management.Automation
         /// <param name="output">
         /// If not null, this is used as another source of output sent to the client.
         /// </param> 
-        internal ServerPowerShellDriver(PowerShell powershell, PowerShell extraPowerShell, bool noInput, Guid clientPowerShellId, 
+        internal ServerPowerShellDriver(PowerShell powershell, PowerShell extraPowerShell, bool noInput, Guid clientPowerShellId,
             Guid clientRunspacePoolId, ServerRunspacePoolDriver runspacePoolDriver,
             HostInfo hostInfo, RemoteStreamOptions streamOptions,
             bool addToHistory, Runspace rsToUse, PSDataCollection<PSObject> output)
@@ -168,55 +162,55 @@ namespace System.Management.Automation
         /// <param name="output">
         /// If not null, this is used as another source of output sent to the client.
         /// </param>
-        internal ServerPowerShellDriver(PowerShell powershell, PowerShell extraPowerShell, bool noInput, Guid clientPowerShellId, 
+        internal ServerPowerShellDriver(PowerShell powershell, PowerShell extraPowerShell, bool noInput, Guid clientPowerShellId,
             Guid clientRunspacePoolId, ServerRunspacePoolDriver runspacePoolDriver,
             ApartmentState apartmentState, HostInfo hostInfo, RemoteStreamOptions streamOptions,
             bool addToHistory, Runspace rsToUse, PSDataCollection<PSObject> output)
 #endif
         {
-            this.clientPowerShellId = clientPowerShellId;
-            this.clientRunspacePoolId = clientRunspacePoolId;
-            this.remoteStreamOptions = streamOptions;
+            InstanceId = clientPowerShellId;
+            RunspacePoolId = clientRunspacePoolId;
+            RemoteStreamOptions = streamOptions;
 #if !CORECLR // No ApartmentState In CoreCLR
             this.apartmentState = apartmentState;
 #endif
-            this.localPowerShell = powershell;
-            this.extraPowerShell = extraPowerShell;
-            this.localPowerShellOutput = new PSDataCollection<PSObject>();
-            this.noInput = noInput;
-            this.addToHistory = addToHistory;
-            this.psDriverInvoker = runspacePoolDriver;
+            LocalPowerShell = powershell;
+            _extraPowerShell = extraPowerShell;
+            _localPowerShellOutput = new PSDataCollection<PSObject>();
+            _noInput = noInput;
+            _addToHistory = addToHistory;
+            _psDriverInvoker = runspacePoolDriver;
 
-            this.dsHandler = runspacePoolDriver.DataStructureHandler.CreatePowerShellDataStructureHandler(clientPowerShellId, clientRunspacePoolId, remoteStreamOptions, localPowerShell);
-            this.remoteHost = dsHandler.GetHostAssociatedWithPowerShell(hostInfo, runspacePoolDriver.ServerRemoteHost);
+            DataStructureHandler = runspacePoolDriver.DataStructureHandler.CreatePowerShellDataStructureHandler(clientPowerShellId, clientRunspacePoolId, RemoteStreamOptions, LocalPowerShell);
+            _remoteHost = DataStructureHandler.GetHostAssociatedWithPowerShell(hostInfo, runspacePoolDriver.ServerRemoteHost);
 
             if (!noInput)
             {
-                input = new PSDataCollection<object>();
-                input.ReleaseOnEnumeration = true;
-                input.IdleEvent += new EventHandler<EventArgs>(HandleIdleEvent);
+                InputCollection = new PSDataCollection<object>();
+                InputCollection.ReleaseOnEnumeration = true;
+                InputCollection.IdleEvent += new EventHandler<EventArgs>(HandleIdleEvent);
             }
 
-            RegisterPipelineOutputEventHandlers(localPowerShellOutput);
+            RegisterPipelineOutputEventHandlers(_localPowerShellOutput);
 
-            if (localPowerShell != null)
+            if (LocalPowerShell != null)
             {
-                RegisterPowerShellEventHandlers(localPowerShell);
-                datasent[0] = false;
+                RegisterPowerShellEventHandlers(LocalPowerShell);
+                _datasent[0] = false;
             }
 
             if (extraPowerShell != null)
             {
                 RegisterPowerShellEventHandlers(extraPowerShell);
-                datasent[1] = false;
+                _datasent[1] = false;
             }
 
-            RegisterDataStructureHandlerEventHandlers(dsHandler);
+            RegisterDataStructureHandlerEventHandlers(DataStructureHandler);
 
             // set the runspace pool and invoke this powershell
             if (null != rsToUse)
             {
-                localPowerShell.Runspace = rsToUse;
+                LocalPowerShell.Runspace = rsToUse;
                 if (extraPowerShell != null)
                 {
                     extraPowerShell.Runspace = rsToUse;
@@ -224,7 +218,7 @@ namespace System.Management.Automation
             }
             else
             {
-                localPowerShell.RunspacePool = runspacePoolDriver.RunspacePool;
+                LocalPowerShell.RunspacePool = runspacePoolDriver.RunspacePool;
                 if (extraPowerShell != null)
                 {
                     extraPowerShell.RunspacePool = runspacePoolDriver.RunspacePool;
@@ -235,12 +229,12 @@ namespace System.Management.Automation
             {
                 output.DataAdded += (sender, args) =>
                     {
-                        if (localPowerShellOutput.IsOpen)
+                        if (_localPowerShellOutput.IsOpen)
                         {
                             var items = output.ReadAll();
                             foreach (var item in items)
                             {
-                                localPowerShellOutput.Add(item);
+                                _localPowerShellOutput.Add(item);
                             }
                         }
                     };
@@ -254,42 +248,24 @@ namespace System.Management.Automation
         /// <summary>
         /// Input collection sync object
         /// </summary>
-        internal PSDataCollection<object> InputCollection
-        {
-            get { return input; }
-        }
+        internal PSDataCollection<object> InputCollection { get; }
 
         /// <summary>
         /// Local PowerShell instance
         /// </summary>
-        internal PowerShell LocalPowerShell
-        {
-            get { return localPowerShell; }
-        }
+        internal PowerShell LocalPowerShell { get; }
 
         /// <summary>
         /// Instance id by which this powershell driver is 
         /// identified. This is the same as the id of the
         /// powershell on the client side
         /// </summary>
-        internal Guid InstanceId
-        {
-            get
-            {
-                return clientPowerShellId;
-            }
-        }
+        internal Guid InstanceId { get; }
 
         /// <summary>
         /// Serialization options for the streams in this powershell
         /// </summary>
-        internal RemoteStreamOptions RemoteStreamOptions
-        {
-            get
-            {
-                return this.remoteStreamOptions;
-            }
-        }
+        internal RemoteStreamOptions RemoteStreamOptions { get; }
 
         /// <summary>
         /// Id of the runspace pool driver which created
@@ -298,65 +274,51 @@ namespace System.Management.Automation
         /// is associated with the powershell on the 
         /// client side
         /// </summary>
-        internal Guid RunspacePoolId
-        {
-            get
-            {
-                return clientRunspacePoolId;
-            }
-
-        }
+        internal Guid RunspacePoolId { get; }
 
         /// <summary>
         /// ServerPowerShellDataStructureHandler associated with this
         /// powershell driver
         /// </summary>
-        internal ServerPowerShellDataStructureHandler DataStructureHandler
-        {
-            get
-            {
-                return dsHandler;
-            }
-        }
+        internal ServerPowerShellDataStructureHandler DataStructureHandler { get; }
 
         private PSInvocationSettings PrepInvoke(bool startMainPowerShell)
         {
             if (startMainPowerShell)
             {
                 // prepare transport manager for sending and receiving data.
-                dsHandler.Prepare();
+                DataStructureHandler.Prepare();
             }
 
             PSInvocationSettings settings = new PSInvocationSettings();
 #if !CORECLR // No ApartmentState In CoreCLR            
             settings.ApartmentState = apartmentState;
 #endif
-            settings.Host = remoteHost;
+            settings.Host = _remoteHost;
 
             // Flow the impersonation policy to pipeline execution thread
             // only if the current thread is impersonated (Delegation is 
             // also a kind of impersonation).
             if (Platform.IsWindows)
             {
-            	WindowsIdentity currentThreadIdentity = WindowsIdentity.GetCurrent();
-            	switch (currentThreadIdentity.ImpersonationLevel)
-            	{
-
-            	case TokenImpersonationLevel.Impersonation:
-            	case TokenImpersonationLevel.Delegation:
-				settings.FlowImpersonationPolicy = true;
-            	break;
-            	default:
-            		settings.FlowImpersonationPolicy = false;
-            		break;
-            	}
+                WindowsIdentity currentThreadIdentity = WindowsIdentity.GetCurrent();
+                switch (currentThreadIdentity.ImpersonationLevel)
+                {
+                    case TokenImpersonationLevel.Impersonation:
+                    case TokenImpersonationLevel.Delegation:
+                        settings.FlowImpersonationPolicy = true;
+                        break;
+                    default:
+                        settings.FlowImpersonationPolicy = false;
+                        break;
+                }
             }
             else
             {
-        		settings.FlowImpersonationPolicy = false;
+                settings.FlowImpersonationPolicy = false;
             }
 
-            settings.AddToHistory = addToHistory;
+            settings.AddToHistory = _addToHistory;
             return settings;
         }
 
@@ -366,11 +328,11 @@ namespace System.Management.Automation
 
             if (startMainPowerShell)
             {
-                return localPowerShell.BeginInvoke<object, PSObject>(input, localPowerShellOutput, settings, null, null);
+                return LocalPowerShell.BeginInvoke<object, PSObject>(InputCollection, _localPowerShellOutput, settings, null, null);
             }
             else
             {
-                return extraPowerShell.BeginInvoke<object, PSObject>(input, localPowerShellOutput, settings, null, null);
+                return _extraPowerShell.BeginInvoke<object, PSObject>(InputCollection, _localPowerShellOutput, settings, null, null);
             }
         }
 
@@ -390,19 +352,18 @@ namespace System.Management.Automation
         /// </summary>
         internal void RunNoOpCommand()
         {
-            if (this.localPowerShell != null)
+            if (LocalPowerShell != null)
             {
                 System.Threading.ThreadPool.QueueUserWorkItem(
-                    (state) => 
+                    (state) =>
                         {
-                            this.localPowerShell.SetStateChanged(
+                            LocalPowerShell.SetStateChanged(
                                 new PSInvocationStateInfo(
                                     PSInvocationState.Running, null));
 
-                            this.localPowerShell.SetStateChanged(
+                            LocalPowerShell.SetStateChanged(
                                 new PSInvocationStateInfo(
                                     PSInvocationState.Completed, null));
-
                         });
             }
         }
@@ -417,7 +378,7 @@ namespace System.Management.Automation
             Exception ex = null;
             try
             {
-                localPowerShell.InvokeWithDebugger(input, localPowerShellOutput, settings, true);
+                LocalPowerShell.InvokeWithDebugger(InputCollection, _localPowerShellOutput, settings, true);
             }
             catch (Exception e)
             {
@@ -430,15 +391,15 @@ namespace System.Management.Automation
                 // Since this is being invoked asynchronously on a single pipeline thread
                 // any invoke failures (such as possible debugger failures) need to be
                 // passed back to client or the original client invoke request will hang.
-                string failedCommand = localPowerShell.Commands.Commands[0].CommandText;
-                localPowerShell.Commands.Clear();
+                string failedCommand = LocalPowerShell.Commands.Commands[0].CommandText;
+                LocalPowerShell.Commands.Clear();
                 string msg = StringUtil.Format(
                     RemotingErrorIdStrings.ServerSideNestedCommandInvokeFailed,
                     failedCommand ?? string.Empty,
                     ex.Message ?? string.Empty);
 
-                localPowerShell.AddCommand("Write-Error").AddArgument(msg);
-                localPowerShell.Invoke();
+                LocalPowerShell.AddCommand("Write-Error").AddArgument(msg);
+                LocalPowerShell.Invoke();
             }
         }
 
@@ -515,11 +476,11 @@ namespace System.Management.Automation
                 case PSInvocationState.Failed:
                 case PSInvocationState.Stopped:
                     {
-                        if (localPowerShell.RunningExtraCommands)
+                        if (LocalPowerShell.RunningExtraCommands)
                         {
                             // If completed successfully then allow extra commands to run.
                             if (state == PSInvocationState.Completed) { return; }
-                            
+
                             // For failed or stopped state, extra commands cannot run and 
                             // we allow this command invocation to finish.
                         }
@@ -534,28 +495,28 @@ namespace System.Management.Automation
                         // the runspace pool data structure handler on the client side
                         SendRemainingData();
 
-                        if (state == PSInvocationState.Completed && 
-                            (extraPowerShell != null) && 
-                            !extraPowerShellAlreadyScheduled)
+                        if (state == PSInvocationState.Completed &&
+                            (_extraPowerShell != null) &&
+                            !_extraPowerShellAlreadyScheduled)
                         {
-                            extraPowerShellAlreadyScheduled = true;
+                            _extraPowerShellAlreadyScheduled = true;
                             Start(false);
                         }
                         else
                         {
-                            dsHandler.RaiseRemoveAssociationEvent();
+                            DataStructureHandler.RaiseRemoveAssociationEvent();
 
                             // send the state change notification to the client
-                            dsHandler.SendStateChangedInformationToClient(
+                            DataStructureHandler.SendStateChangedInformationToClient(
                                 eventArgs.InvocationStateInfo);
 
-                            UnregisterPowerShellEventHandlers(localPowerShell);
-                            if (extraPowerShell != null)
+                            UnregisterPowerShellEventHandlers(LocalPowerShell);
+                            if (_extraPowerShell != null)
                             {
-                                UnregisterPowerShellEventHandlers(extraPowerShell);
+                                UnregisterPowerShellEventHandlers(_extraPowerShell);
                             }
-                            UnregisterDataStructureHandlerEventHandlers(dsHandler);
-                            UnregisterPipelineOutputEventHandlers(localPowerShellOutput);
+                            UnregisterDataStructureHandlerEventHandlers(DataStructureHandler);
+                            UnregisterPipelineOutputEventHandlers(_localPowerShellOutput);
 
                             // BUGBUG: currently the local powershell cannot
                             // be disposed as raising the events is
@@ -569,7 +530,7 @@ namespace System.Management.Automation
                 case PSInvocationState.Stopping:
                     {
                         // abort all pending host calls
-                        remoteHost.ServerMethodExecutor.AbortAllCalls();
+                        _remoteHost.ServerMethodExecutor.AbortAllCalls();
                     }
                     break;
             }
@@ -584,18 +545,18 @@ namespace System.Management.Automation
         {
             int index = e.Index;
 
-            lock (syncObject)
+            lock (_syncObject)
             {
-                int indexIntoDataSent = (!extraPowerShellAlreadyScheduled) ? 0 : 1;
-                if (!datasent[indexIntoDataSent])
+                int indexIntoDataSent = (!_extraPowerShellAlreadyScheduled) ? 0 : 1;
+                if (!_datasent[indexIntoDataSent])
                 {
-                    PSObject data = localPowerShellOutput[index];
+                    PSObject data = _localPowerShellOutput[index];
                     // once send the output is removed so that the same
                     // is not sent again by SendRemainingData() method
-                    localPowerShellOutput.RemoveAt(index);
+                    _localPowerShellOutput.RemoveAt(index);
 
                     // send the output data to the client
-                    dsHandler.SendOutputDataToClient(data);
+                    DataStructureHandler.SendOutputDataToClient(data);
                 }
             } // lock ..
         }
@@ -609,18 +570,18 @@ namespace System.Management.Automation
         {
             int index = e.Index;
 
-            lock (syncObject)
+            lock (_syncObject)
             {
-                int indexIntoDataSent = (!extraPowerShellAlreadyScheduled) ? 0 : 1;
-                if ((indexIntoDataSent == 0) && (!datasent[indexIntoDataSent]))
+                int indexIntoDataSent = (!_extraPowerShellAlreadyScheduled) ? 0 : 1;
+                if ((indexIntoDataSent == 0) && (!_datasent[indexIntoDataSent]))
                 {
-                    ErrorRecord errorRecord = localPowerShell.Streams.Error[index];
+                    ErrorRecord errorRecord = LocalPowerShell.Streams.Error[index];
                     // once send the error record is removed so that the same
                     // is not sent again by SendRemainingData() method
-                    localPowerShell.Streams.Error.RemoveAt(index);
+                    LocalPowerShell.Streams.Error.RemoveAt(index);
 
                     // send the error record to the client
-                    dsHandler.SendErrorRecordToClient(errorRecord);
+                    DataStructureHandler.SendErrorRecordToClient(errorRecord);
                 }
             } // lock ...
         }
@@ -634,18 +595,18 @@ namespace System.Management.Automation
         {
             int index = eventArgs.Index;
 
-            lock (syncObject)
+            lock (_syncObject)
             {
-                int indexIntoDataSent = (!extraPowerShellAlreadyScheduled) ? 0 : 1;
-                if ((indexIntoDataSent == 0) && (!datasent[indexIntoDataSent]))
+                int indexIntoDataSent = (!_extraPowerShellAlreadyScheduled) ? 0 : 1;
+                if ((indexIntoDataSent == 0) && (!_datasent[indexIntoDataSent]))
                 {
-                    ProgressRecord data = localPowerShell.Streams.Progress[index];
+                    ProgressRecord data = LocalPowerShell.Streams.Progress[index];
                     // once the debug message is sent, it is removed so that 
                     // the same is not sent again by SendRemainingData() method
-                    localPowerShell.Streams.Progress.RemoveAt(index);
+                    LocalPowerShell.Streams.Progress.RemoveAt(index);
 
                     // send the output data to the client
-                    dsHandler.SendProgressRecordToClient(data);
+                    DataStructureHandler.SendProgressRecordToClient(data);
                 }
             } // lock ..
         }
@@ -659,18 +620,18 @@ namespace System.Management.Automation
         {
             int index = eventArgs.Index;
 
-            lock (syncObject)
+            lock (_syncObject)
             {
-                int indexIntoDataSent = (!extraPowerShellAlreadyScheduled) ? 0 : 1;
-                if ((indexIntoDataSent == 0) && (!datasent[indexIntoDataSent]))
+                int indexIntoDataSent = (!_extraPowerShellAlreadyScheduled) ? 0 : 1;
+                if ((indexIntoDataSent == 0) && (!_datasent[indexIntoDataSent]))
                 {
-                    WarningRecord data = localPowerShell.Streams.Warning[index];
+                    WarningRecord data = LocalPowerShell.Streams.Warning[index];
                     // once the debug message is sent, it is removed so that 
                     // the same is not sent again by SendRemainingData() method
-                    localPowerShell.Streams.Warning.RemoveAt(index);
-                    
+                    LocalPowerShell.Streams.Warning.RemoveAt(index);
+
                     // send the output data to the client
-                    dsHandler.SendWarningRecordToClient(data);
+                    DataStructureHandler.SendWarningRecordToClient(data);
                 }
             } // lock ..
         }
@@ -684,18 +645,18 @@ namespace System.Management.Automation
         {
             int index = eventArgs.Index;
 
-            lock (syncObject)
+            lock (_syncObject)
             {
-                int indexIntoDataSent = (!extraPowerShellAlreadyScheduled) ? 0 : 1;
-                if ((indexIntoDataSent == 0) && (!datasent[indexIntoDataSent]))
+                int indexIntoDataSent = (!_extraPowerShellAlreadyScheduled) ? 0 : 1;
+                if ((indexIntoDataSent == 0) && (!_datasent[indexIntoDataSent]))
                 {
-                    VerboseRecord data = localPowerShell.Streams.Verbose[index];
+                    VerboseRecord data = LocalPowerShell.Streams.Verbose[index];
                     // once the debug message is sent, it is removed so that 
                     // the same is not sent again by SendRemainingData() method
-                    localPowerShell.Streams.Verbose.RemoveAt(index);
+                    LocalPowerShell.Streams.Verbose.RemoveAt(index);
 
                     // send the output data to the client
-                    dsHandler.SendVerboseRecordToClient(data);
+                    DataStructureHandler.SendVerboseRecordToClient(data);
                 }
             } // lock ..
         }
@@ -709,18 +670,18 @@ namespace System.Management.Automation
         {
             int index = eventArgs.Index;
 
-            lock (syncObject)
+            lock (_syncObject)
             {
-                int indexIntoDataSent = (!extraPowerShellAlreadyScheduled) ? 0 : 1;
-                if ((indexIntoDataSent == 0) && (!datasent[indexIntoDataSent]))
+                int indexIntoDataSent = (!_extraPowerShellAlreadyScheduled) ? 0 : 1;
+                if ((indexIntoDataSent == 0) && (!_datasent[indexIntoDataSent]))
                 {
-                    DebugRecord data = localPowerShell.Streams.Debug[index];
+                    DebugRecord data = LocalPowerShell.Streams.Debug[index];
                     // once the debug message is sent, it is removed so that 
                     // the same is not sent again by SendRemainingData() method
-                    localPowerShell.Streams.Debug.RemoveAt(index);
+                    LocalPowerShell.Streams.Debug.RemoveAt(index);
 
                     // send the output data to the client
-                    dsHandler.SendDebugRecordToClient(data);
+                    DataStructureHandler.SendDebugRecordToClient(data);
                 }
             } // lock ..
         }
@@ -734,18 +695,18 @@ namespace System.Management.Automation
         {
             int index = eventArgs.Index;
 
-            lock (syncObject)
+            lock (_syncObject)
             {
-                int indexIntoDataSent = (!extraPowerShellAlreadyScheduled) ? 0 : 1;
-                if ((indexIntoDataSent == 0) && (!datasent[indexIntoDataSent]))
+                int indexIntoDataSent = (!_extraPowerShellAlreadyScheduled) ? 0 : 1;
+                if ((indexIntoDataSent == 0) && (!_datasent[indexIntoDataSent]))
                 {
-                    InformationRecord data = localPowerShell.Streams.Information[index];
+                    InformationRecord data = LocalPowerShell.Streams.Information[index];
                     // once the Information message is sent, it is removed so that 
                     // the same is not sent again by SendRemainingData() method
-                    localPowerShell.Streams.Information.RemoveAt(index);
+                    LocalPowerShell.Streams.Information.RemoveAt(index);
 
                     // send the output data to the client
-                    dsHandler.SendInformationRecordToClient(data);
+                    DataStructureHandler.SendInformationRecordToClient(data);
                 }
             } // lock ..
         }
@@ -763,37 +724,37 @@ namespace System.Management.Automation
         /// discarded</remarks>
         private void SendRemainingData()
         {
-            int indexIntoDataSent = (!extraPowerShellAlreadyScheduled) ? 0 : 1;
-            lock (syncObject)
+            int indexIntoDataSent = (!_extraPowerShellAlreadyScheduled) ? 0 : 1;
+            lock (_syncObject)
             {
-                datasent[indexIntoDataSent] = true;
+                _datasent[indexIntoDataSent] = true;
             }
 
             try
             {
                 // BUGBUG: change this code to use enumerator
                 // blocked on bug #108824, to be fixed by Kriscv
-                for (int i = 0; i < localPowerShellOutput.Count; i++)
+                for (int i = 0; i < _localPowerShellOutput.Count; i++)
                 {
-                    PSObject data = localPowerShellOutput[i];
-                    dsHandler.SendOutputDataToClient(data);
+                    PSObject data = _localPowerShellOutput[i];
+                    DataStructureHandler.SendOutputDataToClient(data);
                 }
-                localPowerShellOutput.Clear();
+                _localPowerShellOutput.Clear();
 
                 //foreach (ErrorRecord errorRecord in localPowerShell.Error)
-                for (int i = 0; i < localPowerShell.Streams.Error.Count; i++)
+                for (int i = 0; i < LocalPowerShell.Streams.Error.Count; i++)
                 {
-                    ErrorRecord errorRecord = localPowerShell.Streams.Error[i];
-                    dsHandler.SendErrorRecordToClient(errorRecord);
+                    ErrorRecord errorRecord = LocalPowerShell.Streams.Error[i];
+                    DataStructureHandler.SendErrorRecordToClient(errorRecord);
                 }
-                localPowerShell.Streams.Error.Clear();
+                LocalPowerShell.Streams.Error.Clear();
             }
             finally
             {
-                lock (syncObject)
+                lock (_syncObject)
                 {
                     // reset to original state so other pipelines can stream.
-                    datasent[indexIntoDataSent] = true;
+                    _datasent[indexIntoDataSent] = true;
                 }
             }
         }
@@ -807,10 +768,10 @@ namespace System.Management.Automation
         {
             do // false loop
             {
-                if (localPowerShell.InvocationStateInfo.State == PSInvocationState.Stopped ||
-                    localPowerShell.InvocationStateInfo.State == PSInvocationState.Completed ||
-                    localPowerShell.InvocationStateInfo.State == PSInvocationState.Failed ||
-                    localPowerShell.InvocationStateInfo.State == PSInvocationState.Stopping)
+                if (LocalPowerShell.InvocationStateInfo.State == PSInvocationState.Stopped ||
+                    LocalPowerShell.InvocationStateInfo.State == PSInvocationState.Completed ||
+                    LocalPowerShell.InvocationStateInfo.State == PSInvocationState.Failed ||
+                    LocalPowerShell.InvocationStateInfo.State == PSInvocationState.Stopping)
                 {
                     break;
                 }
@@ -818,33 +779,33 @@ namespace System.Management.Automation
                 {
                     // Ensure that the local PowerShell command is not stopped in debug mode.
                     bool handledByDebugger = false;
-                    if (!localPowerShell.IsNested &&
-                        this.psDriverInvoker != null)
+                    if (!LocalPowerShell.IsNested &&
+                        _psDriverInvoker != null)
                     {
-                        handledByDebugger = this.psDriverInvoker.HandleStopSignal();
+                        handledByDebugger = _psDriverInvoker.HandleStopSignal();
                     }
-                    
+
                     if (!handledByDebugger)
                     {
-                        localPowerShell.Stop();
+                        LocalPowerShell.Stop();
                     }
                 }
             } while (false);
 
-            if (extraPowerShell != null)
+            if (_extraPowerShell != null)
             {
                 do // false loop
                 {
-                    if (extraPowerShell.InvocationStateInfo.State == PSInvocationState.Stopped ||
-                        extraPowerShell.InvocationStateInfo.State == PSInvocationState.Completed ||
-                        extraPowerShell.InvocationStateInfo.State == PSInvocationState.Failed ||
-                        extraPowerShell.InvocationStateInfo.State == PSInvocationState.Stopping)
+                    if (_extraPowerShell.InvocationStateInfo.State == PSInvocationState.Stopped ||
+                        _extraPowerShell.InvocationStateInfo.State == PSInvocationState.Completed ||
+                        _extraPowerShell.InvocationStateInfo.State == PSInvocationState.Failed ||
+                        _extraPowerShell.InvocationStateInfo.State == PSInvocationState.Stopping)
                     {
                         break;
                     }
                     else
                     {
-                        extraPowerShell.Stop();
+                        _extraPowerShell.Stop();
                     }
                 } while (false);
             }
@@ -859,9 +820,9 @@ namespace System.Management.Automation
         {
             // This can be called in pushed runspace scenarios for error reporting (pipeline stopped).  
             // Ignore for noInput.
-            if (!noInput && (input != null))
+            if (!_noInput && (InputCollection != null))
             {
-                input.Add(eventArgs.Data);
+                InputCollection.Add(eventArgs.Data);
             }
         }
 
@@ -874,9 +835,9 @@ namespace System.Management.Automation
         {
             // This can be called in pushed runspace scenarios for error reporting (pipeline stopped).  
             // Ignore for noInput.
-            if (!noInput && (input != null))
+            if (!_noInput && (InputCollection != null))
             {
-                input.Complete();
+                InputCollection.Complete();
             }
         }
 
@@ -884,10 +845,10 @@ namespace System.Management.Automation
         {
             //Close input if its active. no need to synchronize as input stream would have already been processed
             // when connect call came into PS plugin
-            if (input != null)
+            if (InputCollection != null)
             {
                 //TODO: Post an ETW event
-                input.Complete();
+                InputCollection.Complete();
             }
         }
 
@@ -898,7 +859,7 @@ namespace System.Management.Automation
         /// <param name="eventArgs">arguments describing this event</param>
         private void HandleHostResponseReceived(object sender, RemoteDataEventArgs<RemoteHostResponse> eventArgs)
         {
-            remoteHost.ServerMethodExecutor.HandleRemoteHostResponseFromClient(eventArgs.Data);
+            _remoteHost.ServerMethodExecutor.HandleRemoteHostResponseFromClient(eventArgs.Data);
         }
 
         /// <summary>
@@ -908,7 +869,7 @@ namespace System.Management.Automation
         /// <param name="args"></param>
         private void HandleIdleEvent(object sender, EventArgs args)
         {
-            Runspace rs = dsHandler.RunspaceUsedToInvokePowerShell;
+            Runspace rs = DataStructureHandler.RunspaceUsedToInvokePowerShell;
             if (rs != null)
             {
                 PSLocalEventManager events = (object)rs.Events as PSLocalEventManager;

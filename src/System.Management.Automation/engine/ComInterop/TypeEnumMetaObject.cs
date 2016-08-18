@@ -8,26 +8,28 @@ using System.Linq.Expressions;
 #else
 using Microsoft.Scripting.Ast;
 #endif
-
-using System;
 using System.Collections.Generic;
 using System.Dynamic;
 //using Microsoft.Scripting.Runtime;
 //using AstUtils = Microsoft.Scripting.Ast.Utils;
 using AstUtils = System.Management.Automation.Interpreter.Utils;
 
-namespace System.Management.Automation.ComInterop {
-
-    internal class TypeEnumMetaObject : DynamicMetaObject {
+namespace System.Management.Automation.ComInterop
+{
+    internal class TypeEnumMetaObject : DynamicMetaObject
+    {
         private readonly ComTypeEnumDesc _desc;
 
         internal TypeEnumMetaObject(ComTypeEnumDesc desc, Expression expression)
-            : base(expression, BindingRestrictions.Empty, desc) {
+            : base(expression, BindingRestrictions.Empty, desc)
+        {
             _desc = desc;
         }
 
-        public override DynamicMetaObject BindGetMember(GetMemberBinder binder) {
-            if (_desc.HasMember(binder.Name)) {
+        public override DynamicMetaObject BindGetMember(GetMemberBinder binder)
+        {
+            if (_desc.HasMember(binder.Name))
+            {
                 return new DynamicMetaObject(
                     // return (.bound $arg0).GetValue("<name>")
                     Expression.Constant(((ComTypeEnumDesc)Value).GetValue(binder.Name), typeof(object)),
@@ -38,11 +40,13 @@ namespace System.Management.Automation.ComInterop {
             throw new NotImplementedException();
         }
 
-        public override IEnumerable<string> GetDynamicMemberNames() {
+        public override IEnumerable<string> GetDynamicMemberNames()
+        {
             return _desc.GetMemberNames();
         }
 
-        private BindingRestrictions EnumRestrictions() {
+        private BindingRestrictions EnumRestrictions()
+        {
             return BindingRestrictions.GetTypeRestriction(
                 Expression, typeof(ComTypeEnumDesc)
             ).Merge(

@@ -17,7 +17,7 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
     /// <summary>
     /// Job wrapping invocation of an extrinsic CIM method
     /// </summary>
-    abstract internal class MethodInvocationJobBase<T> : CimChildJobBase<T> 
+    internal abstract class MethodInvocationJobBase<T> : CimChildJobBase<T>
     {
         internal MethodInvocationJobBase(CimJobContext jobContext, bool passThru, string methodSubject, MethodInvocationInfo methodInvocationInfo)
                 : base(jobContext)
@@ -25,25 +25,24 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
             Dbg.Assert(methodInvocationInfo != null, "Caller should verify methodInvocationInfo != null");
             Dbg.Assert(methodSubject != null, "Caller should verify methodSubject != null");
 
-            this._passThru = passThru;
-            this._methodSubject = methodSubject;
-            this._methodInvocationInfo = methodInvocationInfo;
+            _passThru = passThru;
+            MethodSubject = methodSubject;
+            _methodInvocationInfo = methodInvocationInfo;
         }
 
-        private readonly string _methodSubject;
         private readonly bool _passThru;
         private readonly MethodInvocationInfo _methodInvocationInfo;
 
         internal string MethodName
         {
-            get { return this._methodInvocationInfo.MethodName; }
+            get { return _methodInvocationInfo.MethodName; }
         }
 
         private const string CustomOperationOptionPrefix = "cim:operationOption:";
 
         private IEnumerable<MethodParameter> GetMethodInputParametersCore(Func<MethodParameter, bool> filter)
         {
-            IEnumerable<MethodParameter> inputParameters = this._methodInvocationInfo.Parameters.Where(filter);
+            IEnumerable<MethodParameter> inputParameters = _methodInvocationInfo.Parameters.Where(filter);
 
             var result = new List<MethodParameter>();
             foreach (MethodParameter inputParameter in inputParameters)
@@ -52,13 +51,13 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
                 Type cimType = CimSensitiveValueConverter.GetCimType(inputParameter.ParameterType);
                 CimValueConverter.AssertIntrinsicCimType(cimType);
                 result.Add(new MethodParameter
-                               {
-                                   Name = inputParameter.Name,
-                                   ParameterType = cimType,
-                                   Bindings = inputParameter.Bindings,
-                                   Value = cimValue,
-                                   IsValuePresent = inputParameter.IsValuePresent
-                               });
+                {
+                    Name = inputParameter.Name,
+                    ParameterType = cimType,
+                    Bindings = inputParameter.Bindings,
+                    Value = cimValue,
+                    IsValuePresent = inputParameter.IsValuePresent
+                });
             }
             return result;
         }
@@ -72,7 +71,7 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
 
         internal IEnumerable<CimInstance> GetCimInstancesFromArguments()
         {
-            return this._methodInvocationInfo.GetArgumentsOfType<CimInstance>();
+            return _methodInvocationInfo.GetArgumentsOfType<CimInstance>();
         }
 
         internal override CimCustomOptionsDictionary CalculateJobSpecificCustomOptions()
@@ -96,10 +95,10 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
 
         internal IEnumerable<MethodParameter> GetMethodOutputParameters()
         {
-            IEnumerable<MethodParameter> allParameters_plus_returnValue = this._methodInvocationInfo.Parameters;
-            if (this._methodInvocationInfo.ReturnValue != null)
+            IEnumerable<MethodParameter> allParameters_plus_returnValue = _methodInvocationInfo.Parameters;
+            if (_methodInvocationInfo.ReturnValue != null)
             {
-                allParameters_plus_returnValue = allParameters_plus_returnValue.Append(this._methodInvocationInfo.ReturnValue);
+                allParameters_plus_returnValue = allParameters_plus_returnValue.Append(_methodInvocationInfo.ReturnValue);
             }
 
             var outParameters = allParameters_plus_returnValue
@@ -108,10 +107,7 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
             return outParameters;
         }
 
-        internal string MethodSubject
-        {
-            get { return this._methodSubject; }
-        }
+        internal string MethodSubject { get; }
 
         internal bool ShouldProcess()
         {
@@ -158,7 +154,7 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
 
         internal bool IsPassThruObjectNeeded()
         {
-            return (this._passThru) && (!this.DidUserSuppressTheOperation) && (!this.JobHadErrors);
+            return (_passThru) && (!this.DidUserSuppressTheOperation) && (!this.JobHadErrors);
         }
 
         public override void OnCompleted()
@@ -187,7 +183,7 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
 
         internal override string Description
         {
-            get 
+            get
             {
                 return string.Format(
                     CultureInfo.InvariantCulture,
@@ -211,6 +207,5 @@ namespace Microsoft.PowerShell.Cmdletization.Cim
         }
 
         #endregion
-
     }
 }

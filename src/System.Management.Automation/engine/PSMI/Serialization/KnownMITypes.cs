@@ -2,27 +2,8 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Management.Automation.Internal;
-using System.Management.Automation.Language;
-using System.Management.Automation.Runspaces;
-using System.Management.Automation.Tracing;
-using System.Runtime.CompilerServices;
-using System.Security;
-using System.Text;
-using System.Xml;
-using Microsoft.Management.Infrastructure;
-using Microsoft.Management.Infrastructure.Serialization;
-using Microsoft.PowerShell;
 using Dbg = System.Management.Automation.Diagnostics;
-using System.Management.Automation.Remoting;
 
 namespace System.Management.Automation
 {
@@ -38,9 +19,9 @@ namespace System.Management.Automation
         /// </summary>
         static KnownMITypes()
         {
-            for (int i = 0; i < _TypeSerializationInfo.Length; i++)
+            for (int i = 0; i < s_typeSerializationInfo.Length; i++)
             {
-                _knownTableKeyType.Add(_TypeSerializationInfo[i].Type.FullName, _TypeSerializationInfo[i]);
+                s_knownTableKeyType.Add(s_typeSerializationInfo[i].Type.FullName, s_typeSerializationInfo[i]);
             }
         }
 
@@ -52,7 +33,7 @@ namespace System.Management.Automation
         internal static MITypeSerializationInfo GetTypeSerializationInfo(Type type)
         {
             MITypeSerializationInfo temp = null;
-            _knownTableKeyType.TryGetValue(type.FullName, out temp);
+            s_knownTableKeyType.TryGetValue(type.FullName, out temp);
             return temp;
         }
 
@@ -61,10 +42,10 @@ namespace System.Management.Automation
         /// <summary>
         /// Array of known types.
         /// </summary>
-        private static readonly MITypeSerializationInfo[] _TypeSerializationInfo = new MITypeSerializationInfo[]
-		{
-			new MITypeSerializationInfo(typeof(Boolean),
-								InternalMISerializer.CreateCimInstanceForPrimitiveType,
+        private static readonly MITypeSerializationInfo[] s_typeSerializationInfo = new MITypeSerializationInfo[]
+        {
+            new MITypeSerializationInfo(typeof(Boolean),
+                                InternalMISerializer.CreateCimInstanceForPrimitiveType,
                                 "PS_ObjectProperty_boolean"),
 
             new MITypeSerializationInfo(typeof(Byte),
@@ -72,7 +53,7 @@ namespace System.Management.Automation
                                 "PS_ObjectProperty_uint8"),
 
             new MITypeSerializationInfo(typeof(Char),
-								InternalMISerializer.CreateCimInstanceForPrimitiveType,
+                                InternalMISerializer.CreateCimInstanceForPrimitiveType,
                                 "PS_ObjectProperty_char16"),
 
             new MITypeSerializationInfo(typeof(Double),
@@ -148,14 +129,13 @@ namespace System.Management.Automation
 
             //new MITypeSerializationInfo(typeof(SecureString),
             //                          InternalSerializer.WriteSecureString),
-
 		};
 
         /// <summary>
         /// Dictionary of knowntypes. 
         /// Key is Type.FullName and value is Type object.
         /// </summary>
-        private static readonly Dictionary<string, MITypeSerializationInfo> _knownTableKeyType = new Dictionary<string, MITypeSerializationInfo>();
+        private static readonly Dictionary<string, MITypeSerializationInfo> s_knownTableKeyType = new Dictionary<string, MITypeSerializationInfo>();
 
         #endregion private_fields
     }

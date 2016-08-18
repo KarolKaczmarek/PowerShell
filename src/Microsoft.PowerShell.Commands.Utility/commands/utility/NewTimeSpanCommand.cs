@@ -1,14 +1,13 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System;
 using System.Management.Automation;
 using Dbg = System.Management.Automation;
 
 namespace Microsoft.PowerShell.Commands
 {
-  
-
     /// <summary> 
     /// implementation for the new-timespan command 
     /// </summary> 
@@ -29,16 +28,16 @@ namespace Microsoft.PowerShell.Commands
         {
             get
             {
-                return start;
+                return _start;
             }
             set
             {
-                start = value;
-                startSpecified = true;
+                _start = value;
+                _startSpecified = true;
             }
         }
-        private DateTime start;
-        private bool startSpecified;
+        private DateTime _start;
+        private bool _startSpecified;
 
 
         /// <summary>
@@ -46,93 +45,49 @@ namespace Microsoft.PowerShell.Commands
         /// times are being compared.  If one of the times is not specified,
         /// the current system time is used.  
         /// </summary>
-        [Parameter(Position = 1,ValueFromPipelineByPropertyName = true,ParameterSetName = "Date" )]
+        [Parameter(Position = 1, ValueFromPipelineByPropertyName = true, ParameterSetName = "Date")]
         public DateTime End
         {
             get
             {
-                return end;
+                return _end;
             }
             set
             {
-                end = value;
-                endSpecified = true;
+                _end = value;
+                _endSpecified = true;
             }
         }
-        private DateTime end;
-        private bool endSpecified = false;
+        private DateTime _end;
+        private bool _endSpecified = false;
 
 
-          /// <summary>
+        /// <summary>
         /// Allows the user to override the day
         /// </summary>
         [Parameter(ParameterSetName = "Time")]
-        public int Days
-        {
-            get
-            {
-                return days;
-            }
-            set
-            {
-                days = value;
-            }
-        }
-        private int days = 0;
+        public int Days { get; set; } = 0;
 
 
         /// <summary>
         /// Allows the user to override the hour
         /// </summary>
         [Parameter(ParameterSetName = "Time")]
-        public int Hours
-        {
-            get
-            {
-                return hours;
-            }
-            set
-            {
-                hours = value;
-            }
-        }
-        private int hours = 0;
+        public int Hours { get; set; } = 0;
 
 
         /// <summary>
         /// Allows the user to override the minute
         /// </summary>
         [Parameter(ParameterSetName = "Time")]
-        public int Minutes
-        {
-            get
-            {
-                return minutes;
-            }
-            set
-            {
-                minutes = value;
-            }
-        }
-        private int minutes = 0;
+        public int Minutes { get; set; } = 0;
 
 
         /// <summary>
         /// Allows the user to override the second
         /// </summary>
         [Parameter(ParameterSetName = "Time")]
-        public int Seconds
-        {
-            get
-            {
-                return seconds;
-            }
-            set
-            {
-                seconds = value;
-            }
-        }
-        private int seconds = 0;
+        public int Seconds { get; set; } = 0;
 
         #endregion
 
@@ -148,36 +103,35 @@ namespace Microsoft.PowerShell.Commands
             DateTime endTime = startTime;
             TimeSpan result;
 
-            switch ( ParameterSetName )
+            switch (ParameterSetName)
             {
                 case "Date":
-                    if ( startSpecified )
+                    if (_startSpecified)
                     {
                         startTime = Start;
                     }
-                    if ( endSpecified )
+                    if (_endSpecified)
                     {
                         endTime = End;
                     }
 
-                    result = endTime.Subtract( startTime );
+                    result = endTime.Subtract(startTime);
                     break;
 
                 case "Time":
-                    result = new TimeSpan( Days, Hours, Minutes, Seconds );
+                    result = new TimeSpan(Days, Hours, Minutes, Seconds);
                     break;
 
                 default:
-                    Dbg.Diagnostics.Assert(false,"Only one of the specified parameter sets should be called." );
+                    Dbg.Diagnostics.Assert(false, "Only one of the specified parameter sets should be called.");
                     return;
             }
 
-            WriteObject( result );
+            WriteObject(result);
         } // EndProcessing
 
         #endregion
     }  // NewTimeSpanCommand
-
- } // namespace Microsoft.PowerShell.Commands
+} // namespace Microsoft.PowerShell.Commands
 
 

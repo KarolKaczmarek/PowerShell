@@ -12,6 +12,7 @@ using System.Globalization;
 using System.Management.Automation;
 using System.Management.Automation.Internal;
 using System.Text;
+
 namespace Microsoft.PowerShell.Commands
 {
     /// <summary>
@@ -85,7 +86,7 @@ namespace Microsoft.PowerShell.Commands
 
         internal override void Add(PSObject groupValue)
         {
-            count++;
+            Count++;
         }
     }
 
@@ -94,19 +95,18 @@ namespace Microsoft.PowerShell.Commands
     /// </summary>
     public class GroupInfo
     {
-        internal int count;
         internal GroupInfo(OrderByPropertyEntry groupValue)
         {
-            group = new Collection<PSObject>();
+            Group = new Collection<PSObject>();
             this.Add(groupValue.inputObject);
-            this.groupValue = groupValue;
-            name = BuildName(groupValue.orderValues);
+            GroupValue = groupValue;
+            Name = BuildName(groupValue.orderValues);
         }
 
         internal virtual void Add(PSObject groupValue)
         {
-            group.Add(groupValue);
-            count++;
+            Group.Add(groupValue);
+            Count++;
         }
 
 
@@ -123,7 +123,7 @@ namespace Microsoft.PowerShell.Commands
                     {
                         sb.Append("{");
                         var length = sb.Length;
-                        
+
                         foreach (object item in propertyValueItems)
                         {
                             sb.Append(string.Format(CultureInfo.InvariantCulture, "{0}, ", item.ToString()));
@@ -152,7 +152,7 @@ namespace Microsoft.PowerShell.Commands
             get
             {
                 ArrayList values = new ArrayList();
-                foreach (ObjectCommandPropertyValue propValue in groupValue.orderValues)
+                foreach (ObjectCommandPropertyValue propValue in GroupValue.orderValues)
                 {
                     values.Add(propValue.PropertyValue);
                 }
@@ -165,43 +165,28 @@ namespace Microsoft.PowerShell.Commands
         /// Number of objects in the group
         ///
         /// </summary>
-        public int Count
-        {
-            get { return this.count; }
-        }
+        public int Count { get; internal set; }
 
         /// <summary>
         ///
         /// The list of objects in this group
         ///
         /// </summary>
-        public Collection<PSObject> Group
-        {
-            get { return group; }
-        }
-        internal Collection<PSObject> group = null;
+        public Collection<PSObject> Group { get; } = null;
 
         /// <summary>
         ///
         /// The name of the group
         ///
         /// </summary>
-        public string Name
-        {
-            get { return name; }
-        }
-        private string name = null;
+        public string Name { get; } = null;
 
         /// <summary>
         ///
         /// The OrderByPropertyEntry used to build this group object
         ///
         /// </summary>
-        internal OrderByPropertyEntry GroupValue
-        {
-            get { return groupValue; }
-        }
-        private OrderByPropertyEntry groupValue = null;
+        internal OrderByPropertyEntry GroupValue { get; } = null;
     }
 
     /// <summary>
@@ -221,7 +206,7 @@ namespace Microsoft.PowerShell.Commands
         [TraceSourceAttribute(
              "GroupObjectCommand",
              "Class that has group base implementation")]
-        private static PSTraceSource tracer =
+        private static PSTraceSource s_tracer =
             PSTraceSource.GetTracer("GroupObjectCommand",
              "Class that has group base implementation");
 
@@ -238,10 +223,10 @@ namespace Microsoft.PowerShell.Commands
         [Parameter]
         public SwitchParameter NoElement
         {
-            get { return noElement; }
-            set { noElement = value; }
+            get { return _noElement; }
+            set { _noElement = value; }
         }
-        private bool noElement;
+        private bool _noElement;
         /// <summary>
         /// the Ashashtable parameter
         /// </summary>
@@ -249,29 +234,20 @@ namespace Microsoft.PowerShell.Commands
         [Parameter(ParameterSetName = "HashTable")]
         [SuppressMessage("Microsoft.Naming", "CA1702:CompoundWordsShouldBeCasedCorrectly", MessageId = "HashTable")]
         [Alias("AHT")]
-        public SwitchParameter AsHashTable
-        {
-            get { return ashashtable; }
-            set { ashashtable = value; }
-        }
-        private SwitchParameter ashashtable;
+        public SwitchParameter AsHashTable { get; set; }
+
         /// <summary>
         /// 
         /// </summary>
         /// <value></value>
         [Parameter(ParameterSetName = "HashTable")]
-        public SwitchParameter AsString
-        {
-            get { return asstring; }
-            set { asstring = value; }
-        }
-        private SwitchParameter asstring;
+        public SwitchParameter AsString { get; set; }
 
-        private List<GroupInfo> groups = new List<GroupInfo>();
-        private OrderByProperty orderByProperty = new OrderByProperty();
-        private bool hasProcessedFirstInputObject;
-        private Dictionary<object, GroupInfo> tupleToGroupInfoMappingDictionary = new Dictionary<object, GroupInfo>();
-        private OrderByPropertyComparer orderByPropertyComparer = null;
+        private List<GroupInfo> _groups = new List<GroupInfo>();
+        private OrderByProperty _orderByProperty = new OrderByProperty();
+        private bool _hasProcessedFirstInputObject;
+        private Dictionary<object, GroupInfo> _tupleToGroupInfoMappingDictionary = new Dictionary<object, GroupInfo>();
+        private OrderByPropertyComparer _orderByPropertyComparer = null;
 
         #endregion
 
@@ -320,7 +296,7 @@ namespace Microsoft.PowerShell.Commands
                     if (!isCurrentItemGrouped)
                     {
                         // create a new group
-                        tracer.WriteLine("Create a new group: {0}", currentObjectEntry.orderValues);
+                        s_tracer.WriteLine("Create a new group: {0}", currentObjectEntry.orderValues);
                         GroupInfo newObjGrp = noElement ? new GroupInfoNoElement(currentObjectEntry) : new GroupInfo(currentObjectEntry);
                         groups.Add(newObjGrp);
 
@@ -346,30 +322,30 @@ namespace Microsoft.PowerShell.Commands
             {
                 OrderByPropertyEntry currentEntry = null;
 
-                if (!hasProcessedFirstInputObject)
+                if (!_hasProcessedFirstInputObject)
                 {
                     if (Property == null)
                     {
                         Property = OrderByProperty.GetDefaultKeyPropertySet(InputObject);
                     }
-                    orderByProperty.ProcessExpressionParameter(this, Property);
+                    _orderByProperty.ProcessExpressionParameter(this, Property);
 
-                    currentEntry = orderByProperty.CreateOrderByPropertyEntry(this, InputObject, CaseSensitive, _cultureInfo);
+                    currentEntry = _orderByProperty.CreateOrderByPropertyEntry(this, InputObject, CaseSensitive, _cultureInfo);
                     bool[] ascending = new bool[currentEntry.orderValues.Count];
                     for (int index = 0; index < currentEntry.orderValues.Count; index++)
                     {
                         ascending[index] = true;
                     }
-                    orderByPropertyComparer = new OrderByPropertyComparer(ascending, _cultureInfo, CaseSensitive);
+                    _orderByPropertyComparer = new OrderByPropertyComparer(ascending, _cultureInfo, CaseSensitive);
 
-                    hasProcessedFirstInputObject = true;
+                    _hasProcessedFirstInputObject = true;
                 }
                 else
                 {
-                    currentEntry = orderByProperty.CreateOrderByPropertyEntry(this, InputObject, CaseSensitive, _cultureInfo);
+                    currentEntry = _orderByProperty.CreateOrderByPropertyEntry(this, InputObject, CaseSensitive, _cultureInfo);
                 }
 
-                DoGrouping(currentEntry, this.NoElement, this.groups, tupleToGroupInfoMappingDictionary, orderByPropertyComparer);
+                DoGrouping(currentEntry, this.NoElement, _groups, _tupleToGroupInfoMappingDictionary, _orderByPropertyComparer);
             }
         }
 
@@ -378,17 +354,17 @@ namespace Microsoft.PowerShell.Commands
         /// </summary>
         protected override void EndProcessing()
         {
-            tracer.WriteLine(groups.Count);
-            if (groups.Count > 0)
+            s_tracer.WriteLine(_groups.Count);
+            if (_groups.Count > 0)
             {
-                if (ashashtable)
+                if (AsHashTable)
                 {
                     Hashtable _table = CollectionsUtil.CreateCaseInsensitiveHashtable();
                     try
                     {
-                        foreach (GroupInfo _grp in groups)
+                        foreach (GroupInfo _grp in _groups)
                         {
-                            if (asstring)
+                            if (AsString)
                             {
                                 _table.Add(_grp.Name, _grp.Group);
                             }
@@ -416,20 +392,19 @@ namespace Microsoft.PowerShell.Commands
                 }
                 else
                 {
-                    if (asstring)
+                    if (AsString)
                     {
                         ArgumentException ex = new ArgumentException(UtilityCommonStrings.GroupObjectWithHashTable);
-                        ErrorRecord er = new ErrorRecord(ex, "ArgumentException", ErrorCategory.InvalidArgument, this.asstring);
+                        ErrorRecord er = new ErrorRecord(ex, "ArgumentException", ErrorCategory.InvalidArgument, AsString);
                         ThrowTerminatingError(er);
                     }
                     else
                     {
-                        WriteObject(groups, true);
+                        WriteObject(_groups, true);
                     }
                 }
             }
         }
-
     }
 }
 

@@ -1,11 +1,9 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
+
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Management.Automation.Internal;
 
 namespace System.Management.Automation
 {
@@ -42,7 +40,7 @@ namespace System.Management.Automation
         /// 
         internal AliasInfo(string name, string definition, ExecutionContext context) : base(name, CommandTypes.Alias)
         {
-            this._definition = definition;
+            _definition = definition;
             this.Context = context;
 
             if (context != null)
@@ -80,26 +78,26 @@ namespace System.Management.Automation
         /// </exception>
         /// 
         internal AliasInfo(
-            string name, 
-            string definition, 
+            string name,
+            string definition,
             ExecutionContext context,
             ScopedItemOptions options) : base(name, CommandTypes.Alias)
         {
-            this._definition = definition;
+            _definition = definition;
             this.Context = context;
-            this.options = options;
+            _options = options;
 
             if (context != null)
             {
                 this.Module = context.SessionState.Internal.Module;
             }
         }
-        
+
         #endregion ctor
 
         internal override HelpCategory HelpCategory
         {
-            get { return HelpCategory.Alias;  }
+            get { return HelpCategory.Alias; }
         }
 
         /// <summary>
@@ -163,7 +161,7 @@ namespace System.Management.Automation
                     List<string> cyclePrevention = new List<string>();
                     cyclePrevention.Add(Name);
 
-                    string commandNameToResolve = this._definition;
+                    string commandNameToResolve = _definition;
                     result = ReferencedCommand;
                     while (result != null && result.CommandType == CommandTypes.Alias)
                     {
@@ -191,7 +189,7 @@ namespace System.Management.Automation
                         // points to, remember the defintion so that we can
                         // provide better error reporting.
 
-                        unresolvedCommandName = commandNameToResolve;
+                        UnresolvedCommandName = commandNameToResolve;
                     }
                 }
 
@@ -231,8 +229,8 @@ namespace System.Management.Automation
         {
             // Check to see if the variable is writable
 
-            if ((options & ScopedItemOptions.Constant ) != 0 ||
-                (!force && (options & ScopedItemOptions.ReadOnly) != 0))
+            if ((_options & ScopedItemOptions.Constant) != 0 ||
+                (!force && (_options & ScopedItemOptions.ReadOnly) != 0))
             {
                 SessionStateUnauthorizedAccessException e =
                     new SessionStateUnauthorizedAccessException(
@@ -244,8 +242,7 @@ namespace System.Management.Automation
                 throw e;
             }
 
-            this._definition = definition;
-
+            _definition = definition;
         } // SetDefinition
 
         /// <summary>
@@ -260,7 +257,7 @@ namespace System.Management.Automation
         {
             get
             {
-                return options;
+                return _options;
             }
 
             set
@@ -286,7 +283,7 @@ namespace System.Management.Automation
             // Check to see if the variable is constant, if so
             // throw an exception because the options cannot be changed.
 
-            if ((options & ScopedItemOptions.Constant) != 0)
+            if ((_options & ScopedItemOptions.Constant) != 0)
             {
                 SessionStateUnauthorizedAccessException e =
                     new SessionStateUnauthorizedAccessException(
@@ -301,7 +298,7 @@ namespace System.Management.Automation
             // Check to see if the variable is readonly, if so
             // throw an exception because the options cannot be changed.
 
-            if (!force && (options & ScopedItemOptions.ReadOnly) != 0)
+            if (!force && (_options & ScopedItemOptions.ReadOnly) != 0)
             {
                 SessionStateUnauthorizedAccessException e =
                     new SessionStateUnauthorizedAccessException(
@@ -333,7 +330,7 @@ namespace System.Management.Automation
             }
 
             if ((newOptions & ScopedItemOptions.AllScope) == 0 &&
-                (options & ScopedItemOptions.AllScope) != 0)
+                (_options & ScopedItemOptions.AllScope) != 0)
             {
                 // user is trying to remove the AllScope option from the alias. 
                 // Do not allow this (as per spec).
@@ -348,26 +345,14 @@ namespace System.Management.Automation
                 throw e;
             }
 
-            options = newOptions;
+            _options = newOptions;
         }
-        private ScopedItemOptions options = ScopedItemOptions.None;
+        private ScopedItemOptions _options = ScopedItemOptions.None;
 
         /// <summary>
         /// Gets or sets the description for the alias
         /// </summary>
-        public string Description
-        {
-            get
-            {
-                return description;
-            }
-
-            set
-            {
-                description = value;
-            }   
-        }
-        private string description = String.Empty;
+        public string Description { get; set; } = String.Empty;
 
 
         /// <summary>
@@ -377,14 +362,7 @@ namespace System.Management.Automation
         /// to resolve the command, this this property will return null.
         /// </summary>
         /// 
-        internal string UnresolvedCommandName
-        {
-            get
-            {
-                return unresolvedCommandName;
-            }
-        }
-        private string unresolvedCommandName;
+        internal string UnresolvedCommandName { get; private set; }
 
         /// <summary>
         /// The objects output from an alias are the objects output from the resolved

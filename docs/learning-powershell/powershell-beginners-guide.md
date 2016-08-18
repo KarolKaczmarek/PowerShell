@@ -7,7 +7,7 @@ We recommend that you open a PowerShell console/session and type along with the 
 
 Launch PowerShell Console/Session
 ---
-First you need to launch a PowerShell session by following the [Installing PowerShell Guide](./learning-powershell.md#installing-powershell).
+First you need to launch a PowerShell session by following the [Installing PowerShell Guide](./README.md#installing-powershell).
 
 
 Getting Familiar with PowerShell Commands
@@ -20,7 +20,7 @@ In this section, you will learn how to
 - find syntax of PowerShell cmdlets
 - and more
 
-As mentioned above, PowerShell commands are designed to have Verb-Noun structure, for instance Get-Process, Set-Location, Clear-Host, etc. 
+As mentioned above, PowerShell commands are designed to have Verb-Noun structure, for instance Get-Process, Set-Location, Clear-Host, etc.
 Let’s exercise some of the basic PowerShell commands, also known as **cmdlets**.
 
 Please note that we will use the PowerShell prompt sign **PS />** as it appears on Linux in the following examples.
@@ -186,7 +186,7 @@ Type **$PSVersionTable** in your PowerShell session, you will see something like
 Name                           Value
 ----                           -----
 PSVersion                      5.1.10032.0
-PSEdition                      Linux
+PSEdition                      Core
 PSCompatibleVersions           {1.0, 2.0, 3.0, 4.0...}
 BuildVersion                   3.0.0.0
 CLRVersion                     
@@ -213,7 +213,7 @@ PS /> Get-Help -Name Get-Process
 
 It displays the examples how to use the Get-Process cmdlet.
 ```PowerShell
-PS />**Get-Help -Name Get-Process -Examples**
+PS />Get-Help -Name Get-Process -Examples
 ```
 
 If you use **-Full** parameter, for example, `Get-Help -Name Get-Process -Full`, it will display more technical information.
@@ -261,13 +261,9 @@ Mode                LastWriteTime       Length  Name
 ```
 How to Create and Run PowerShell scripts
 ----
-- You can use ISE, Visual Studio Code or your favorite editor to create a PowerShell script and save the script with a .ps1 file extension (for example, helloworld.ps1)
-- To run the script, cd to your current folder and type ./yourscript.ps1 (for example, ./helloworld.ps1).
+You can use Visual Studio Code or your favorite editor to create a PowerShell script and save it with a `.ps1` file extension.
+For more details, see [Create and Run PowerShell Script Guide][create-run-script]
 
-Note: If you are using Windows, make sure you set the PowerShell's execution policy to "RemoteSigned" in this case.
-See [Running PowerShell Scripts Is as Easy as 1-2-3] [run-ps] for more details.
-
-[run-ps]:http://windowsitpro.com/powershell/running-powershell-scripts-easy-1-2-3
 
 Recommended Training and Reading
 ----
@@ -309,3 +305,4 @@ Commercial Resources
 [examples-ps-module]:https://msdn.microsoft.com/en-us/library/dd878340%28v=vs.85%29.aspx
 [writing-ps-module]:http://www.powershellmagazine.com/2014/03/18/writing-a-powershell-module-in-c-part-1-the-basics/
 [sample-code]:https://msdn.microsoft.com/en-us/library/ff602031%28v=vs.85%29.aspx
+[create-run-script]:./create-powershell-scripts.md

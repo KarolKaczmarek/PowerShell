@@ -1,6 +1,7 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
+
 using System.IO;
 
 namespace System.Management.Automation
@@ -26,9 +27,9 @@ namespace System.Management.Automation
         /// <param name="filename">file name that contains the help text</param>
         private HelpFileHelpInfo(string name, string text, string filename)
         {
-            _fullHelpObject = PSObject.AsPSObject(text);
+            FullHelp = PSObject.AsPSObject(text);
 
-            _name = name;
+            Name = name;
 
             // Take the 5th line as synopsis. This may not be true if 
             // format of help file is changed later on.
@@ -46,18 +47,11 @@ namespace System.Management.Automation
             _filename = filename;
         }
 
-        private string _name = "";
         /// <summary>
         /// Name for the help info
         /// </summary>
         /// <value>Name for the help info</value>
-        override internal string Name
-        {
-            get
-            {
-                return _name;
-            }
-        }
+        internal override string Name { get; } = "";
 
         private string _filename = "";
         private string _synopsis = "";
@@ -65,7 +59,7 @@ namespace System.Management.Automation
         /// Synopsis for the help info
         /// </summary>
         /// <value>Synopsis for the help info</value>
-        override internal string Synopsis
+        internal override string Synopsis
         {
             get
             {
@@ -77,7 +71,7 @@ namespace System.Management.Automation
         /// Help category for the help info
         /// </summary>
         /// <value>Help category for the help info</value>
-        override internal HelpCategory HelpCategory
+        internal override HelpCategory HelpCategory
         {
             get
             {
@@ -85,19 +79,11 @@ namespace System.Management.Automation
             }
         }
 
-        private PSObject _fullHelpObject;
-
         /// <summary>
         /// Full help object for this help info
         /// </summary>
         /// <value>Full help object for this help info</value>
-        override internal PSObject FullHelp
-        {
-            get
-            {
-                return _fullHelpObject;
-            }
-        }
+        internal override PSObject FullHelp { get; }
 
         /// <summary>
         /// Get help info based on name, text and filename

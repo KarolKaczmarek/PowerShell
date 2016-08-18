@@ -1,18 +1,8 @@
 /********************************************************************++
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
-using System;
+
 using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Management.Automation;
-using System.Management.Automation.Host;
-using System.Management.Automation.Remoting;
-using System.Management.Automation.Internal;
 using Dbg = System.Management.Automation.Diagnostics;
 
 namespace System.Management.Automation.Remoting
@@ -61,7 +51,7 @@ namespace System.Management.Automation.Remoting
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         private bool CheckLengthsNonNegative(int[] lengths)
         {
-            for (int i = 0 ; i < lengths.Length ; ++i)
+            for (int i = 0; i < lengths.Length; ++i)
             {
                 if (lengths[i] < 0)
                 {
@@ -86,7 +76,7 @@ namespace System.Management.Automation.Remoting
         /// </summary>
         public void Reset()
         {
-            for (int i = 0 ; i < _current.Length ; ++i)
+            for (int i = 0; i < _current.Length; ++i)
             {
                 _current[i] = 0;
             }
@@ -103,7 +93,7 @@ namespace System.Management.Automation.Remoting
         /// </summary>
         public bool MoveNext()
         {
-            for (int i = _lengths.Length - 1 ; i >= 0 ; --i)
+            for (int i = _lengths.Length - 1; i >= 0; --i)
             {
                 // See if we can increment this dimension.
                 if (_current[i] < _lengths[i] - 1)

@@ -2,7 +2,6 @@
 Copyright (c) Microsoft Corporation.  All rights reserved.
 --********************************************************************/
 
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Dbg = System.Management.Automation.Diagnostics;
@@ -11,22 +10,21 @@ using Microsoft.Management.Infrastructure;
 
 namespace System.Management.Automation.Runspaces
 {
-
     /// <summary>
     /// Defines a Command object which can be added to <see cref="Pipeline"/> object
     /// for invocation.
     /// </summary>
-    public sealed class Command 
+    public sealed class Command
     {
         #region constructors
-        
+
         /// <summary>
         /// Initializes a new instance of Command class using specified command parameter.
         /// </summary>
         /// <param name="command">Name of the command or script contents </param>
         /// <exception cref="ArgumentNullException">command is null</exception>
-        public Command (string command)
-            :this(command,false,null)
+        public Command(string command)
+            : this(command, false, null)
         {
         }
 
@@ -36,8 +34,8 @@ namespace System.Management.Automation.Runspaces
         /// <param name="command">The command name or script contents</param>
         /// <param name="isScript">True if this command represents a script, otherwise; false.</param>
         /// <exception cref="ArgumentNullException">command is null</exception>
-        public Command (string command, bool isScript)
-            :this(command,isScript,null)
+        public Command(string command, bool isScript)
+            : this(command, isScript, null)
         {
         }
 
@@ -53,11 +51,11 @@ namespace System.Management.Automation.Runspaces
             IsEndOfStatement = false;
             if (command == null)
             {
-                throw PSTraceSource.NewArgumentNullException ("command");
+                throw PSTraceSource.NewArgumentNullException("command");
             }
 
-            _command = command;
-            _isScript = isScript;
+            CommandText = command;
+            IsScript = isScript;
             _useLocalScope = useLocalScope;
         }
 
@@ -69,8 +67,8 @@ namespace System.Management.Automation.Runspaces
                 throw PSTraceSource.NewArgumentNullException("command");
             }
 
-            _command = command;
-            _isScript = isScript;
+            CommandText = command;
+            IsScript = isScript;
             _useLocalScope = useLocalScope;
         }
 
@@ -84,36 +82,36 @@ namespace System.Management.Automation.Runspaces
         }
 
         internal Command(CommandInfo commandInfo)
-            :this(commandInfo, false)
+            : this(commandInfo, false)
         {
         }
 
         internal Command(CommandInfo commandInfo, bool isScript)
         {
             IsEndOfStatement = false;
-            _commandInfo = commandInfo;
-            _command = _commandInfo.Name;
-            _isScript = isScript;
+            CommandInfo = commandInfo;
+            CommandText = CommandInfo.Name;
+            IsScript = isScript;
         }
 
         /// <summary>
         /// Copy constructor for clone operations
         /// </summary>
         /// <param name="command">The source <see cref="Command"/> instance.</param>
-        internal Command (Command command)
+        internal Command(Command command)
         {
-            _isScript = command._isScript;
+            IsScript = command.IsScript;
             _useLocalScope = command._useLocalScope;
-            _command = command._command;
-            _mergeInstructions = command._mergeInstructions;
-            _mergeMyResult = command._mergeMyResult;
-            _mergeToResult = command._mergeToResult;
+            CommandText = command.CommandText;
+            MergeInstructions = command.MergeInstructions;
+            MergeMyResult = command.MergeMyResult;
+            MergeToResult = command.MergeToResult;
             _mergeUnclaimedPreviousCommandResults = command._mergeUnclaimedPreviousCommandResults;
             IsEndOfStatement = command.IsEndOfStatement;
 
             foreach (CommandParameter param in command.Parameters)
             {
-                Parameters.Add (new CommandParameter (param.Name, param.Value));
+                Parameters.Add(new CommandParameter(param.Name, param.Value));
             }
         }
 
@@ -127,36 +125,24 @@ namespace System.Management.Automation.Runspaces
         /// <remarks>
         /// This property is used to add positional or named parameters to the command.
         /// </remarks>
-        public CommandParameterCollection Parameters
-        {
-            get { return _parameters; }
-        }
+        public CommandParameterCollection Parameters { get; } = new CommandParameterCollection();
 
         /// <summary>
         /// Access the command string.
         /// </summary>
         /// <value>The command name, if <see cref="Command.IsScript"/> is false; otherwise; the script contents</value>
-        public string CommandText
-        {
-            get { return _command; }
-        }
+        public string CommandText { get; } = string.Empty;
 
         /// <summary>
         /// Access the commandInfo.
         /// </summary>
         /// <value>The command info object</value>
-        internal CommandInfo CommandInfo
-        {
-            get { return _commandInfo; }
-        }
+        internal CommandInfo CommandInfo { get; }
 
         /// <summary>
         /// Access the value indicating if this <see cref="Command"/> represents a script.
         /// </summary>
-        public bool IsScript
-        {
-            get { return _isScript; }
-        }
+        public bool IsScript { get; }
 
         /// <summary>
         /// Access the value indicating if LocalScope is to be used for running
@@ -175,12 +161,7 @@ namespace System.Management.Automation.Runspaces
         /// of 'Runspace' (the default) applies Runspace restrictions to this command.
         /// A command origin of 'Internal' does not apply runspace restrictions.
         /// </summary>
-        public CommandOrigin CommandOrigin
-        {
-            get { return _commandOrigin; }
-            set { _commandOrigin = value; }
-        }
-        private CommandOrigin _commandOrigin = CommandOrigin.Runspace;
+        public CommandOrigin CommandOrigin { get; set; } = CommandOrigin.Runspace;
 
         /// <summary>
         /// Access the actual value indicating if LocalScope is to be used for running
@@ -199,14 +180,14 @@ namespace System.Management.Automation.Runspaces
         #endregion Properties
 
         #region Methods
-        
+
         /// <summary>
         /// Creates a new <see cref="Command"/> that is a copy of the current instance.
         /// </summary>
         /// <returns>A new <see cref="Command"/> that is a copy of this instance.</returns>
-        internal Command Clone ()
+        internal Command Clone()
         {
-            return new Command (this);
+            return new Command(this);
         }
 
         /// <summary>
@@ -215,13 +196,13 @@ namespace System.Management.Automation.Runspaces
         /// <returns></returns>
         public override string ToString()
         {
-            return _command;
+            return CommandText;
         }
 
         #endregion Methods
 
         #region Merge
-        
+
         private PipelineResultTypes _mergeUnclaimedPreviousCommandResults =
             PipelineResultTypes.None;
         /// <summary>
@@ -257,7 +238,7 @@ namespace System.Management.Automation.Runspaces
                 {
                     throw PSTraceSource.NewNotSupportedException();
                 }
-                
+
                 _mergeUnclaimedPreviousCommandResults = value;
             }
         }
@@ -266,18 +247,10 @@ namespace System.Management.Automation.Runspaces
         // These properties are kept for backwards compatibility for V2
         // over the wire, which allows merging only for Error stream.
         //
-        private PipelineResultTypes _mergeMyResult = PipelineResultTypes.None;
-        private PipelineResultTypes _mergeToResult = PipelineResultTypes.None;
 
-        internal PipelineResultTypes MergeMyResult
-        {
-            get { return _mergeMyResult; }
-        }
+        internal PipelineResultTypes MergeMyResult { get; private set; } = PipelineResultTypes.None;
 
-        internal PipelineResultTypes MergeToResult
-        {
-            get { return _mergeToResult; }
-        }
+        internal PipelineResultTypes MergeToResult { get; private set; } = PipelineResultTypes.None;
 
         //
         // For V3 we allow merging from all streams except Output.
@@ -291,17 +264,12 @@ namespace System.Management.Automation.Runspaces
             Information = 4
         }
         internal const int MaxMergeType = (int)(MergeType.Information + 1);
-        private PipelineResultTypes[] _mergeInstructions = new PipelineResultTypes[MaxMergeType];
 
         /// <summary>
         /// Internal accessor for _mergeInstructions. It is used by serialization
         /// code
         /// </summary>
-        internal PipelineResultTypes[] MergeInstructions
-        {
-            get { return _mergeInstructions; }
-            set { _mergeInstructions = value; }
-        }
+        internal PipelineResultTypes[] MergeInstructions { get; set; } = new PipelineResultTypes[MaxMergeType];
 
         /// <summary>
         /// Merges this commands resutls
@@ -328,12 +296,12 @@ namespace System.Management.Automation.Runspaces
             if (myResult == PipelineResultTypes.None && toResult == PipelineResultTypes.None)
             {
                 // For V2 backwards compatibility.
-                _mergeMyResult = myResult;
-                _mergeToResult = toResult;
+                MergeMyResult = myResult;
+                MergeToResult = toResult;
 
                 for (int i = 0; i < MaxMergeType; ++i)
                 {
-                    _mergeInstructions[i] = PipelineResultTypes.None;
+                    MergeInstructions[i] = PipelineResultTypes.None;
                 }
                 return;
             }
@@ -355,32 +323,31 @@ namespace System.Management.Automation.Runspaces
             // For V2 backwards compatibility.
             if (myResult == PipelineResultTypes.Error)
             {
-                _mergeMyResult = myResult;
-                _mergeToResult = toResult;
+                MergeMyResult = myResult;
+                MergeToResult = toResult;
             }
 
             // Set internal merge instructions.
             if (myResult == PipelineResultTypes.Error || myResult == PipelineResultTypes.All)
             {
-                _mergeInstructions[(int)MergeType.Error] = toResult;
+                MergeInstructions[(int)MergeType.Error] = toResult;
             }
             if (myResult == PipelineResultTypes.Warning || myResult == PipelineResultTypes.All)
             {
-                _mergeInstructions[(int)MergeType.Warning] = toResult;
+                MergeInstructions[(int)MergeType.Warning] = toResult;
             }
             if (myResult == PipelineResultTypes.Verbose || myResult == PipelineResultTypes.All)
             {
-                _mergeInstructions[(int)MergeType.Verbose] = toResult;
+                MergeInstructions[(int)MergeType.Verbose] = toResult;
             }
             if (myResult == PipelineResultTypes.Debug || myResult == PipelineResultTypes.All)
             {
-                _mergeInstructions[(int)MergeType.Debug] = toResult;
+                MergeInstructions[(int)MergeType.Debug] = toResult;
             }
             if (myResult == PipelineResultTypes.Information || myResult == PipelineResultTypes.All)
             {
-                _mergeInstructions[(int)MergeType.Information] = toResult;
+                MergeInstructions[(int)MergeType.Information] = toResult;
             }
-
         }
 
         /// <summary>
@@ -405,35 +372,35 @@ namespace System.Management.Automation.Runspaces
             }
 
             // Error merge.
-            if (_mergeInstructions[(int)MergeType.Error] == PipelineResultTypes.Output)
+            if (MergeInstructions[(int)MergeType.Error] == PipelineResultTypes.Output)
             {
                 //Currently only merging error with output is supported.
                 mcr.ErrorMergeTo = MshCommandRuntime.MergeDataStream.Output;
             }
 
             // Warning merge.
-            PipelineResultTypes toType = _mergeInstructions[(int)MergeType.Warning];
+            PipelineResultTypes toType = MergeInstructions[(int)MergeType.Warning];
             if (toType != PipelineResultTypes.None)
             {
                 mcr.WarningOutputPipe = GetRedirectionPipe(toType, mcr);
             }
 
             // Verbose merge.
-            toType = _mergeInstructions[(int)MergeType.Verbose];
+            toType = MergeInstructions[(int)MergeType.Verbose];
             if (toType != PipelineResultTypes.None)
             {
                 mcr.VerboseOutputPipe = GetRedirectionPipe(toType, mcr);
             }
 
             // Debug merge.
-            toType = _mergeInstructions[(int)MergeType.Debug];
+            toType = MergeInstructions[(int)MergeType.Debug];
             if (toType != PipelineResultTypes.None)
             {
                 mcr.DebugOutputPipe = GetRedirectionPipe(toType, mcr);
             }
 
             // Information merge.
-            toType = _mergeInstructions[(int)MergeType.Information];
+            toType = MergeInstructions[(int)MergeType.Information];
             if (toType != PipelineResultTypes.None)
             {
                 mcr.InformationOutputPipe = GetRedirectionPipe(toType, mcr);
@@ -490,7 +457,7 @@ namespace System.Management.Automation.Runspaces
                 }
 
                 ScriptBlock scriptBlock = executionContext.Engine.ParseScriptBlock(CommandText, addToHistory);
-                if(origin == Automation.CommandOrigin.Internal)
+                if (origin == Automation.CommandOrigin.Internal)
                 {
                     scriptBlock.LanguageMode = PSLanguageMode.FullLanguage;
                 }
@@ -499,19 +466,19 @@ namespace System.Management.Automation.Runspaces
                 // constructions...
                 switch (scriptBlock.LanguageMode)
                 {
-                case PSLanguageMode.RestrictedLanguage:
-                    scriptBlock.CheckRestrictedLanguage(null, null, false);
-                    break;
-                case PSLanguageMode.FullLanguage:
-                    // Interactive script commands are permitted in this mode.
-                    break;
-                case PSLanguageMode.ConstrainedLanguage:
-                    // Constrained Language is checked at runtime.
-                    break;
-                default:
-                    // This should never happen...
-                    Diagnostics.Assert(false, "Invalid langage mode was set when building a ScriptCommandProcessor");
-                    throw new InvalidOperationException("Invalid langage mode was set when building a ScriptCommandProcessor");
+                    case PSLanguageMode.RestrictedLanguage:
+                        scriptBlock.CheckRestrictedLanguage(null, null, false);
+                        break;
+                    case PSLanguageMode.FullLanguage:
+                        // Interactive script commands are permitted in this mode.
+                        break;
+                    case PSLanguageMode.ConstrainedLanguage:
+                        // Constrained Language is checked at runtime.
+                        break;
+                    default:
+                        // This should never happen...
+                        Diagnostics.Assert(false, "Invalid langage mode was set when building a ScriptCommandProcessor");
+                        throw new InvalidOperationException("Invalid langage mode was set when building a ScriptCommandProcessor");
                 }
 
                 if (scriptBlock.UsesCmdletBinding)
@@ -531,7 +498,7 @@ namespace System.Management.Automation.Runspaces
             else
             {
                 // RestrictedLanguage / NoLanguage do not support dot-sourcing when CommandOrigin is Runspace
-                if (( _useLocalScope.HasValue ) && ( !_useLocalScope.Value ))
+                if ((_useLocalScope.HasValue) && (!_useLocalScope.Value))
                 {
                     switch (executionContext.LanguageMode)
                     {
@@ -569,8 +536,8 @@ namespace System.Management.Automation.Runspaces
             if (commandProcessorBase.IsHelpRequested(out helpTarget, out helpCategory))
             {
                 commandProcessorBase = CommandProcessorBase.CreateGetHelpCommandProcessor(
-                    executionContext, 
-                    helpTarget, 
+                    executionContext,
+                    helpTarget,
                     helpCategory);
             }
 
@@ -583,26 +550,6 @@ namespace System.Management.Automation.Runspaces
         #region Private fields
 
         /// <summary>
-        /// The collection of paramters that have been added.
-        /// </summary>
-        private readonly CommandParameterCollection _parameters = new CommandParameterCollection ();
-
-        /// <summary>
-        /// The command string passed in at ctor time.
-        /// </summary>
-        private readonly string          _command = string.Empty;
-
-        /// <summary>
-        /// The command info passed in at ctor time.
-        /// </summary>
-        private readonly CommandInfo _commandInfo;
-
-        /// <summary>
-        /// Does this instance represent a script?
-        /// </summary>
-        private readonly bool            _isScript;
-        
-        /// <summary>
         /// This is used for script commands (i.e. _isScript is true). If 
         /// _useLocalScope is true, script is run in LocalScope.  If
         /// null, it was unspecified and a suitable default is used (true
@@ -610,7 +557,7 @@ namespace System.Management.Automation.Runspaces
         /// property is bool, not bool? (from V1), so it should probably
         /// be deprecated, at least for internal use.
         /// </summary>
-        private bool?           _useLocalScope;
+        private bool? _useLocalScope;
 
         #endregion Private fields
 
@@ -631,7 +578,7 @@ namespace System.Management.Automation.Runspaces
         /// <exception cref="System.Management.Automation.Remoting.PSRemotingDataStructureException">
         /// Thrown when the PSObject is not in the expected format
         /// </exception>
-        static internal Command FromPSObjectForRemoting(PSObject commandAsPSObject)
+        internal static Command FromPSObjectForRemoting(PSObject commandAsPSObject)
         {
             if (commandAsPSObject == null)
             {
@@ -705,25 +652,25 @@ namespace System.Management.Automation.Runspaces
                 psRPVersion >= RemotingConstants.ProtocolVersionWin10RTM)
             {
                 // V5 merge instructions
-                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeError, _mergeInstructions[(int)MergeType.Error]));
-                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeWarning, _mergeInstructions[(int)MergeType.Warning]));
-                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeVerbose, _mergeInstructions[(int)MergeType.Verbose]));
-                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeDebug, _mergeInstructions[(int)MergeType.Debug]));
-                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeInformation, _mergeInstructions[(int)MergeType.Information]));
+                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeError, MergeInstructions[(int)MergeType.Error]));
+                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeWarning, MergeInstructions[(int)MergeType.Warning]));
+                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeVerbose, MergeInstructions[(int)MergeType.Verbose]));
+                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeDebug, MergeInstructions[(int)MergeType.Debug]));
+                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeInformation, MergeInstructions[(int)MergeType.Information]));
             }
             else if (psRPVersion != null &&
                 psRPVersion >= RemotingConstants.ProtocolVersionWin8RTM)
             {
                 // V3 merge instructions.
-                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeError, _mergeInstructions[(int)MergeType.Error]));
-                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeWarning, _mergeInstructions[(int)MergeType.Warning]));
-                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeVerbose, _mergeInstructions[(int)MergeType.Verbose]));
-                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeDebug, _mergeInstructions[(int)MergeType.Debug]));
+                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeError, MergeInstructions[(int)MergeType.Error]));
+                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeWarning, MergeInstructions[(int)MergeType.Warning]));
+                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeVerbose, MergeInstructions[(int)MergeType.Verbose]));
+                commandAsPSObject.Properties.Add(new PSNoteProperty(RemoteDataNameStrings.MergeDebug, MergeInstructions[(int)MergeType.Debug]));
 
                 // If they've explicitly redirected the Information stream, generate an error. Don't
                 // generate an error if they've done "*", as that makes any new stream a breaking change.
-                if ((_mergeInstructions[(int)MergeType.Information] == PipelineResultTypes.Output) &&
-                    (_mergeInstructions.Length != MaxMergeType))
+                if ((MergeInstructions[(int)MergeType.Information] == PipelineResultTypes.Output) &&
+                    (MergeInstructions.Length != MaxMergeType))
                 {
                     throw new RuntimeException(
                         StringUtil.Format(RunspaceStrings.InformationRedirectionNotSupported));
@@ -733,27 +680,27 @@ namespace System.Management.Automation.Runspaces
             {
                 // If they've explicitly redirected an unsupported stream, generate an error. Don't
                 // generate an error if they've done "*", as that makes any new stream a breaking change.
-                if (_mergeInstructions.Length != MaxMergeType)
+                if (MergeInstructions.Length != MaxMergeType)
                 {
-                    if (_mergeInstructions[(int)MergeType.Warning] == PipelineResultTypes.Output)
+                    if (MergeInstructions[(int)MergeType.Warning] == PipelineResultTypes.Output)
                     {
                         throw new RuntimeException(
                             StringUtil.Format(RunspaceStrings.WarningRedirectionNotSupported));
                     }
 
-                    if (_mergeInstructions[(int)MergeType.Verbose] == PipelineResultTypes.Output)
+                    if (MergeInstructions[(int)MergeType.Verbose] == PipelineResultTypes.Output)
                     {
                         throw new RuntimeException(
                             StringUtil.Format(RunspaceStrings.VerboseRedirectionNotSupported));
                     }
 
-                    if (_mergeInstructions[(int)MergeType.Debug] == PipelineResultTypes.Output)
+                    if (MergeInstructions[(int)MergeType.Debug] == PipelineResultTypes.Output)
                     {
                         throw new RuntimeException(
                             StringUtil.Format(RunspaceStrings.DebugRedirectionNotSupported));
                     }
 
-                    if (_mergeInstructions[(int)MergeType.Information] == PipelineResultTypes.Output)
+                    if (MergeInstructions[(int)MergeType.Information] == PipelineResultTypes.Output)
                     {
                         throw new RuntimeException(
                             StringUtil.Format(RunspaceStrings.InformationRedirectionNotSupported));
@@ -780,12 +727,12 @@ namespace System.Management.Automation.Runspaces
         internal CimInstance ToCimInstance()
         {
             CimInstance c = InternalMISerializer.CreateCimInstance("PS_Command");
-            CimProperty commandTextProperty = InternalMISerializer.CreateCimProperty("CommandText", 
-                                                                                     this.CommandText, 
+            CimProperty commandTextProperty = InternalMISerializer.CreateCimProperty("CommandText",
+                                                                                     this.CommandText,
                                                                                      Microsoft.Management.Infrastructure.CimType.String);
             c.CimInstanceProperties.Add(commandTextProperty);
-            CimProperty isScriptProperty = InternalMISerializer.CreateCimProperty("IsScript", 
-                                                                                  this.IsScript, 
+            CimProperty isScriptProperty = InternalMISerializer.CreateCimProperty("IsScript",
+                                                                                  this.IsScript,
                                                                                   Microsoft.Management.Infrastructure.CimType.Boolean);
             c.CimInstanceProperties.Add(isScriptProperty);
 
@@ -799,7 +746,7 @@ namespace System.Management.Automation.Runspaces
 
                 if (parameterInstances.Count > 0)
                 {
-                    CimProperty parametersProperty = InternalMISerializer.CreateCimProperty("Parameters", 
+                    CimProperty parametersProperty = InternalMISerializer.CreateCimProperty("Parameters",
                                                                                             parameterInstances.ToArray(),
                                                                                             Microsoft.Management.Infrastructure.CimType.ReferenceArray);
                     c.CimInstanceProperties.Add(parametersProperty);
@@ -874,17 +821,17 @@ namespace System.Management.Automation.Runspaces
         /// <summary>
         /// Make the default constructor internal
         /// </summary>
-        internal CommandCollection ()
+        internal CommandCollection()
         {
         }
-        
+
         /// <summary>
         /// Adds a new command for given string
         /// </summary>
         /// <exception cref="System.ArgumentNullException">
         /// command is null.
         /// </exception>
-        public void Add (string command)
+        public void Add(string command)
         {
             if (String.Equals(command, "out-default", StringComparison.OrdinalIgnoreCase))
             {
@@ -908,9 +855,9 @@ namespace System.Management.Automation.Runspaces
         /// <exception cref="System.ArgumentNullException">
         /// scriptContents is null.
         /// </exception>
-        public void AddScript (string scriptContents)
+        public void AddScript(string scriptContents)
         {
-            this.Add (new Command (scriptContents, true));
+            this.Add(new Command(scriptContents, true));
         }
 
         /// <summary>
@@ -921,9 +868,9 @@ namespace System.Management.Automation.Runspaces
         /// <exception cref="System.ArgumentNullException">
         /// scriptContents is null.
         /// </exception>
-        public void AddScript (string scriptContents, bool useLocalScope)
+        public void AddScript(string scriptContents, bool useLocalScope)
         {
-            this.Add (new Command (scriptContents, true, useLocalScope));
+            this.Add(new Command(scriptContents, true, useLocalScope));
         }
 
         /// <summary>
