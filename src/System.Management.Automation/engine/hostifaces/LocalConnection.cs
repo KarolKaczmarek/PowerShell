@@ -380,8 +380,8 @@ namespace System.Management.Automation.Runspaces
             }
         }
 
-        private static string DebugPreferenceCachePath = Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), ClrFacade.GetPowerShellBaseName()), "DebugPreference.clixml");
-        private static object DebugPreferenceLockObject = new object();
+        private static string s_debugPreferenceCachePath = Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), ClrFacade.GetPowerShellBaseName()), "DebugPreference.clixml");
+        private static object s_debugPreferenceLockObject = new object();
 
         /// <summary>
         /// DebugPreference serves as a property bag to keep 
