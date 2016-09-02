@@ -311,7 +311,6 @@ namespace System.Management.Automation
         {
             Signature signature = null;
 
-//#if !_CMF
             if (fileContent == null)
             {
                 // First, try to get the signature from the catalog signature APIs.
@@ -323,8 +322,7 @@ namespace System.Management.Automation
             if ((signature == null) || (signature.Status != SignatureStatus.Valid))
             {
                 signature = GetSignatureFromWinVerifyTrust(fileName, fileContent);
-            }        
-//#endif        
+            }              
             return signature;
         }
 

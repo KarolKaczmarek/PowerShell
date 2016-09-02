@@ -618,12 +618,10 @@ namespace System.Management.Automation
 
             
             // Version of the requested assembly should be the same or before the version of loaded assembly
-            /* TODO Temporarily commented out to identify the issue
             if (requestedAssembly.Version != null && requestedAssembly.Version.CompareTo(loadedAssembly.Version) > 0)
             {
                 return false;
             }
-            */
 
             // CultureName of requested assembly and loaded assembly should be the same
             string requestedCultureName = requestedAssembly.CultureName;
@@ -632,7 +630,6 @@ namespace System.Management.Automation
                 return false;
             }
 
-            #if !CORECLR
             // PublicKeyToken should be the same, unless it's not specified in the requested assembly
             byte[] requestedPublicKeyToken = requestedAssembly.GetPublicKeyToken();
             byte[] loadedPublicKeyToken = loadedAssembly.GetPublicKeyToken();
@@ -648,7 +645,6 @@ namespace System.Management.Automation
                         return false;
                 }
             }
-            #endif
 
             return true;
         }

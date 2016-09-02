@@ -238,7 +238,6 @@ namespace System.Management.Automation
         /// </exception>
         internal static string GetApplicationBase(string shellId)
         {
-
 #if CORECLR 
             // Use the location of SMA.dll as the application base
             // Assembly.GetEntryAssembly and GAC are not in CoreCLR.

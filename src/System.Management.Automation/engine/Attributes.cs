@@ -298,12 +298,7 @@ namespace System.Management.Automation
         /// <summary>        
         /// To specify RunAs Behavior for the resource. 
         /// </summary>        
-        public DSCResourceRunAsCredential RunAsCredential { get; set; }      
-
-        /// <summary>        
-        /// Specify if resource is used for inventory. 
-        /// </summary>        
-        public bool SupportsInventory { get; set; }         
+        public DSCResourceRunAsCredential RunAsCredential { get; set; }          
     }    
 
     /// <summary>
