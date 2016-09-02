@@ -1032,7 +1032,7 @@ namespace System.Management.Automation
 
         /// <summary>
         /// The API set 'api-ms-win-shell-shellfolders-l1-1-0.dll' was removed from NanoServer, so we cannot depend on 'SHGetFolderPathW'
-        /// to get the special folder paths. Instead, we need to rely on the baisc environment variables to get the special folder paths.
+        /// to get the special folder paths. Instead, we need to rely on the basic environment variables to get the special folder paths.
         /// </summary>
         /// <returns>
         /// The path to the specified system special folder, if that folder physically exists on your computer.
@@ -1227,12 +1227,14 @@ namespace System.Management.Automation
             // Win32 return type is BOOLEAN (which is 1 byte and not BOOL which is 4bytes)
             internal static extern byte GetUserNameEx(int format, [Out] StringBuilder domainName, ref uint domainNameLen);
 
-            [DllImport("api-ms-win-core-localization-l1-2-1.dll", CharSet = CharSet.Unicode)]
+            [DllImport(PinvokeDllNames.FormatMessageDllName, CharSet = CharSet.Unicode)]
             internal static extern int FormatMessage(int dwFlags, IntPtr lpSource, int dwMessageId,
                                                      int dwLanguageId, [Out]StringBuilder lpBuffer,
                                                      int nSize, IntPtr va_list_arguments);
 
-            [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+            // TODO Use the same strategy as for PInvokeDllNames.cs instead of removing it
+            // [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+            [DllImport(PinvokeDllNames.GetVersionExDllName, CharSet = CharSet.Unicode, SetLastError = true)]
             internal static extern bool GetVersionEx(ref OSVERSIONINFOEX osVerEx);
 
             [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]

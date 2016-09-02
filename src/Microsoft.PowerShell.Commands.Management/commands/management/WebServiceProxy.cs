@@ -35,7 +35,7 @@ namespace Microsoft.PowerShell.Commands
     /// <summary>
     /// Cmdlet for new-WebService Proxy
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "WebServiceProxy", DefaultParameterSetName = "NoCredentials", HelpUri = "http://go.microsoft.com/fwlink/?LinkID=135238")]
+    [Cmdlet(VerbsCommon.New, "WebServiceProxy", DefaultParameterSetName = "NoCredentials", HelpUri = "https://go.microsoft.com/fwlink/?LinkID=135238")]
     public sealed class NewWebServiceProxy : PSCmdlet
     {
         #region Parameters
@@ -305,11 +305,11 @@ namespace Microsoft.PowerShell.Commands
         {
             DiscoveryClientProtocol dcp = new DiscoveryClientProtocol();
 
-            //if paramset is defualtcredential, set the flag in wcclient
+            //if paramset is defaultcredential, set the flag in wcclient
             if (_usedefaultcredential.IsPresent)
                 dcp.UseDefaultCredentials = true;
 
-            //if paramset is credential, assign the crdentials
+            //if paramset is credential, assign the credentials
             if (ParameterSetName.Equals("Credential", StringComparison.OrdinalIgnoreCase))
                 dcp.Credentials = _credential.GetNetworkCredential();
 
@@ -396,7 +396,7 @@ namespace Microsoft.PowerShell.Commands
                 this.WriteWarning(warning);
             }
 
-            // add the refernces to the required assemblies
+            // add the references to the required assemblies
             options.ReferencedAssemblies.Add("System.dll");
             options.ReferencedAssemblies.Add("System.Data.dll");
             options.ReferencedAssemblies.Add("System.Xml.dll");

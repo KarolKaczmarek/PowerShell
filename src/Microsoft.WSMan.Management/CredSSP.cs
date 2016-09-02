@@ -123,7 +123,7 @@ namespace Microsoft.WSMan.Management
     /// </summary>
 
 
-    [Cmdlet(VerbsLifecycle.Disable, "WSManCredSSP", HelpUri = "http://go.microsoft.com/fwlink/?LinkId=141438")]
+    [Cmdlet(VerbsLifecycle.Disable, "WSManCredSSP", HelpUri = "https://go.microsoft.com/fwlink/?LinkId=141438")]
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cred")]
     [SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "SSP")]
     public class DisableWSManCredSSPCommand : WSManCredSSPCommandBase, IDisposable
@@ -423,7 +423,7 @@ namespace Microsoft.WSMan.Management
     /// an application to delegate the user's credentials from the client to the 
     /// server, hence allowing the user to perform management operations that access 
     /// a second hop.
-    /// This cmdlt performs the following:
+    /// This cmdlet performs the following:
     /// 
     /// On the client:
     /// 1. Enables WSMan local configuration on client to enable CredSSP
@@ -431,7 +431,7 @@ namespace Microsoft.WSMan.Management
     /// allows delegating explicit credentials to a server when server 
     /// authentication is achieved via a trusted X509 certificate or Kerberos
     /// </summary>
-    [Cmdlet(VerbsLifecycle.Enable, "WSManCredSSP", HelpUri = "http://go.microsoft.com/fwlink/?LinkId=141442")]
+    [Cmdlet(VerbsLifecycle.Enable, "WSManCredSSP", HelpUri = "https://go.microsoft.com/fwlink/?LinkId=141442")]
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cred")]
     [SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "SSP")]
     public class EnableWSManCredSSPCommand : WSManCredSSPCommandBase, IDisposable/*, IDynamicParameters*/
@@ -547,7 +547,7 @@ namespace Microsoft.WSMan.Management
                 return dyanmicParameters;
             }
 
-            // Construct attributes for the DelegateComputer paramter
+            // Construct attributes for the DelegateComputer parameter
             Collection<Attribute> delegateComputerAttributeCollection = new Collection<Attribute>();
             ParameterAttribute paramAttribute = new ParameterAttribute();
             paramAttribute.Mandatory = true;
@@ -848,7 +848,7 @@ namespace Microsoft.WSMan.Management
     /// enables an application to delegate the user's credentials from the client to 
     /// the server, hence allowing the user to perform management operations that 
     /// access a second hop.
-    /// This cmdlt performs the following:
+    /// This cmdlet performs the following:
     /// 1. Gets the configuration for WSMan policy on client to enable/disable 
     /// CredSSP
     /// 2. Gets the configuration information for the CredSSP policy 
@@ -858,7 +858,7 @@ namespace Microsoft.WSMan.Management
     /// </summary>
     [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Cred")]
     [SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "SSP")]
-    [Cmdlet(VerbsCommon.Get, "WSManCredSSP", HelpUri = "http://go.microsoft.com/fwlink/?LinkId=141443")]
+    [Cmdlet(VerbsCommon.Get, "WSManCredSSP", HelpUri = "https://go.microsoft.com/fwlink/?LinkId=141443")]
     public class GetWSManCredSSPCommand : PSCmdlet, IDisposable
     {
         # region private

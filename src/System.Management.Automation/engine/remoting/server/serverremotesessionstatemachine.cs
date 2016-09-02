@@ -276,7 +276,7 @@ namespace System.Management.Automation.Remoting
         #region Event Handlers
 
         /// <summary>
-        /// This is the handler for Start event of the FSM. This is the begining of everything
+        /// This is the handler for Start event of the FSM. This is the beginning of everything
         /// else. From this moment on, the FSM will proceeds step by step to eventually reach
         /// Established state or Closed state.
         /// </summary>
@@ -457,7 +457,7 @@ namespace System.Management.Automation.Remoting
                     throw PSTraceSource.NewArgumentNullException("fsmEventArg");
                 }
 
-                Dbg.Assert(_state == RemoteSessionState.NegotiationSent, "State must be NeogtiationReceived");
+                Dbg.Assert(_state == RemoteSessionState.NegotiationSent, "State must be NegotiationReceived");
                 Dbg.Assert(fsmEventArg.StateEvent == RemoteSessionEvent.NegotiationCompleted, "StateEvent must be NegotiationCompleted");
 
                 if (fsmEventArg.StateEvent != RemoteSessionEvent.NegotiationCompleted)
@@ -921,7 +921,7 @@ namespace System.Management.Automation.Remoting
             //***TODO*** Deal with this on the client side. Key exchange packets should have additional information
             //that identify the context of negotiation. Just like callId in SetMax and SetMinRunspaces messages
             Dbg.Assert(_state >= RemoteSessionState.Established,
-                "Key Receving can only be raised after reaching the Established state");
+                "Key Receiving can only be raised after reaching the Established state");
 
             switch (eventArgs.StateEvent)
             {

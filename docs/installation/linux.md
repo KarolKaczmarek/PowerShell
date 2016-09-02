@@ -2,7 +2,7 @@ Package installation instructions
 =================================
 
 Supports [Ubuntu 14.04][u14], [Ubuntu 16.04][u16],
-[CentOS 7][cos], and [OS X 10.11][osx].
+[CentOS 7][cos], and [macOS 10.11][osx].
 All packages are available on our GitHub [releases][] page.
 
 Once the package is installed, run `powershell` from a terminal.
@@ -46,6 +46,7 @@ sudo dpkg -i powershell_6.0.0-alpha.9-1ubuntu1.16.04.1_amd64.deb
 
 [Ubuntu 16.04]: http://releases.ubuntu.com/16.04/
 
+This works for Debian Stretch (now testing) as well.
 
 CentOS 7
 ========
@@ -60,14 +61,20 @@ Then execute the following in the terminal:
 sudo yum install powershell-6.0.0_alpha.9-1.el7.centos.x86_64.rpm
 ```
 
-> This package should work on Red Hat Enterprise Linux 7 too.
+You can also install the RPM without the intermediate step of downloading it:
+
+```sh
+sudo yum install https://github.com/PowerShell/PowerShell/releases/download/v6.0.0-alpha.9/powershell-6.0.0_alpha.9-1.el7.centos.x86_64.rpm
+```
+
+> This package works on Oracle Linux 7. It should work on Red Hat Enterprise Linux 7 too.
 
 [CentOS 7]: https://www.centos.org/download/
 
-OS X 10.11
+macOS 10.11
 ==========
 
-Using OS X 10.11, download the PKG package `powershell-6.0.0-alpha.9.pkg` from the [releases][] page onto the OS X machine.
+Using macOS 10.11, download the PKG package `powershell-6.0.0-alpha.9.pkg` from the [releases][] page onto the macOS machine.
 
 Either double-click the file and follow the prompts,
 or install it from the terminal:
@@ -90,10 +97,10 @@ Paths
 The profiles respect PowerShell's per-host configuration,
 so the default host-specific profiles exists at `Microsoft.PowerShell_profile.ps1` in the same locations.
 
-On Linux and OS X, the [XDG Base Directory Specification][xdg-bds] is respected.
+On Linux and macOS, the [XDG Base Directory Specification][xdg-bds] is respected.
 
 
-Note that because OS X is a derivation of BSD,
+Note that because macOS is a derivation of BSD,
 instead of `/opt`, the prefix used is `/usr/local`.
 Thus, `$PSHOME` is `/usr/local/microsoft/powershell/6.0.0-alpha.9/`,
 and the symlink is placed at `/usr/local/bin/powershell`.

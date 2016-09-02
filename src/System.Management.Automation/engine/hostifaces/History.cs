@@ -86,7 +86,7 @@ namespace Microsoft.PowerShell.Commands
         }
 
         /// <summary>
-        /// Execution status of assoicated pipeline
+        /// Execution status of associated pipeline
         /// </summary>
         /// <value></value>
         public PipelineState ExecutionStatus
@@ -245,7 +245,7 @@ namespace Microsoft.PowerShell.Commands
         #region ICloneable Members
 
         /// <summary>
-        /// Retuns a clone of this object
+        /// Returns a clone of this object
         /// </summary>
         /// <returns></returns>
         public HistoryInfo Clone()
@@ -326,7 +326,7 @@ namespace Microsoft.PowerShell.Commands
         }
 
         /// <summary>
-        /// Udpate the history entry corresponding to id.
+        /// Update the history entry corresponding to id.
         /// </summary>
         /// <param name="id">id of history entry to be updated</param>
         /// <param name="status">status to be updated</param>
@@ -497,7 +497,7 @@ namespace Microsoft.PowerShell.Commands
                     long index, SmallestID = 0;
                     //if we change the defaulthistory size and when no of entries exceed the size, then 
                     //we need to get the smallest entry in the buffer when we want to clear the oldest entry
-                    //eg if size is 5 and then the enrties can be 7,6,1,2,3
+                    //eg if size is 5 and then the entries can be 7,6,1,2,3
                     if (_capacity != DefaultHistorySize)
                         SmallestID = SmallestIDinBuffer();
                     if (!newest.IsPresent)
@@ -585,7 +585,7 @@ namespace Microsoft.PowerShell.Commands
                 }
                 List<HistoryInfo> cmdlist = new List<HistoryInfo>();
                 long SmallestID = 1;
-                //if buffersize is changes,Get the smallest entry thts not cleared in the buffer
+                //if buffersize is changes,Get the smallest entry that's not cleared in the buffer
                 if (_capacity != DefaultHistorySize)
                     SmallestID = SmallestIDinBuffer();
                 if (count != 0)
@@ -613,7 +613,7 @@ namespace Microsoft.PowerShell.Commands
                         long id = _countEntriesAdded;
                         for (long i = 0; i <= count - 1;)
                         {
-                            //if buffersize is changed,we have to loop from max enttry to min entry thats not cleraed
+                            //if buffersize is changed,we have to loop from max entry to min entry thats not cleared
                             if (_capacity != DefaultHistorySize)
                             {
                                 if (_countEntriesAdded > _capacity)
@@ -927,7 +927,7 @@ namespace Microsoft.PowerShell.Commands
     /// <summary>
     /// This class Implements the get-history command
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "History", HelpUri = "http://go.microsoft.com/fwlink/?LinkID=113317")]
+    [Cmdlet(VerbsCommon.Get, "History", HelpUri = "https://go.microsoft.com/fwlink/?LinkID=113317")]
     [OutputType(typeof(HistoryInfo))]
     public class GetHistoryCommand : PSCmdlet
     {
@@ -1056,7 +1056,7 @@ namespace Microsoft.PowerShell.Commands
             }
             else
             {
-                // The defualt value for _count is the size of the history buffer.
+                // The default value for _count is the size of the history buffer.
                 if (!_countParameterSpecified)
                 {
                     _count = history.Buffercapacity();
@@ -1071,7 +1071,7 @@ namespace Microsoft.PowerShell.Commands
     /// <summary>
     /// This class implements the Invoke-History command
     /// </summary>
-    [Cmdlet("Invoke", "History", SupportsShouldProcess = true, HelpUri = "http://go.microsoft.com/fwlink/?LinkID=113344")]
+    [Cmdlet("Invoke", "History", SupportsShouldProcess = true, HelpUri = "https://go.microsoft.com/fwlink/?LinkID=113344")]
     public class InvokeHistoryCommand : PSCmdlet
     {
         #region Parameters
@@ -1416,7 +1416,7 @@ namespace Microsoft.PowerShell.Commands
     /// <summary>
     /// This class Implements the add-history command
     /// </summary>
-    [Cmdlet(VerbsCommon.Add, "History", HelpUri = "http://go.microsoft.com/fwlink/?LinkID=113279")]
+    [Cmdlet(VerbsCommon.Add, "History", HelpUri = "https://go.microsoft.com/fwlink/?LinkID=113279")]
     [OutputType(typeof(HistoryInfo))]
     public class AddHistoryCommand : PSCmdlet
     {
@@ -1508,7 +1508,7 @@ namespace Microsoft.PowerShell.Commands
         /// mshObject to be converted to HistoryInfo.
         /// </param>
         /// <returns>
-        /// HistoryInfo object if coversion is successful else null.
+        /// HistoryInfo object if conversion is successful else null.
         /// </returns>
 #pragma warning disable 0162
         private
@@ -1672,7 +1672,7 @@ namespace Microsoft.PowerShell.Commands
     /// This Class implements the Clear History cmdlet
     ///</summary>
 
-    [Cmdlet(VerbsCommon.Clear, "History", SupportsShouldProcess = true, DefaultParameterSetName = "IDParameter", HelpUri = "http://go.microsoft.com/fwlink/?LinkID=135199")]
+    [Cmdlet(VerbsCommon.Clear, "History", SupportsShouldProcess = true, DefaultParameterSetName = "IDParameter", HelpUri = "https://go.microsoft.com/fwlink/?LinkID=135199")]
     public class ClearHistoryCommand : PSCmdlet
     {
         #region Command Line Parameters
@@ -1991,7 +1991,7 @@ namespace Microsoft.PowerShell.Commands
 
 
         /// <summary>
-        /// Clears the session history based on the input parametera
+        /// Clears the session history based on the input parameter
         /// <param name="id" >id of the entry to be cleared</param>
         /// <param name="count" > count of entries to be cleared</param>
         /// <param name="cmdline" >cmdline string to be cleared</param>

@@ -10,7 +10,7 @@ We use the following labels for issue classifications:
 * `Issue-Bug`: the issue is reporting a bug
 * `Issue-Discussion`: the issue may not have a clear classification yet.
   The issue may generate a [RFC][ln-rfc] or maybe be reclassified as a bug or enhancement.
-* `Issue-Enhancment`: the issue is more of a feature request than a bug.
+* `Issue-Enhancement`: the issue is more of a feature request than a bug.
 * `Issue-Meta`: an issue used to track multiple issues
 * `Issue-Question`: ideally support can be provided via other mechanisms,
   but sometimes folks to open an issue to get a question answered and we will use this label for such issues.
@@ -48,6 +48,7 @@ These labels describe what feature area of PowerShell that an issue affects.
 * `Area-Portability`: anything affecting script portability
 * `Area-PowerShellGet`: PowerShellGet related issues
 * `Area-PSReadline`: PSReadLine related issues
+* `Area-Remoting`: PSRP issues with any transport layer
 * `Area-SideBySide`: side by side support
 * `Area-Test`:issues in a test or in test infrastructure
 
@@ -55,7 +56,7 @@ These labels describe what feature area of PowerShell that an issue affects.
 
 These are for issues that are specific to certain operating systems:
 * `OS-Linux`
-* `OS-OS X`
+* `OS-macOS`
 * `OS-Windows`
 * `OS-WSL`: Windows Subsystem for Linux
 

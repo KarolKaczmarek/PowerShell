@@ -127,7 +127,7 @@ namespace System.Diagnostics.Eventing
         {
             //
             // explicit cleanup is done by calling Dispose with true from 
-            // Dispose() or Close(). The disposing arguement is ignored because there
+            // Dispose() or Close(). The disposing argument is ignored because there
             // are no unmanaged resources.
             // The finalizer calls Dispose with false.
             //
@@ -139,7 +139,7 @@ namespace System.Diagnostics.Eventing
 
             if (Interlocked.Exchange(ref _disposed, 1) != 0)
             {
-                // somebody is allready disposing the provider
+                // somebody is already disposing the provider
                 return;
             }
 
@@ -652,7 +652,7 @@ namespace System.Diagnostics.Eventing
                         //
                         // The loop below goes through all the arguments and fills in the data 
                         // descriptors. For strings save the location in the dataString array.
-                        // Caculates the total size of the event by adding the data descriptor
+                        // Calculates the total size of the event by adding the data descriptor
                         // size value set in EncodeObjec method.
                         //
                         for (index = 0; index < eventPayload.Length; index++)
