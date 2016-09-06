@@ -846,7 +846,7 @@ namespace System.Management.Automation
                     currentProcessModulePath += hklmMachineModulePath; // += EVT.Machine
                 }
             }
-// #if !CORECLR 
+
             // EVT.Process exists
             // Now handle the case where the environment variable is already set.
             else if (runningSxS) // The running powershell is an SxS PS instance
