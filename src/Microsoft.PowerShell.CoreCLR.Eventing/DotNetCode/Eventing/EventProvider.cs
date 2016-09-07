@@ -96,18 +96,19 @@ namespace System.Diagnostics.Eventing
         {
             _etwCallback = new UnsafeNativeMethods.EtwEnableCallback(EtwEnableCallBack);
 
-            #if !CORECLR   
+            // TODO clean up
+            //#if !CORECLR   
             uint status;            
             status = UnsafeNativeMethods.EventRegister(ref _providerId, _etwCallback, null, ref _regHandle);
             if (status != 0)
             {
                 throw new Win32Exception((int)status);
             }
-            #endif
+            //#endif
 
-            #if CORECLR
-            _regHandle = 0;
-            #endif
+            //#if CORECLR
+            //_regHandle = 0;
+            //#endif
         }
 
         //
