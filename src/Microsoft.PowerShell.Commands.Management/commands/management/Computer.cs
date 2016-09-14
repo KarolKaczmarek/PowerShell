@@ -1535,7 +1535,7 @@ namespace Microsoft.PowerShell.Commands
                             {
                                 string message = StringUtil.Format(ComputerResources.NoResorePoint, id);
                                 ArgumentException e = new ArgumentException(message);
-                                ErrorRecord errorrecord = new ErrorRecord(e, "NoResorePoint", ErrorCategory.InvalidArgument, null);
+                                ErrorRecord errorrecord = new ErrorRecord(e, "NoRestorePoint", ErrorCategory.InvalidArgument, null);
                                 WriteError(errorrecord);
                             }
                         }
@@ -6264,7 +6264,7 @@ $result
         [DllImport("Netapi32.dll", SetLastError = true)]
         internal static extern int NetApiBufferFree(IntPtr Buffer);
 
-        internal const int WorkrGroupMachine = 2692;
+        internal const int WorkGroupMachine = 2692;
         internal const int MaxMachineNameLength = 15;
     }
 
