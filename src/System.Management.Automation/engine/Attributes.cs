@@ -298,8 +298,8 @@ namespace System.Management.Automation
         /// <summary>        
         /// To specify RunAs Behavior for the resource. 
         /// </summary>        
-        public DSCResourceRunAsCredential RunAsCredential { get; set; }          
-    }    
+        public DSCResourceRunAsCredential RunAsCredential { get; set; }
+    }
 
     /// <summary>
     /// When specified on a property or field of a DSC Resource, the property

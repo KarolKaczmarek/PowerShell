@@ -5699,7 +5699,7 @@ if($paths) {
             if (psSnapInInfo != null && psSnapInInfo.Name.Equals(InitialSessionState.CoreSnapin, StringComparison.OrdinalIgnoreCase))
             {
                 InitializeCoreCmdletsAndProviders(psSnapInInfo, out cmdlets, out providers, helpFile);
-                 
+
 #if DEBUG
                 // Make sure the pre-built cmdlet and provider tables match what reflection finds.  This will help
                 // avoid issues where you add a cmdlet but forget to update the table in InitializeCoreCmdletsAndProviders.

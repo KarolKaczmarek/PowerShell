@@ -322,7 +322,8 @@ namespace System.Management.Automation
             if ((signature == null) || (signature.Status != SignatureStatus.Valid))
             {
                 signature = GetSignatureFromWinVerifyTrust(fileName, fileContent);
-            }              
+            }     
+                     
             return signature;
         }
 

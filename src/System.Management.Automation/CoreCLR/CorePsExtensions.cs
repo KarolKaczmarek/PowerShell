@@ -1232,8 +1232,6 @@ namespace System.Management.Automation
                                                      int dwLanguageId, [Out]StringBuilder lpBuffer,
                                                      int nSize, IntPtr va_list_arguments);
 
-            // TODO Use the same strategy as for PInvokeDllNames.cs instead of removing it
-            // [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
             [DllImport(PinvokeDllNames.GetVersionExDllName, CharSet = CharSet.Unicode, SetLastError = true)]
             internal static extern bool GetVersionEx(ref OSVERSIONINFOEX osVerEx);
 
